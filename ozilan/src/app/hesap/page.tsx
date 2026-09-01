@@ -31,7 +31,7 @@ export default function Account() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b-4 border-ink pb-3">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
         <div>
           <p className="eyebrow">{me.kind === "kurumsal" ? "Kurumsal üye" : "Bireysel üye"} · üyelik {dateTR(me.createdAt)}</p>
           <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">{me.name}</h1>
@@ -58,7 +58,7 @@ export default function Account() {
       </div>
 
       <section className="mt-12">
-        <div className="border-b-4 border-ink pb-3">
+        <div className="border-b border-line pb-4">
           <p className="eyebrow">Portföy</p>
           <h2 className="mt-1 font-serif text-2xl leading-none">İlanlarım</h2>
         </div>
@@ -92,7 +92,7 @@ export default function Account() {
 
       {state.searches.length > 0 && (
         <section className="mt-12">
-          <div className="border-b-4 border-ink pb-3">
+          <div className="border-b border-line pb-4">
             <p className="eyebrow">Takip</p>
             <h2 className="mt-1 font-serif text-2xl leading-none">Kayıtlı aramalar</h2>
           </div>
@@ -109,7 +109,7 @@ export default function Account() {
 
       {recent.length > 0 && (
         <section className="mt-12">
-          <div className="border-b-4 border-ink pb-3">
+          <div className="border-b border-line pb-4">
             <p className="eyebrow">Geçmiş</p>
             <h2 className="mt-1 font-serif text-2xl leading-none">Son gezdiklerin</h2>
           </div>
