@@ -113,7 +113,7 @@ export default function Home() {
           {byCat.map(({ c, n, med }) => (
             <div key={c.slug} className="plaque flex flex-col p-6">
               <div className="flex items-baseline justify-between gap-3">
-                <Link href={e/arama/?k=${c.slug}`} className="text-[1.375rem] font-semibold tracking-[-0.02em] hover:text-signal">
+                <Link href={`/arama/?k=${c.slug}`} className="text-[1.375rem] font-semibold tracking-[-0.02em] hover:text-signal">
                   {c.label}
                 </Link>
                 <span className="num text-[0.8125rem] text-mute-2">{num(n)} ilan</span>
@@ -177,7 +177,7 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ------------------------------------------------------ Şehirler */}
+      {/* ------------------------------------------------------- şehirler */}
       <div className="border-t border-line">
         <Section title="Şehre göre">
           <div className="flex flex-wrap gap-x-6 gap-y-3">

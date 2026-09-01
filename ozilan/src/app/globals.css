@@ -83,7 +83,7 @@
   .ticks { background-image: none; }
   .halftone { background-image: none; }
 
-  /* satır ayırıcı listeler (Apple tarbı hairline) */
+  /* satır ayırıcı listeler (Apple tarzı hairline) */
   .rows > * + * { @apply border-t border-line; }
 }
 
