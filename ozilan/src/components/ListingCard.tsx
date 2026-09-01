@@ -91,10 +91,10 @@ export function ListingCard({ l, pool, variant = "grid" }: { l: Listing; pool: L
       <Link href={href} className="plaque-link group flex flex-col gap-4 overflow-hidden p-3 sm:flex-row sm:items-start">
         <div className="relative w-full shrink-0 overflow-hidden rounded-md sm:w-48">
           <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-40 w-full sm:h-[132px]" label={l.title} />
-          <span className="absolute left-0 top-0 bg-ink/85 px-1.5 py-0.5 font-mono text-2xs uppercase tracking-[0.1em] text-paper">
+          <span className="absolute left-2 top-2 rounded-full bg-paper/85 px-2.5 py-1 text-[0.6875rem] font-medium text-ink backdrop-blur">
             {l.deal}
           </span>
-          {l.featured && <span className="absolute bottom-0 left-0 bg-signal px-1.5 py-0.5 font-mono text-2xs uppercase tracking-[0.1em] text-white">Öne çıkan</span>}
+          {l.featured && <span className="absolute bottom-2 left-2 rounded-full bg-signal px-2.5 py-1 text-[0.6875rem] font-medium text-white">Öne çıkan</span>}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -134,25 +134,25 @@ export function ListingCard({ l, pool, variant = "grid" }: { l: Listing; pool: L
     <Link href={href} className="plaque-link group flex flex-col overflow-hidden">
       <div className="relative">
         <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="aspect-[4/3] w-full" label={l.title} />
-        <span className="absolute left-0 top-0 bg-ink/85 px-1.5 py-0.5 font-mono text-2xs uppercase tracking-[0.1em] text-paper">{l.deal}</span>
+        <span className="absolute left-2 top-2 rounded-full bg-paper/85 px-2.5 py-1 text-[0.6875rem] font-medium text-ink backdrop-blur">{l.deal}</span>
         <FavButton id={l.id} className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus:opacity-100" />
         <CompareButton id={l.id} className="absolute right-2 top-12 opacity-0 transition group-hover:opacity-100 focus:opacity-100" />
-        {l.featured && <span className="absolute bottom-0 left-0 bg-signal px-1.5 py-0.5 font-mono text-2xs uppercase tracking-[0.1em] text-white">Öne çıkan</span>}
+        {l.featured && <span className="absolute bottom-2 left-2 rounded-full bg-signal px-2.5 py-1 text-[0.6875rem] font-medium text-white">Öne çıkan</span>}
       </div>
 
-      <div className="flex flex-1 flex-col p-3">
-        <p className="eyebrow">{l.district}, {l.city}</p>
-        <h3 className="mt-1.5 line-clamp-2 text-[0.92rem] font-medium leading-snug group-hover:text-signal">{l.title}</h3>
-        <p className="mt-1.5 line-clamp-1 text-[0.75rem] text-mute">{bits.join(" · ")}</p>
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-[0.8125rem] text-mute-2">{l.district}, {l.city}</p>
+        <h3 className="mt-1 line-clamp-2 text-[0.9375rem] font-medium leading-snug">{l.title}</h3>
+        <p className="mt-1 line-clamp-1 text-[0.8125rem] text-mute-2">{bits.join(" · ")}</p>
 
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-4">
           <div className="flex items-center justify-between">
-            <p className="num text-[1.05rem] leading-none">{tl(l.price)}</p>
+            <p className="num text-[1.1875rem] font-semibold leading-none">{tl(l.price)}</p>
             <TrustChip t={t} compact />
           </div>
           <div className="mt-2 flex items-center justify-between">
             {m && m.confidence !== "low" ? <GaugeInline m={m} /> : <span />}
-            <span className="num text-2xs text-mute">{ago(l.bumpedAt)}</span>
+            <span className="num text-[0.75rem] text-mute-2">{ago(l.bumpedAt)}</span>
           </div>
         </div>
       </div>

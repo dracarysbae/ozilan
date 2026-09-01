@@ -1,18 +1,15 @@
 import React from "react";
 
 const PALETTES: [string, string][] = [
-  ["#1B44E5", "#FFFFFF"],
-  ["#0C1830", "#E8A400"],
-  ["#E8A400", "#0C1830"],
-  ["#FFFFFF", "#1B44E5"],
-  ["#0B7A52", "#FFF1CE"],
-  ["#DFE5FF", "#0C1830"],
-  ["#0C1830", "#DFE5FF"],
-  ["#FFF1CE", "#0F2FAF"],
-  ["#DDE3EC", "#1B44E5"],
-  ["#D32F2B", "#FFF1CE"],
+  ["#F2F2F4", "#8A8A90"],
+  ["#EEF1F6", "#7C8794"],
+  ["#F3F1EE", "#8E8579"],
+  ["#EDF1EF", "#7B8C83"],
+  ["#F1F0F4", "#87848F"],
+  ["#EFF2F5", "#7E8892"],
+  ["#F4F1F0", "#8C8280"],
+  ["#ECEFF3", "#79848F"],
 ]
-
 /* silhouettes drawn on a 0..100 box, anchored bottom */
 const GLYPH: Record<string, string[]> = {
   konut: [
@@ -106,35 +103,23 @@ export function Artwork({
   const [bg, fg] = p;
   const glyphs = (kind ? TYPE_GLYPH[kind] : undefined) ?? GLYPH[sub] ?? GLYPH.elektronik;
   const d = glyphs[seed % glyphs.length];
-  const rot = ((seed >> 3) % 5) - 2;
-  const stripes = 6 + (seed % 5);
+  const rot = ((seed >> 3) % 3) - 1;
   const id = `a${seed}`;
 
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className={className} role="img"
       aria-label={label ?? "ilan görseli"}>
       <defs>
-        <pattern id={`dot${id}`} width="4" height="4" patternUnits="userSpaceOnUse">
-          <circle cx="1" cy="1" r="0.6" fill={fg} opacity="0.28" />
-        </pattern>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={bg} />
-          <stop offset="100%" stopColor={bg} stopOpacity="0.82" />
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor={bg} />
         </linearGradient>
       </defs>
       <rect width="100" height="100" fill={`url(#g${id})`} />
-      <rect width="100" height="100" fill={`url(#dot${id})`} />
-      <g opacity="0.16" stroke={fg} strokeWidth="0.7">
-        {Array.from({ length: stripes }).map((_, i) => (
-          <line key={i} x1={-20 + i * (140 / stripes)} y1="110" x2={20 + i * (140 / stripes)} y2="-10" />
-        ))}
-      </g>
-      <circle cx={72 + (seed % 12)} cy={26 + (seed % 9)} r={16 + (seed % 7)} fill={fg} opacity="0.09" />
-      <g transform={`translate(4 2) rotate(${rot} 50 60) scale(0.94)`} fill="none" stroke={fg}
-        strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.9">
+      <g transform={`translate(2 1) rotate(${rot} 50 58) scale(0.9)`} fill="none" stroke={fg}
+        strokeWidth="1.9" strokeLinejoin="round" strokeLinecap="round" opacity="0.85">
         <path d={d} />
       </g>
-      <rect x="0" y="97.4" width="100" height="2.6" fill={fg} opacity="0.5" />
     </svg>
   );
 }

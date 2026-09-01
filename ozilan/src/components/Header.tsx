@@ -1,35 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Omnibox } from "./Omnibox";
 import { useStore } from "@/lib/store";
 import { CATEGORIES } from "@/data/taxonomy";
-import { num, tlShort } from "@/lib/format";
-
-function Ticker() {
-  const { pool } = useStore();
-  const items = useMemo(() => {
-    const byCat = CATEGORIES.map((c) => {
-      const set = pool.filter((l) => l.cat === c.slug && l.price > 0);
-      const med = set.length ? [...set].sort((a, b) => a.price - b.price)[Math.floor(set.length / 2)].price : 0;
-      return `${c.label.toLocaleUpperCase("tr")} ${num(set.length)} ilan · ortanca ${tlShort(med)}`;
-    });
-    return [...byCat, `TOPLAM ${num(pool.length)} aktif ilan`, "PİYASA ENDEKSİ günlük güncellenir", "GÜVEN TARAMASI her ilanda otomatik"];
-  }, [pool]);
-  const row = [...items, ...items];
-  return (
-    <div className="marquee-host overflow-hidden border-b border-line bg-ink py-2">
-      <div className="marquee-track flex w-max gap-11 whitespace-nowrap">
-        {row.map((t, i) => (
-          <span key={i} className="font-mono text-[0.78rem] uppercase tracking-[0.05em] text-paper/70">
-            <span className="mr-11 text-gold">◆</span>{t}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const NAV = [
   { href: "/favorilerim/", label: "Favoriler" },
@@ -41,82 +16,105 @@ export function Header() {
   const path = usePathname();
   const { me, state, ready } = useStore();
   const [open, setOpen] = useState(false);
-  useEffect(() => { setOpen(false); }, [path]);
+  const [menu, setMenu] = useState<string | null>(null);
+  useEffect(() => { setOpen(false); setMenu(null); }, [path]);
 
   const unread = ready ? state.threads.length : 0;
+  const home = path === "/";
 
   return (
-    <header className="sticky top-0 z-40">
-      <Ticker />
-      <div className="border-b border-line bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 lg:px-6">
-          <Link href="/" className="group flex shrink-0 items-baseline gap-1.5">
-            <span className="font-serif text-[1.55rem] leading-none tracking-tight">OzIlan</span>
-            <span className="h-1.5 w-1.5 translate-y-[-2px] bg-signal transition group-hover:scale-150" />
-          </Link>
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/80 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-shell items-center gap-3 px-5 lg:px-6">
+        <Link href="/" className="shrink-0 text-[1.0625rem] font-semibold tracking-[-0.03em]">
+          OzIlan
+        </Link>
 
-          <div className="hidden flex-1 md:block"><Omnibox /></div>
-
-          <nav className="ml-auto hidden items-center gap-1 lg:flex">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href}
-                className={`btn-quiet ${path === n.href ? "text-signal" : "text-ink"}`}>
-                {n.label}
-                {n.href === "/mesajlar/" && unread > 0 && (
-                  <span className="num ml-1 bg-ink px-1 text-2xs text-paper">{unread}</span>
-                )}
+        {/* kategoriler — sessiz, gezinmenin ana yolu */}
+        <nav className="ml-4 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
+          {CATEGORIES.slice(0, 6).map((c) => (
+            <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug)}>
+              <Link
+                href={`/arama/?k=${c.slug}`}
+                className={`flex h-14 items-center px-3 text-[0.8125rem] transition ${
+                  menu === c.slug ? "text-ink" : "text-mute hover:text-ink"
+                }`}
+              >
+                {c.label}
               </Link>
-            ))}
-            <Link href={me ? "/hesap/" : "/giris/"} className="btn-ghost">
-              {me ? me.name.split(" ")[0] : "Giriş yap"}
-            </Link>
-            <Link href="/ilan-ver/" className="btn-signal">İlan ver</Link>
-          </nav>
-
-          <button onClick={() => setOpen((o) => !o)} aria-label="Menü" className="ml-auto btn-ghost h-10 w-10 !px-0 lg:hidden">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-          </button>
-        </div>
-
-        <div className="mx-auto max-w-[1400px] px-4 pb-3 md:hidden lg:px-6"><Omnibox /></div>
-
-        <div className="hidden border-t border-line md:block">
-          <div className="mx-auto flex max-w-[1400px] items-stretch gap-6 overflow-x-auto px-4 lg:px-6">
-            {CATEGORIES.map((c) => (
-              <div key={c.slug} className="group relative shrink-0">
-                <Link href={`/arama/?k=${c.slug}`}
-                  className="flex h-10 items-center gap-2 border-b-2 border-transparent text-[0.82rem] font-medium transition group-hover:border-signal">
-                  {c.label}
-                  <span className="font-mono text-2xs text-mute">{c.subs.length}</span>
-                </Link>
-                <div className="invisible absolute left-0 top-full z-50 w-60 rounded-lg border border-line bg-paper-2 opacity-0 shadow-pop transition group-hover:visible group-hover:opacity-100 overflow-hidden">
+              {menu === c.slug && (
+                <div className="absolute left-0 top-full w-56 animate-rise overflow-hidden rounded-lg border border-line bg-paper-2 py-1 shadow-pop">
                   {c.subs.map((s) => (
-                    <Link key={s.slug} href={`/arama/?k=${c.slug}&a=${s.slug}`}
-                      className="block border-b border-line px-3 py-2 text-[0.82rem] last:border-0 hover:bg-paper-3">
+                    <Link
+                      key={s.slug}
+                      href={`/arama/?k=${c.slug}&a=${s.slug}`}
+                      className="block px-4 py-2 text-[0.8125rem] text-mute transition hover:bg-paper-3 hover:text-ink"
+                    >
                       {s.label}
                     </Link>
                   ))}
                 </div>
-              </div>
-            ))}
-            <Link href="/arama/?s=value" className="ml-auto flex h-10 shrink-0 items-center gap-2 text-[0.82rem] text-signal">
-              Piyasa altı fırsatlar →
+              )}
+            </div>
+          ))}
+          <Link href="/arama/" className="flex h-14 items-center px-3 text-[0.8125rem] text-mute transition hover:text-ink">
+            Tümü
+          </Link>
+        </nav>
+
+        {/* ana sayfada arama kutusu hero'da; içeride başlıkta */}
+        {!home && <div className="ml-auto hidden max-w-sm flex-1 md:block"><Omnibox /></div>}
+
+        <div className={`hidden items-center gap-1 lg:flex ${home ? "ml-auto" : "ml-3"}`}>
+          {NAV.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={`rounded-full px-3 py-1.5 text-[0.8125rem] transition hover:bg-paper-3 ${
+                path === n.href ? "text-ink" : "text-mute hover:text-ink"
+              }`}
+            >
+              {n.label}
+              {n.href === "/mesajlar/" && unread > 0 && (
+                <span className="num ml-1.5 rounded-full bg-signal px-1.5 py-0.5 text-[0.6875rem] text-white">{unread}</span>
+              )}
             </Link>
-          </div>
+          ))}
+          <Link href={me ? "/hesap/" : "/giris/"} className="rounded-full px-3 py-1.5 text-[0.8125rem] text-mute transition hover:bg-paper-3 hover:text-ink">
+            {me ? me.name.split(" ")[0] : "Giriş"}
+          </Link>
+          <Link href="/ilan-ver/" className="ml-1 rounded-full bg-ink px-4 py-2 text-[0.8125rem] font-medium text-white transition hover:bg-ink-2">
+            İlan ver
+          </Link>
         </div>
+
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Menü"
+          className="ml-auto grid h-9 w-9 place-items-center rounded-full text-ink transition hover:bg-paper-3 lg:hidden"
+        >
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
+          </svg>
+        </button>
       </div>
 
+      {!home && <div className="mx-auto max-w-shell px-5 pb-3 md:hidden"><Omnibox /></div>}
+
       {open && (
-        <div className="border-b border-line bg-paper lg:hidden">
-          <div className="mx-auto grid max-w-[1400px] gap-px bg-line px-0">
-            {CATEGORIES.map((c) => (
-              <Link key={c.slug} href={`/arama/?k=${c.slug}`} className="bg-paper px-4 py-3 text-[0.9rem]">{c.label}</Link>
-            ))}
-            {NAV.map((n) => <Link key={n.href} href={n.href} className="bg-paper px-4 py-3 text-[0.9rem]">{n.label}</Link>)}
-            <Link href={me ? "/hesap/" : "/giris/"} className="bg-paper px-4 py-3 text-[0.9rem]">{me ? "Hesabım" : "Giriş yap"}</Link>
-            <Link href="/ilan-ver/" className="bg-signal px-4 py-3 text-[0.9rem] font-medium text-white">İlan ver</Link>
+        <div className="animate-rise border-t border-line bg-paper lg:hidden">
+          <div className="mx-auto max-w-shell px-5 py-2">
+            <div className="rows">
+              {CATEGORIES.map((c) => (
+                <Link key={c.slug} href={`/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
+              ))}
+              {NAV.map((n) => (
+                <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>
+              ))}
+              <Link href={me ? "/hesap/" : "/giris/"} className="block py-3 text-[0.9375rem] text-mute">
+                {me ? "Hesabım" : "Giriş yap"}
+              </Link>
+            </div>
+            <Link href="/ilan-ver/" className="btn-primary my-3 w-full">İlan ver</Link>
           </div>
         </div>
       )}

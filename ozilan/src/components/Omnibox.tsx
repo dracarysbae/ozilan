@@ -46,9 +46,11 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
     <div ref={box} className="relative w-full">
       <form
         onSubmit={(e) => { e.preventDefault(); go(); }}
-        className={`flex items-stretch border bg-paper transition ${open ? "border-ink" : "border-line"}`}
+        className={`flex items-stretch overflow-hidden rounded-full border bg-paper-3 transition ${
+          open ? "border-line-strong bg-paper-2 shadow-pop" : "border-transparent"
+        }`}
       >
-        <span className="grid w-10 place-items-center text-mute">
+        <span className="grid w-12 place-items-center text-mute-2">
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7">
             <circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" />
           </svg>
@@ -60,15 +62,24 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
           onFocus={() => setOpen(true)}
           placeholder={EXAMPLES[ph]}
           aria-label="Doğal dille arama"
-          className={`min-w-0 flex-1 bg-transparent py-0 outline-none placeholder:text-mute-2 ${big ? "h-14 text-[1rem]" : "h-11 text-[0.9rem]"}`}
+          className={`min-w-0 flex-1 bg-transparent py-0 outline-none placeholder:text-mute-2 ${
+            big ? "h-14 text-[1.0625rem]" : "h-10 text-[0.9375rem]"
+          }`}
         />
-        <button type="submit" className={`shrink-0 bg-ink px-5 font-medium text-paper transition hover:bg-signal ${big ? "text-[0.9rem]" : "text-[0.82rem]"}`}>
-          Ara
-        </button>
+        <span className="flex shrink-0 items-center pr-1.5">
+          <button
+            type="submit"
+            className={`rounded-full bg-signal font-medium text-white transition hover:bg-signal-ink ${
+              big ? "h-11 px-6 text-[0.9375rem]" : "h-8 px-4 text-[0.8125rem]"
+            }`}
+          >
+            Ara
+          </button>
+        </span>
       </form>
 
       {open && (parsed?.chips.length || tips.length) ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 animate-rise border border-ink bg-paper shadow-pop">
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 animate-rise overflow-hidden rounded-lg border border-line bg-paper-2 shadow-pop">
           {parsed?.chips.length ? (
             <div className="border-b border-line p-3">
               <p className="eyebrow mb-2">Cümleden anlaşılanlar</p>
@@ -91,7 +102,7 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
             <ul className="max-h-64 overflow-auto">
               {tips.map((s, i) => (
                 <li key={i}>
-                  <button onMouseDown={() => go(s)} className="block w-full truncate px-3 py-2 text-left text-[0.85rem] hover:bg-paper-2">
+                  <button onMouseDown={() => go(s)} className="block w-full truncate px-4 py-2.5 text-left text-[0.9375rem] transition hover:bg-paper-3">
                     {s}
                   </button>
                 </li>

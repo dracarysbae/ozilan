@@ -10,9 +10,9 @@ const TONE: Record<TrustRead["grade"], string> = {
 
 export function TrustChip({ t, compact = false }: { t: TrustRead; compact?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 border px-1.5 h-[22px] font-mono text-2xs uppercase tracking-[0.1em] ${TONE[t.grade]}`}
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 h-[22px] text-[0.6875rem] font-medium tracking-normal ${TONE[t.grade]}`}
       title={`Güven skoru ${t.score}/100`}>
-      <span className="font-bold">{t.grade}</span>
+      <span className="font-semibold">{t.grade}</span>
       {!compact && <span className="opacity-70">{t.score}</span>}
     </span>
   );
@@ -20,7 +20,7 @@ export function TrustChip({ t, compact = false }: { t: TrustRead; compact?: bool
 
 export function TrustPanel({ t }: { t: TrustRead }) {
   return (
-    <div className="border border-line">
+    <div className="rounded-lg border border-line">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <span className="eyebrow">Güven analizi</span>
         <div className="flex items-baseline gap-2">
