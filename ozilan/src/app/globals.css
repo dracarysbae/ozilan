@@ -11,6 +11,95 @@
   }
   * { -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: smooth; }
+  body { @apply bg-paper text-ink font-sans antialiased; }
+  ::selection { background: #1B44E5; color: #fff; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid #1B44E5; outline-offset: 2px; border-radius: 4px; }
+
+  input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+  input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: #E5E8F0; border-radius: 99px; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+    background: #fff; border: 1.5px solid #CBD2E0; border-radius: 99px; margin-top: -7px; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(11,15,26,.18);
+  }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD2E0; border: 3px solid #FAFAFC; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #99A1B3; }
+}
+
+@layer components {
+  .eyebrow { @apply font-mono text-2xs uppercase tracking-[0.09em] text-mute; }
+  .num { @apply font-mono tabular-nums; }
+  .font-serif { font-weight: 700; letter-spacing: -0.03em; }
+
+  /* ---------- yüzeyler ---------- */
+  .plaque { @apply rounded-lg border border-line bg-paper-2 shadow-plaque transition; }
+  .plaque-link {
+    @apply plaque hover:-translate-y-0.5 hover:shadow-pop hover:border-line-strong;
+  }
+  .panel { @apply rounded-lg border border-line bg-paper-2 shadow-plaque; }
+  .panel-flat { @apply rounded-lg border border-line bg-paper-2; }
+
+  /* bölüm etiketi: sessiz kapsül */
+  .tag {
+    @apply inline-flex items-center gap-2 rounded-full bg-paper-3 px-3 py-1
+           font-mono text-2xs uppercase tracking-[0.09em] text-mute;
+  }
+  .tag-blue { @apply tag bg-signal-soft text-signal; }
+  .tag-gold { @apply tag bg-gold-soft text-gold-ink; }
+
+  .field {
+    @apply w-full rounded-md border border-line bg-paper-2 px-3.5 py-2.5 text-[0.9rem]
+           placeholder:text-mute-2 transition
+           focus:outline-none focus:border-signal focus:ring-4 focus:ring-signal/10;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-full px-5 h-10
+           text-[0.85rem] font-semibold transition active:scale-[0.98];
+  }
+  .btn-primary { @apply btn bg-ink text-white hover:bg-ink-2; }
+  .btn-signal  { @apply btn bg-signal text-white shadow-plaque-blue hover:bg-signal-ink; }
+  .btn-gold    { @apply btn bg-gold text-ink hover:brightness-105; }
+  .btn-ghost   { @apply btn border border-line bg-paper-2 text-ink hover:border-line-strong hover:bg-paper-3; }
+  .btn-quiet   { @apply btn bg-transparent font-medium text-ink hover:bg-paper-3; }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-paper-2 h-8 px-3
+           font-mono text-2xs uppercase tracking-[0.04em] text-mute transition
+           hover:border-line-strong hover:text-ink;
+  }
+  .chip-on { @apply chip border-signal bg-signal text-white hover:text-white hover:border-signal; }
+
+  .ticks { background-image: repeating-linear-gradient(to right, #CBD2E0 0 1px, transparent 1px 8px); }
+  .halftone {
+    background-image: radial-gradient(#CBD2E0 1px, transparent 1.4px);
+    background-size: 12px 12px;
+  }
+  .marquee-track { animation: marquee 150s linear infinite; }
+  .marquee-host:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .marquee-track { animation: none !important; }
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --font-sans: "Archivo";
+    --font-display: "Bricolage Grotesque";
+    --font-mono: "Azeret Mono";
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
   body {
     @apply bg-paper text-ink font-sans antialiased;
   }
