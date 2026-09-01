@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --font-sans: "Archivo";
+    --font-display: "Bricolage Grotesque";
+    --font-mono: "Azeret Mono";
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  ::selection { background: #1B44E5; color: #fff; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid #1B44E5; outline-offset: 2px; }
+
+  input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+  input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: #C6CFDD; border-radius: 99px; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+    background: #1B44E5; border: 2px solid #0C1830; border-radius: 3px; margin-top: -7px; cursor: pointer;
+  }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: #DDE3EC; }
+  ::-webkit-scrollbar-thumb { background: #9CAABF; border: 3px solid #DDE3EC; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #5B6880; }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-mono text-2xs uppercase tracking-[0.1em] text-mute;
+  }
+  .num { @apply font-mono tabular-nums; }
+  .font-serif { font-weight: 700; letter-spacing: -0.028em; }
+
+  /* ---------- levha: kimliğin çekirdeği ---------- */
+  .plaque {
+    @apply relative rounded-md border-2 border-ink bg-paper-2 shadow-plaque transition;
+  }
+  .plaque-link {
+    @apply plaque hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-pop
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none;
+  }
+  .panel { @apply rounded-md border-2 border-ink bg-paper-2; }
+  .panel-flat { @apply rounded-md border border-line bg-paper-2; }
+
+  /* bölüm başlığı: lacivert levha */
+  .tag {
+    @apply inline-flex items-center gap-2 rounded-sm bg-ink px-2.5 py-1
+           font-mono text-2xs uppercase tracking-[0.1em] text-paper-2;
+  }
+  .tag-blue { @apply tag bg-signal; }
+  .tag-gold { @apply tag bg-gold text-ink; }
+
+  .field {
+    @apply w-full rounded-sm border-2 border-ink bg-paper-2 px-3 py-2.5 text-[0.9rem]
+           placeholder:text-mute-2 focus:outline-none focus:border-signal transition;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-sm border-2 px-4 h-10
+           text-[0.85rem] font-semibold transition
+           active:translate-x-[2px] active:translate-y-[2px] active:!shadow-none;
+  }
+  .btn-primary { @apply btn border-ink bg-ink text-paper-2 shadow-plaque-sm hover:bg-ink-2; }
+  .btn-signal  { @apply btn border-ink bg-signal text-white shadow-plaque-sm hover:bg-signal-ink; }
+  .btn-gold    { @apply btn border-ink bg-gold text-ink shadow-plaque-sm hover:brightness-105; }
+  .btn-ghost   { @apply btn border-ink bg-paper-2 text-ink shadow-plaque-sm hover:bg-paper-3; }
+  .btn-quiet   { @apply btn border-transparent bg-transparent font-medium hover:bg-paper-3 active:translate-x-0 active:translate-y-0; }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-sm border-2 border-line bg-paper-2 h-8 px-2.5
+           font-mono text-2xs uppercase tracking-[0.06em] text-mute transition
+           hover:border-ink hover:text-ink;
+  }
+  .chip-on { @apply chip border-ink bg-signal text-white hover:text-white; }
+
+  /* fiyat şeridi arkaplanı — ölçü aleti hissi */
+  .ticks {
+    background-image: repeating-linear-gradient(to right, #9CAABF 0 1px, transparent 1px 8px);
+  }
+  .halftone {
+    background-image: radial-gradient(#9CAABF 1px, transparent 1.4px);
+    background-size: 11px 11px;
+  }
+  .marquee-track { animation: marquee 150s linear infinite; }
+  .marquee-host:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .marquee-track { animation: none !important; }
+}
