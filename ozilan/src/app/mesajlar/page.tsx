@@ -32,7 +32,7 @@ export default function Inbox() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
-      <div className="border-b-4 border-ink pb-3">
+      <div className="border-b border-line pb-4">
         <p className="eyebrow">Kutu</p>
         <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">Mesajlar</h1>
       </div>
