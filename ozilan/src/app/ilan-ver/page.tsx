@@ -98,7 +98,7 @@ export default function Compose() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
-      <div className="border-b-4 border-ink pb-3">
+      <div className="border-b border-line pb-4">
         <p className="eyebrow">Yeni ilan</p>
         <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">İlanını oluştur</h1>
       </div>
