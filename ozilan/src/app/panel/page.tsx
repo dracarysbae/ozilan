@@ -104,7 +104,7 @@ export default function Panel() {
         <div className="mt-6 overflow-x-auto border border-line">
           <table className="w-full min-w-[860px]">
             <thead>
-              <tr className="border-b border-line font-mono text-2xs uppercase tracking-[0.1em] text-mute">
+              <tr className="border-b border-line font-mono text-2xs text-mute">
                 <th className="px-3 py-2.5 text-left font-normal">İlan</th>
                 <th className="px-2 py-2.5 text-left font-normal">Kategori</th>
                 <th className="px-2 py-2.5 text-right font-normal">Fiyat</th>
