@@ -74,7 +74,7 @@ export default function Inbox() {
                   <p className="truncate text-[0.9rem] font-medium">{listing.title}</p>
                   <p className="num text-[0.85rem] text-mute">{tl(listing.price)} · {sellers[listing.sellerId]?.name}</p>
                 </div>
-                <span className="ml-auto shrink-0 font-mono text-2xs uppercase tracking-[0.1em] text-mute">ilana git →</span>
+                <span className="ml-auto shrink-0 font-mono text-2xs text-mute">ilana git →</span>
               </Link>
             )}
 
