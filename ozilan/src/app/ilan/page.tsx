@@ -60,7 +60,7 @@ function Detail() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 lg:px-6">
-      <nav className="flex flex-wrap items-center gap-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-mute">
+      <nav className="flex flex-wrap items-center gap-1.5 font-mono text-2xs text-mute">
         <Link href="/" className="hover:text-ink">Anasayfa</Link><span>/</span>
         <Link href={`/arama/?k=${l.cat}`} className="hover:text-ink">{labelFor(l.cat)}</Link><span>/</span>
         <Link href={`/arama/?k=${l.cat}&a=${l.sub}`} className="hover:text-ink">{labelFor(l.cat, l.sub).split(" · ")[1]}</Link><span>/</span>
@@ -73,7 +73,7 @@ function Detail() {
         <div>
           <div className="relative border border-line">
             <Artwork seed={l.art + shot * 977} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="aspect-[16/10] w-full" label={l.title} />
-            <span className="absolute left-0 top-0 bg-ink/85 px-2 py-1 font-mono text-2xs uppercase tracking-[0.1em] text-paper">{l.deal}</span>
+            <span className="absolute left-0 top-0 bg-ink/85 px-2 py-1 font-mono text-2xs text-paper">{l.deal}</span>
             <span className="num absolute bottom-0 right-0 bg-ink/85 px-2 py-1 text-2xs text-paper">{shot + 1} / {l.photos}</span>
             <FavButton id={l.id} className="absolute right-2 top-2" />
           </div>
@@ -89,7 +89,7 @@ function Detail() {
           <div className="mt-8">
             <p className="eyebrow">{labelFor(l.cat, l.sub)} · {l.district}, {l.city}</p>
             <h1 className="mt-2 font-serif text-[clamp(1.8rem,3.4vw,2.9rem)] leading-[1.05]">{l.title}</h1>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-2xs uppercase tracking-[0.1em] text-mute">
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-2xs text-mute">
               <span>Yayın {dateTR(l.createdAt)}</span>
               <span>Güncelleme {ago(l.bumpedAt)}</span>
               <span>{num(l.views)} görüntülenme</span>
@@ -124,7 +124,7 @@ function Detail() {
 
           <div className="mt-8">{t && <TrustPanel t={t} />}</div>
 
-          <button onClick={() => setRep(true)} className="mt-4 font-mono text-2xs uppercase tracking-[0.1em] text-mute underline underline-offset-4 hover:text-signal">
+          <button onClick={() => setRep(true)} className="mt-4 font-mono text-2xs text-mute underline underline-offset-4 hover:text-signal">
             Bu ilanı şikâyet et
           </button>
         </div>
@@ -145,7 +145,7 @@ function Detail() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-[0.95rem] font-medium">{seller?.name ?? "Bilinmeyen satıcı"}</p>
-                <p className="font-mono text-2xs uppercase tracking-[0.1em] text-mute">
+                <p className="font-mono text-2xs text-mute">
                   {seller?.kind === "kurumsal" ? "Kurumsal üye" : "Bireysel üye"}
                   {seller?.verified && <span className="ml-2 text-moss">✓ doğrulanmış</span>}
                 </p>
