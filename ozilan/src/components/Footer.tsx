@@ -35,7 +35,7 @@ export function Footer() {
       <div className="border-t border-ink-line">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-5 text-[0.72rem] text-paper/45 md:flex-row md:items-center md:justify-between lg:px-6">
           <p>© 2026 OzIlan — demo amaçlı örnek platform. Veriler kurgusaldır, tarayıcınızda saklanır.</p>
-          <p className="font-mono uppercase tracking-[0.14em]">Statik dağıtım · GitHub Pages</p>
+          <p className="font-mono">Statik dağıtım · GitHub Pages</p>
         </div>
       </div>
     </footer>

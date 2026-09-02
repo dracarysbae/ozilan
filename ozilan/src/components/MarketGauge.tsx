@@ -19,7 +19,7 @@ export function GaugeInline({ m }: { m: MarketRead }) {
         <div className="absolute -top-[3px] h-[9px] w-[2px] bg-ink transition-all"
           style={{ left: `calc(${Math.max(2, Math.min(98, pct))}% - 1px)` }} />
       </div>
-      <span className={`font-mono text-2xs uppercase tracking-[0.08em] ${TONE[m.verdict]}`}>
+      <span className={`font-mono text-2xs ${TONE[m.verdict]}`}>
         {m.delta > 0 ? "+" : ""}{Math.round(m.delta * 100)}%
       </span>
     </div>
@@ -32,7 +32,7 @@ export function GaugeFull({ m }: { m: MarketRead }) {
     <div className="border border-line bg-paper-2/60 p-4">
       <div className="flex items-baseline justify-between gap-4">
         <span className="eyebrow">Piyasa konumu</span>
-        <span className="font-mono text-2xs uppercase tracking-[0.08em] text-mute">
+        <span className="font-mono text-2xs text-mute">
           {m.n} benzer ilan · güven {m.confidence === "high" ? "yüksek" : m.confidence === "mid" ? "orta" : "düşük"}
         </span>
       </div>
@@ -51,7 +51,7 @@ export function GaugeFull({ m }: { m: MarketRead }) {
           style={{ left: `calc(${Math.max(1, Math.min(99, pct))}% - 1px)` }} />
         <div className="absolute -top-[3px] left-1/2 h-[9px] w-px bg-ink/40" />
       </div>
-      <div className="mt-2 flex justify-between font-mono text-2xs uppercase tracking-[0.08em] text-mute">
+      <div className="mt-2 flex justify-between font-mono text-2xs text-mute">
         <span>{tl(Math.round(m.p25))}</span>
         <span className="text-ink">ortanca</span>
         <span>{tl(Math.round(m.p75))}</span>

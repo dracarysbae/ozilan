@@ -1,14 +1,14 @@
 import React from "react";
 
 const PALETTES: [string, string][] = [
-  ["#F2F2F4", "#8A8A90"],
-  ["#EEF1F6", "#7C8794"],
-  ["#F3F1EE", "#8E8579"],
-  ["#EDF1EF", "#7B8C83"],
-  ["#F1F0F4", "#87848F"],
-  ["#EFF2F5", "#7E8892"],
-  ["#F4F1F0", "#8C8280"],
-  ["#ECEFF3", "#79848F"],
+  ["#E7EDF8", "#5A6E90"],
+  ["#EAF0F9", "#4F6488"],
+  ["#E4EBF7", "#54688A"],
+  ["#EDF1F8", "#5F7396"],
+  ["#E6EDF6", "#4C6188"],
+  ["#EBEFF7", "#5B6F92"],
+  ["#E3EAF6", "#506587"],
+  ["#EEF2F9", "#63779A"],
 ]
 /* silhouettes drawn on a 0..100 box, anchored bottom */
 const GLYPH: Record<string, string[]> = {
@@ -111,13 +111,13 @@ export function Artwork({
       aria-label={label ?? "ilan görseli"}>
       <defs>
         <linearGradient id={`g${id}`} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="0%" stopColor="#FBFCFE" />
           <stop offset="100%" stopColor={bg} />
         </linearGradient>
       </defs>
       <rect width="100" height="100" fill={`url(#g${id})`} />
       <g transform={`translate(2 1) rotate(${rot} 50 58) scale(0.9)`} fill="none" stroke={fg}
-        strokeWidth="1.9" strokeLinejoin="round" strokeLinecap="round" opacity="0.85">
+        strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" opacity="0.8">
         <path d={d} />
       </g>
     </svg>

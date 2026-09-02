@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Omnibox } from "./Omnibox";
+import { useScrollY } from "./Motion";
 import { useStore } from "@/lib/store";
 import { CATEGORIES } from "@/data/taxonomy";
 
@@ -17,32 +18,59 @@ export function Header() {
   const { me, state, ready } = useStore();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState<string | null>(null);
+  const y = useScrollY();
   useEffect(() => { setOpen(false); setMenu(null); }, [path]);
 
   const unread = ready ? state.threads.length : 0;
   const home = path === "/";
+  /* ana sayfada koyu kahraman bandının üstündeyken şeffaf + beyaz metin */
+  const onDark = home && y < 90 && !open;
+
+  const tone = onDark ? "text-white/70 hover:text-white" : "text-mute hover:text-ink";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/80 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 max-w-shell items-center gap-3 px-5 lg:px-6">
-        <Link href="/" className="shrink-0 text-[1.0625rem] font-semibold tracking-[-0.03em]">
-          OzIlan
-        </Link>
+    <header
+      className="sticky top-0 z-50"
+      style={{ transition: "background-color .5s var(--ease-apple), border-color .5s var(--ease-apple)" }}
+    >
+      <div
+        className={`border-b ${
+          onDark
+            ? "border-transparent bg-transparent"
+            : "border-line bg-paper/90 backdrop-blur-xl backdrop-saturate-150"
+        }`}
+        style={{ transition: "background-color .5s var(--ease-apple), border-color .5s var(--ease-apple)" }}
+      >
+        <div className="mx-auto flex h-16 max-w-shell items-center gap-3 px-5 lg:px-8">
+          <Link
+            href="/"
+            className={`shrink-0 text-[1.125rem] font-semibold tracking-[-0.035em] transition-colors duration-500 ${
+              onDark ? "text-white" : "text-ink"
+            }`}
+          >
+            Oz<span className={onDark ? "text-signal-glow" : "text-signal"}>Ilan</span>
+          </Link>
 
-        {/* kategoriler — sessiz, gezinmenin ana yolu */}
-        <nav className="ml-4 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
-          {CATEGORIES.slice(0, 6).map((c) => (
-            <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug)}>
-              <Link
-                href={`/arama/?k=${c.slug}`}
-                className={`flex h-14 items-center px-3 text-[0.8125rem] transition ${
-                  menu === c.slug ? "text-ink" : "text-mute hover:text-ink"
-                }`}
-              >
-                {c.label}
-              </Link>
-              {menu === c.slug && (
-                <div className="absolute left-0 top-full w-56 animate-rise overflow-hidden rounded-lg border border-line bg-paper-2 py-1 shadow-pop">
+          <nav className="ml-6 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
+            {CATEGORIES.map((c) => (
+              <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug)}>
+                <Link
+                  href={`/arama/?k=${c.slug}`}
+                  className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${
+                    menu === c.slug ? (onDark ? "text-white" : "text-ink") : tone
+                  }`}
+                >
+                  {c.label}
+                </Link>
+                <div
+                  className={`absolute left-0 top-full w-60 origin-top overflow-hidden rounded-lg border border-line bg-paper-2 py-1.5 shadow-lift ${
+                    menu === c.slug ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+                  }`}
+                  style={{
+                    transform: menu === c.slug ? "translateY(0) scale(1)" : "translateY(-6px) scale(.98)",
+                    transition: "opacity .32s var(--ease-apple), transform .32s var(--ease-apple)",
+                  }}
+                >
                   {c.subs.map((s) => (
                     <Link
                       key={s.slug}
@@ -53,71 +81,88 @@ export function Header() {
                     </Link>
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
-          <Link href="/arama/" className="flex h-14 items-center px-3 text-[0.8125rem] text-mute transition hover:text-ink">
-            Tümü
-          </Link>
-        </nav>
+              </div>
+            ))}
+            <Link href="/arama/?s=value" className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${tone}`}>
+              Fırsatlar
+            </Link>
+          </nav>
 
-        {/* ana sayfada arama kutusu hero'da; içeride başlıkta */}
-        {!home && <div className="ml-auto hidden max-w-sm flex-1 md:block"><Omnibox /></div>}
+          {!home && <div className="ml-auto hidden max-w-sm flex-1 md:block"><Omnibox /></div>}
 
-        <div className={`hidden items-center gap-1 lg:flex ${home ? "ml-auto" : "ml-3"}`}>
-          {NAV.map((n) => (
+          <div className={`hidden items-center gap-0.5 lg:flex ${home ? "ml-auto" : "ml-3"}`}>
+            {NAV.map((n) => (
+              <Link
+                key={n.href}
+                href={n.href}
+                className={`rounded-full px-3 py-1.5 text-[0.8125rem] transition duration-300 ${
+                  path === n.href ? (onDark ? "text-white" : "text-ink") : tone
+                } ${onDark ? "hover:bg-white/10" : "hover:bg-paper-3"}`}
+              >
+                {n.label}
+                {n.href === "/mesajlar/" && unread > 0 && (
+                  <span className="num ml-1.5 rounded-full bg-signal px-1.5 py-0.5 text-[0.6875rem] text-white">{unread}</span>
+                )}
+              </Link>
+            ))}
             <Link
-              key={n.href}
-              href={n.href}
-              className={`rounded-full px-3 py-1.5 text-[0.8125rem] transition hover:bg-paper-3 ${
-                path === n.href ? "text-ink" : "text-mute hover:text-ink"
+              href={me ? "/hesap/" : "/giris/"}
+              className={`rounded-full px-3 py-1.5 text-[0.8125rem] transition duration-300 ${tone} ${
+                onDark ? "hover:bg-white/10" : "hover:bg-paper-3"
               }`}
             >
-              {n.label}
-              {n.href === "/mesajlar/" && unread > 0 && (
-                <span className="num ml-1.5 rounded-full bg-signal px-1.5 py-0.5 text-[0.6875rem] text-white">{unread}</span>
-              )}
+              {me ? me.name.split(" ")[0] : "Giriş"}
             </Link>
-          ))}
-          <Link href={me ? "/hesap/" : "/giris/"} className="rounded-full px-3 py-1.5 text-[0.8125rem] text-mute transition hover:bg-paper-3 hover:text-ink">
-            {me ? me.name.split(" ")[0] : "Giriş"}
-          </Link>
-          <Link href="/ilan-ver/" className="ml-1 rounded-full bg-ink px-4 py-2 text-[0.8125rem] font-medium text-white transition hover:bg-ink-2">
-            İlan ver
-          </Link>
+            <Link
+              href="/ilan-ver/"
+              className={`ml-2 rounded-full px-4 py-2 text-[0.8125rem] font-medium transition duration-300 ${
+                onDark ? "bg-white text-navy-900 hover:bg-white/90" : "bg-signal text-white shadow-plaque-blue hover:bg-signal-ink"
+              }`}
+            >
+              İlan ver
+            </Link>
+          </div>
+
+          <button
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Menü"
+            className={`ml-auto grid h-10 w-10 place-items-center rounded-full transition lg:hidden ${
+              onDark ? "text-white hover:bg-white/10" : "text-ink hover:bg-paper-3"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
+            </svg>
+          </button>
         </div>
 
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Menü"
-          className="ml-auto grid h-9 w-9 place-items-center rounded-full text-ink transition hover:bg-paper-3 lg:hidden"
-        >
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-            {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
-          </svg>
-        </button>
+        {!home && <div className="mx-auto max-w-shell px-5 pb-3 md:hidden"><Omnibox /></div>}
       </div>
 
-      {!home && <div className="mx-auto max-w-shell px-5 pb-3 md:hidden"><Omnibox /></div>}
-
-      {open && (
-        <div className="animate-rise border-t border-line bg-paper lg:hidden">
-          <div className="mx-auto max-w-shell px-5 py-2">
-            <div className="rows">
-              {CATEGORIES.map((c) => (
-                <Link key={c.slug} href={`/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
-              ))}
-              {NAV.map((n) => (
-                <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>
-              ))}
-              <Link href={me ? "/hesap/" : "/giris/"} className="block py-3 text-[0.9375rem] text-mute">
-                {me ? "Hesabım" : "Giriş yap"}
-              </Link>
-            </div>
-            <Link href="/ilan-ver/" className="btn-primary my-3 w-full">İlan ver</Link>
+      <div
+        className="overflow-hidden border-line bg-paper/95 backdrop-blur-xl lg:hidden"
+        style={{
+          maxHeight: open ? 620 : 0,
+          borderBottomWidth: open ? 1 : 0,
+          transition: "max-height .5s var(--ease-apple), border-width .3s",
+        }}
+      >
+        <div className="mx-auto max-w-shell px-5 py-2">
+          <div className="py-2"><Omnibox /></div>
+          <div className="rows">
+            {CATEGORIES.map((c) => (
+              <Link key={c.slug} href={`/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
+            ))}
+            {NAV.map((n) => (
+              <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>
+            ))}
+            <Link href={me ? "/hesap/" : "/giris/"} className="block py-3 text-[0.9375rem] text-mute">
+              {me ? "Hesabım" : "Giriş yap"}
+            </Link>
           </div>
+          <Link href="/ilan-ver/" className="btn-signal my-3 w-full">İlan ver</Link>
         </div>
-      )}
+      </div>
     </header>
   );
 }

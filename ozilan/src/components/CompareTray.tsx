@@ -77,7 +77,7 @@ export function CompareTray() {
                             <Link href={`/ilan/?id=${l.id}`} onClick={() => setOpen(false)}
                               className="mt-1 block truncate text-[0.9rem] font-semibold hover:text-signal">{l.title}</Link>
                             <button onClick={() => toggleCompare(l.id)}
-                              className="mt-2 font-mono text-2xs uppercase tracking-[0.06em] text-mute underline underline-offset-4 hover:text-alert">
+                              className="mt-2 font-mono text-2xs text-mute underline underline-offset-4 hover:text-alert">
                               çıkar
                             </button>
                           </div>

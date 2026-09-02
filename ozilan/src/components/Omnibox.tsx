@@ -12,7 +12,7 @@ const EXAMPLES = [
   "Bodrum villa imarlı arsa",
 ];
 
-export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolean; big?: boolean }) {
+export function Omnibox({ autoFocus = false, big = false, dark = false }: { autoFocus?: boolean; big?: boolean; dark?: boolean }) {
   const router = useRouter();
   const { pool } = useStore();
   const [v, setV] = useState("");
@@ -46,11 +46,15 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
     <div ref={box} className="relative w-full">
       <form
         onSubmit={(e) => { e.preventDefault(); go(); }}
-        className={`flex items-stretch overflow-hidden rounded-full border bg-paper-3 transition ${
-          open ? "border-line-strong bg-paper-2 shadow-pop" : "border-transparent"
+        className={`flex items-stretch overflow-hidden rounded-full border transition ${
+          dark
+            ? "border-white/10 bg-navy-900/70 backdrop-blur-xl"
+            : open
+              ? "border-line-strong bg-paper-2 shadow-pop"
+              : "border-transparent bg-paper-3"
         }`}
       >
-        <span className="grid w-12 place-items-center text-mute-2">
+        <span className={`grid w-12 place-items-center ${dark ? "text-white/40" : "text-mute-2"}`}>
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7">
             <circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" />
           </svg>
@@ -62,15 +66,15 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
           onFocus={() => setOpen(true)}
           placeholder={EXAMPLES[ph]}
           aria-label="Doğal dille arama"
-          className={`min-w-0 flex-1 bg-transparent py-0 outline-none placeholder:text-mute-2 ${
-            big ? "h-14 text-[1.0625rem]" : "h-10 text-[0.9375rem]"
-          }`}
+          className={`min-w-0 flex-1 bg-transparent py-0 outline-none ${
+            dark ? "text-white placeholder:text-white/35" : "placeholder:text-mute-2"
+          } ${big ? "h-16 text-[1.0625rem]" : "h-10 text-[0.9375rem]"}`}
         />
-        <span className="flex shrink-0 items-center pr-1.5">
+        <span className={`flex shrink-0 items-center ${big ? "pr-2" : "pr-1.5"}`}>
           <button
             type="submit"
-            className={`rounded-full bg-signal font-medium text-white transition hover:bg-signal-ink ${
-              big ? "h-11 px-6 text-[0.9375rem]" : "h-8 px-4 text-[0.8125rem]"
+            className={`rounded-full bg-signal font-medium text-white shadow-plaque-blue transition hover:bg-signal-ink ${
+              big ? "h-12 px-7 text-[0.9375rem]" : "h-8 px-4 text-[0.8125rem]"
             }`}
           >
             Ara
@@ -79,7 +83,7 @@ export function Omnibox({ autoFocus = false, big = false }: { autoFocus?: boolea
       </form>
 
       {open && (parsed?.chips.length || tips.length) ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 animate-rise overflow-hidden rounded-lg border border-line bg-paper-2 shadow-pop">
+        <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-50 animate-rise overflow-hidden rounded-lg border border-line bg-paper-2 shadow-lift">
           {parsed?.chips.length ? (
             <div className="border-b border-line p-3">
               <p className="eyebrow mb-2">Cümleden anlaşılanlar</p>
