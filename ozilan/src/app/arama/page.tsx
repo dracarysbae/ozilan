@@ -87,7 +87,7 @@ function Results() {
           <p className="eyebrow !text-paper/45">Cümlen şöyle okundu</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {chips.map((c, i) => (
-              <span key={i} className="inline-flex items-center gap-1.5 border border-ink-line px-2 py-1 font-mono text-2xs uppercase tracking-[0.1em]">
+              <span key={i} className="inline-flex items-center gap-1.5 border border-ink-line px-2 py-1 font-mono text-2xs">
                 <span className="text-paper/40">{c.kind}</span>
                 <span className="text-signal">{c.label}</span>
               </span>
@@ -125,7 +125,7 @@ function Results() {
               </button>
             ))}
             {active.length > 1 && (
-              <button onClick={() => push({ ...emptyQuery(), sort: q.sort })} className="font-mono text-2xs uppercase tracking-[0.1em] text-signal underline underline-offset-4">
+              <button onClick={() => push({ ...emptyQuery(), sort: q.sort })} className="font-mono text-2xs text-signal underline underline-offset-4">
                 temizle
               </button>
             )}
