@@ -1,10 +1,12 @@
+"use client";
+import { MotionToggle } from "./Motion";
 import Link from "next/link";
 import { CATEGORIES } from "@/data/taxonomy";
 
 export function Footer() {
   return (
     <footer className="mt-20 border-t border-line bg-ink text-paper">
-      <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-14 md:grid-cols-4 lg:px-6">
+      <div className="mx-auto grid max-w-shell gap-10 px-4 py-14 md:grid-cols-4 lg:px-6">
         <div className="md:col-span-1">
           <div className="flex items-baseline gap-1.5">
             <span className="font-serif text-2xl">OzIlan</span>
@@ -33,9 +35,12 @@ export function Footer() {
       </div>
 
       <div className="border-t border-ink-line">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-5 text-[0.72rem] text-paper/45 md:flex-row md:items-center md:justify-between lg:px-6">
+        <div className="mx-auto flex max-w-shell flex-col gap-3 px-4 py-5 text-[0.72rem] text-paper/45 md:flex-row md:items-center md:justify-between lg:px-6">
           <p>© 2026 OzIlan — demo amaçlı örnek platform. Veriler kurgusaldır, tarayıcınızda saklanır.</p>
-          <p className="font-mono">Statik dağıtım · GitHub Pages</p>
+          <div className="flex items-center gap-4">
+            <MotionToggle className="!border-white/15 !bg-white/5 !text-paper/70" />
+            <span>Statik dağıtım · GitHub Pages</span>
+          </div>
         </div>
       </div>
     </footer>
