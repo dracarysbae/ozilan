@@ -4,6 +4,7 @@ import { StoreProvider } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CompareTray } from "@/components/CompareTray";
+import { PageTransition, ScrollProgress } from "@/components/Motion";
 
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   applicationName: "OzIlan",
 };
 
-export const viewport: Viewport = { themeColor: "#FFFFFF" };
+export const viewport: Viewport = { themeColor: "#0A1220" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -28,8 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="flex min-h-screen flex-col">
         <StoreProvider>
+          <ScrollProgress />
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1"><PageTransition>{children}</PageTransition></main>
           <Footer />
           <CompareTray />
         </StoreProvider>
