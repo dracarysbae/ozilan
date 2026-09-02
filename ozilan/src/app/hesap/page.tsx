@@ -100,7 +100,7 @@ export default function Account() {
             {state.searches.map((s) => (
               <li key={s.id} className="flex items-center gap-3 px-4 py-3">
                 <Link href={s.href} className="flex-1 truncate text-[0.9rem] hover:text-signal">{s.label}</Link>
-                <button onClick={() => dropSearch(s.id)} className="font-mono text-2xs uppercase tracking-[0.1em] text-mute hover:text-signal">kaldır</button>
+                <button onClick={() => dropSearch(s.id)} className="font-mono text-2xs text-mute hover:text-signal">kaldır</button>
               </li>
             ))}
           </ul>
