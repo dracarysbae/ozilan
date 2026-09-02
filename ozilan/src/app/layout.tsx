@@ -4,7 +4,7 @@ import { StoreProvider } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CompareTray } from "@/components/CompareTray";
-import { PageTransition, ScrollProgress } from "@/components/Motion";
+import { MotionProvider, PageTransition, ScrollProgress } from "@/components/Motion";
 
 
 export const metadata: Metadata = {
@@ -28,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="flex min-h-screen flex-col">
+        <MotionProvider>
         <StoreProvider>
           <ScrollProgress />
           <Header />
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <CompareTray />
         </StoreProvider>
+        </MotionProvider>
       </body>
     </html>
   );

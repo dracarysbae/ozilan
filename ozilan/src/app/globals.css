@@ -7,6 +7,8 @@
     color-scheme: light;
     --font-sans: "Inter";
     --ease-apple: cubic-bezier(.32, .72, 0, 1);
+    --ease-out: cubic-bezier(.16, .84, .32, 1);
+    --ease-pop: cubic-bezier(.2, .9, .25, 1.12);
   }
   * { -webkit-tap-highlight-color: transparent; }
   html {
@@ -18,7 +20,6 @@
     @apply bg-paper text-ink font-sans antialiased;
     font-feature-settings: "cv05" 1, "cv11" 1, "ss01" 1;
     letter-spacing: -0.011em;
-    overflow-x: hidden;
   }
   ::selection { background: #2C6BF5; color: #fff; }
   input, select, textarea, button { font: inherit; color: inherit; letter-spacing: inherit; }
@@ -143,19 +144,60 @@
   .rows > * + * { @apply border-t border-line; }
 
   /* ---------------------------------------------------- kaydırma hareketi */
-  /* Reveal bileşeni bu sınıfları kullanır */
-  .rv {
-    opacity: 0;
-    transform: translate3d(0, 26px, 0);
-    transition: opacity .9s var(--ease-apple), transform .9s var(--ease-apple);
-    will-change: opacity, transform;
+  /* Varsayılan: hareket kapalı gibi görün (JS gelmeden içerik görünür kalsın) */
+  .rv { opacity: 1; }
+  .split-w {
+    display: inline-block; overflow: hidden; vertical-align: bottom;
+    padding: .1em .04em .2em; margin: -.1em -.04em -.2em;
   }
-  .rv-in { opacity: 1; transform: none; }
-  .rv-scale { opacity: 0; transform: scale(.965) translate3d(0, 18px, 0); }
-  .rv-scale.rv-in { opacity: 1; transform: none; }
+  .split-i { display: inline-block; }
+
+  html[data-motion="full"] .rv {
+    opacity: 0;
+    will-change: opacity, transform, filter;
+    transition:
+      opacity 1s var(--ease-out),
+      transform 1.15s var(--ease-out),
+      filter 1s var(--ease-out);
+  }
+  html[data-motion="full"] .rv.is-in { opacity: 1; transform: none; filter: none; }
+
+  html[data-motion="full"] .rv[data-rv="up"]    { transform: translate3d(0, 52px, 0); }
+  html[data-motion="full"] .rv[data-rv="rise"]  { transform: translate3d(0, 90px, 0) scale(.96); filter: blur(7px); }
+  html[data-motion="full"] .rv[data-rv="zoom"]  { transform: scale(.84); filter: blur(10px); }
+  html[data-motion="full"] .rv[data-rv="tilt"]  { transform: perspective(1200px) rotateX(16deg) translate3d(0, 70px, -80px) scale(.94); }
+  html[data-motion="full"] .rv[data-rv="flipL"] { transform: perspective(1200px) rotateY(-26deg) translate3d(-70px, 26px, -90px); }
+  html[data-motion="full"] .rv[data-rv="flipR"] { transform: perspective(1200px) rotateY(26deg) translate3d(70px, 26px, -90px); }
+  html[data-motion="full"] .rv[data-rv="spin"]  { transform: perspective(1000px) rotateX(-24deg) rotateZ(-6deg) translate3d(0, 80px, -120px) scale(.9); }
+
+  /* kelime kelime başlık */
+  html[data-motion="full"] .split-i {
+    transform: translate3d(0, 105%, 0) rotateZ(4deg);
+    opacity: 0;
+    transition: transform 1.05s var(--ease-out), opacity .8s var(--ease-out);
+  }
+  html[data-motion="full"] .split-i.is-in { transform: none; opacity: 1; }
+
+  /* fare ile 3B eğim */
+  .tilt-host { position: relative; transform-style: preserve-3d; }
+  .tilt-glare {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    transition: opacity .45s var(--ease-apple); mix-blend-mode: overlay;
+  }
 
   /* sayfa geçişi */
-  .page-anim { animation: rise .55s var(--ease-apple) both; }
+  html[data-motion="full"] .page-anim { animation: pageIn .7s var(--ease-out) both; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translate3d(0, 18px, 0) scale(.992); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* hareket kapalıyken süsleri de durdur */
+  html[data-motion="reduced"] .animate-drift,
+  html[data-motion="reduced"] .animate-rise,
+  html[data-motion="reduced"] .animate-ping { animation: none !important; }
+  html[data-motion="reduced"] .rv,
+  html[data-motion="reduced"] .split-i { opacity: 1 !important; transform: none !important; filter: none !important; }
 }
 
 @layer utilities {
@@ -164,7 +206,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-  .rv, .rv-scale { opacity: 1 !important; transform: none !important; }
+  html:not([data-motion="full"]) { scroll-behavior: auto; }
 }
