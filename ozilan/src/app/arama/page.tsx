@@ -5,7 +5,8 @@ import { Filters } from "@/components/Filters";
 import { ListingCard } from "@/components/ListingCard";
 import { useStore } from "@/lib/store";
 import { emptyQuery, paramsToQuery, parseNatural, queryToParams, runQuery, type Query, type Sort } from "@/lib/search";
-import { labelFor, CATEGORIES, attrsFor } from "@/data/taxonomy";
+import { labelFor, CATEGORIES, attrsFor, treeFor } from "@/data/taxonomy";
+import { labelPath } from "@/data/tree";
 import { num } from "@/lib/format";
 
 const SORTS: [Sort, string][] = [
@@ -60,11 +61,32 @@ function Results() {
     [pool, q.cat, q.sub, q.city, q.district, q.deal, verifiedIds],
   );
 
-  const results = useMemo(() => runQuery(pool, q, verifiedIds), [pool, q, verifiedIds]);
+  const exact = useMemo(() => runQuery(pool, q, verifiedIds), [pool, q, verifiedIds]);
+
+  /* Ağaç çok derin — seçilen pakette ilan yoksa bir üst dala çıkıp
+     "yakın sonuçlar" göstermek, boş ekran göstermekten çok daha faydalı. */
+  const near = useMemo(() => {
+    if (exact.length || !q.path || q.path.length < 2) return null;
+    for (let cut = q.path.length - 1; cut >= 1; cut--) {
+      const widened = { ...q, path: q.path.slice(0, cut) };
+      const r = runQuery(pool, widened, verifiedIds);
+      if (r.length) {
+        const names = labelPath(treeFor(q.cat!, q.sub!), widened.path!);
+        return { list: r, label: names[names.length - 1] ?? "", path: widened.path! };
+      }
+    }
+    return null;
+  }, [exact.length, pool, q, verifiedIds]);
+
+  const results = exact.length ? exact : near?.list ?? exact;
   const shown = results.slice(0, page * 24);
 
   const active: { label: string; clear: () => void }[] = [];
-  if (q.cat) active.push({ label: labelFor(q.cat, q.sub), clear: () => push({ cat: undefined, sub: undefined, attrs: {}, ranges: {} }) });
+  if (q.cat) active.push({ label: labelFor(q.cat, q.sub), clear: () => push({ cat: undefined, sub: undefined, path: undefined, attrs: {}, ranges: {} }) });
+  if (q.cat && q.sub && q.path?.length) {
+    const names = labelPath(treeFor(q.cat, q.sub), q.path);
+    names.forEach((n, i) => active.push({ label: n, clear: () => push({ path: q.path!.slice(0, i).length ? q.path!.slice(0, i) : undefined }) }));
+  }
   if (q.deal) active.push({ label: q.deal, clear: () => push({ deal: undefined }) });
   if (q.city) active.push({ label: q.district ? `${q.city} / ${q.district}` : q.city, clear: () => push({ city: undefined, district: undefined }) });
   if (q.min != null) active.push({ label: `≥ ${num(q.min)} TL`, clear: () => push({ min: undefined }) });
@@ -180,6 +202,18 @@ function Results() {
               </div>
             );
           })()}
+
+          {near && (
+            <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 border-l-2 border-signal bg-signal-soft px-4 py-3">
+              <span className="text-[0.88rem] text-ink">
+                <strong className="font-medium">{labelPath(treeFor(q.cat!, q.sub!), q.path!).slice(-1)[0]}</strong> için ilan yok —
+                {" "}<strong className="font-medium">{near.label}</strong> altındaki {num(near.list.length)} ilanı gösteriyoruz.
+              </span>
+              <button onClick={() => push({ path: near.path })} className="chip hover:border-signal hover:text-signal">
+                Aramayı buraya genişlet
+              </button>
+            </div>
+          )}
 
           {results.length === 0 ? (
             <div className="border border-line p-10 text-center">
