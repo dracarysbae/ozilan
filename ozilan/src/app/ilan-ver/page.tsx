@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, attrsFor, findSub } from "@/data/taxonomy";
+import { CATEGORIES, attrsFor, findSub, treeFor, treeLabelsFor } from "@/data/taxonomy";
+import { labelPath, childrenOf } from "@/data/tree";
+import { TreePicker } from "@/components/TreePicker";
 import { GEO, CITIES } from "@/data/geo";
 import { useStore } from "@/lib/store";
 import { estimate } from "@/lib/market";
@@ -29,18 +31,23 @@ export default function Compose() {
   const [price, setPrice] = useState<number | "">("");
   const [photos, setPhotos] = useState(4);
   const [attrs, setAttrs] = useState<Record<string, AttrValue>>({});
+  const [path, setPath] = useState<string[]>([]);
   const [err, setErr] = useState<string[]>([]);
 
   const defs = cat && sub ? attrsFor(cat, sub) : [];
+  const tree = cat && sub ? treeFor(cat, sub) : [];
+  const treeLabels = cat && sub ? treeLabelsFor(cat, sub) : [];
+  const pathLabels = tree.length ? labelPath(tree, path) : [];
+  const pathDone = !tree.length || childrenOf(tree, path).length === 0;
   const category = CATEGORIES.find((c) => c.slug === cat);
 
   const draft: Listing = useMemo(() => ({
-    id: "__draft__", title: title || "Başlıksız ilan", desc, cat, sub,
+    id: "__draft__", title: title || "Başlıksız ilan", desc, cat, sub, path, pathLabels,
     deal: deal || "Satılık", price: typeof price === "number" ? price : 0,
     city: city || "İstanbul", district: district || "—", attrs,
     createdAt: Date.now(), bumpedAt: Date.now(), sellerId: me?.id ?? "anon",
     views: 0, photos, status: "active", art: 424242,
-  }), [title, desc, cat, sub, deal, price, city, district, attrs, photos, me]);
+  }), [title, desc, cat, sub, deal, price, city, district, attrs, photos, me, path, pathLabels]);
 
   const est = useMemo(
     () => (cat && sub ? estimate({ cat, sub, deal: deal || "Satılık", city: city || "İstanbul", attrs }, pool) : null),
@@ -52,6 +59,9 @@ export default function Compose() {
   const validate = (s: number) => {
     const e: string[] = [];
     if (s >= 0 && (!cat || !sub || !deal)) e.push("Kategori, alt kategori ve işlem türü seçilmeli.");
+    if (s >= 0 && cat && sub && tree.length && !pathDone) {
+      e.push(`${treeLabels[path.length] ?? "Detaylı kategori"} seçimini tamamlayın.`);
+    }
     if (s >= 1) {
       if (title.trim().length < 10) e.push("Başlık en az 10 karakter olmalı.");
       if (desc.trim().length < 40) e.push("Açıklama en az 40 karakter olmalı.");
@@ -74,7 +84,7 @@ export default function Compose() {
     setErr(e);
     if (e.length) return;
     const id = publish({
-      title: title.trim(), desc: desc.trim(), cat, sub, deal,
+      title: title.trim(), desc: desc.trim(), cat, sub, deal, path, pathLabels,
       price: deal === "Ücretsiz" ? 0 : Number(price),
       city, district: district || GEO[city][0], attrs, photos,
       featured: false,
@@ -132,7 +142,7 @@ export default function Compose() {
                 <p className="eyebrow">Kategori</p>
                 <div className="mt-3 grid gap-px bg-line sm:grid-cols-3">
                   {CATEGORIES.map((c) => (
-                    <button key={c.slug} onClick={() => { setCat(c.slug); setSub(""); setDeal(""); setAttrs({}); }}
+                    <button key={c.slug} onClick={() => { setCat(c.slug); setSub(""); setDeal(""); setAttrs({}); setPath([]); }}
                       className={`p-4 text-left transition ${cat === c.slug ? "bg-ink text-paper" : "bg-paper hover:bg-paper-2"}`}>
                       <p className="font-serif text-2xl leading-none">{c.label}</p>
                       <p className="mt-1.5 text-[0.78rem] opacity-60">{c.tagline}</p>
@@ -146,9 +156,23 @@ export default function Compose() {
                   <p className="eyebrow">Alt kategori</p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {category.subs.map((s) => (
-                      <button key={s.slug} onClick={() => { setSub(s.slug); setAttrs({}); }}
+                      <button key={s.slug} onClick={() => { setSub(s.slug); setAttrs({}); setPath([]); }}
                         className={sub === s.slug ? "chip-on" : "chip hover:border-ink hover:text-ink"}>{s.label}</button>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {tree.length > 0 && (
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <p className="eyebrow">Detaylı kategori</p>
+                    <p className="text-2xs text-mute">
+                      {pathDone ? "Seçim tamam" : `Sırada: ${treeLabels[path.length] ?? "alt seçim"}`}
+                    </p>
+                  </div>
+                  <div className="mt-3">
+                    <TreePicker tree={tree} labels={treeLabels} path={path} onChange={setPath} maxHeight="20rem" />
                   </div>
                 </div>
               )}
@@ -295,7 +319,7 @@ export default function Compose() {
           {step === 3 && (
             <div className="space-y-6">
               <div className="border border-line">
-                <Artwork seed={draft.art} sub={sub} kind={String(attrs.tur ?? attrs.tip ?? "")} className="aspect-[16/9] w-full" />
+                <Artwork seed={draft.art} sub={sub} kind={pathLabels.join(" ")} className="aspect-[16/9] w-full" />
                 <div className="p-4">
                   <p className="eyebrow">{city}, {district || "—"} · {deal}</p>
                   <h2 className="mt-1.5 font-serif text-2xl leading-tight">{draft.title}</h2>
@@ -319,7 +343,7 @@ export default function Compose() {
         <aside className="lg:sticky lg:top-[168px] lg:self-start">
           <div className="border border-line">
             <p className="eyebrow border-b border-line px-4 py-3">Canlı önizleme</p>
-            <Artwork seed={draft.art} sub={sub || "elektronik"} kind={String(attrs.tur ?? attrs.tip ?? "")} className="aspect-[4/3] w-full" />
+            <Artwork seed={draft.art} sub={sub || "elektronik"} kind={pathLabels.join(" ")} className="aspect-[4/3] w-full" />
             <div className="p-4">
               <p className="eyebrow">{city || "Şehir"} · {deal || "İşlem"}</p>
               <p className="mt-1.5 line-clamp-2 text-[0.95rem] font-medium">{title || "İlan başlığı buraya gelecek"}</p>
