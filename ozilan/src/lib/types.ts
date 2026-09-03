@@ -18,6 +18,10 @@ export type Listing = {
   photos: number;
   status: "active" | "pending" | "removed";
   featured?: boolean;
+  /** kategori ağacındaki seçim (marka → seri → paket gibi) */
+  path?: string[];
+  /** aynı seçimin okunabilir etiketleri */
+  pathLabels?: string[];
   /** deterministic art seed */
   art: number;
 };

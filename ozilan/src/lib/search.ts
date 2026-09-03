@@ -17,6 +17,8 @@ export type Query = {
   max?: number;
   attrs: Record<string, string[]>;
   ranges: Record<string, [number | undefined, number | undefined]>;
+  /** kategori ağacında seçilen dal — ilanın path'i bununla başlamalı */
+  path?: string[];
   sort: Sort;
   photosOnly?: boolean;
   verifiedOnly?: boolean;
@@ -37,7 +39,8 @@ const SUB_WORDS: [string, string, string][] = [
   ["araba", "vasita", "otomobil"], ["otomobil", "vasita", "otomobil"], ["oto", "vasita", "otomobil"],
   ["arac", "vasita", "otomobil"], ["motosiklet", "vasita", "motosiklet"], ["motor", "vasita", "motosiklet"],
   ["scooter", "vasita", "motosiklet"], ["kamyonet", "vasita", "ticari"], ["panelvan", "vasita", "ticari"],
-  ["kamyon", "vasita", "ticari"], ["minibus", "vasita", "ticari"],
+  ["kamyon", "vasita", "ticari"], ["otobus", "vasita", "ticari"], ["midibus", "vasita", "ticari"],
+  ["cekici", "vasita", "ticari"], ["tir", "vasita", "ticari"], ["minibus", "vasita", "minivan-panelvan"],
   ["telefon", "ikinci-el", "elektronik"], ["iphone", "ikinci-el", "elektronik"], ["laptop", "ikinci-el", "elektronik"],
   ["bilgisayar", "ikinci-el", "elektronik"], ["macbook", "ikinci-el", "elektronik"], ["televizyon", "ikinci-el", "elektronik"],
   ["tv", "ikinci-el", "elektronik"], ["konsol", "ikinci-el", "elektronik"], ["playstation", "ikinci-el", "elektronik"],
@@ -46,6 +49,15 @@ const SUB_WORDS: [string, string, string][] = [
   ["buzdolabi", "ikinci-el", "ev-yasam"], ["hali", "ikinci-el", "ev-yasam"],
   ["bisiklet", "ikinci-el", "hobi-spor"], ["gitar", "ikinci-el", "hobi-spor"], ["kamp", "ikinci-el", "hobi-spor"],
   ["saat", "ikinci-el", "moda"], ["ayakkabi", "ikinci-el", "moda"], ["canta", "ikinci-el", "moda"],
+  ["suv", "vasita", "arazi-suv-pickup"], ["jeep", "vasita", "arazi-suv-pickup"], ["pickup", "vasita", "arazi-suv-pickup"],
+  ["arazi araci", "vasita", "arazi-suv-pickup"], ["4x4", "vasita", "arazi-suv-pickup"],
+  ["panelvan", "vasita", "minivan-panelvan"], ["minivan", "vasita", "minivan-panelvan"],
+  ["karavan", "vasita", "karavan"], ["motokaravan", "vasita", "karavan"],
+  ["tekne", "vasita", "deniz-araci"], ["yat", "vasita", "deniz-araci"], ["bot", "vasita", "deniz-araci"],
+  ["jet ski", "vasita", "deniz-araci"], ["yelkenli", "vasita", "deniz-araci"],
+  ["devremulk", "emlak", "devremulk"], ["devre tatil", "emlak", "devremulk"],
+  ["gunluk kiralik", "emlak", "turistik-kiralik"], ["tatil", "emlak", "turistik-kiralik"],
+  ["bungalov", "emlak", "turistik-kiralik"], ["tiny house", "emlak", "turistik-kiralik"],
 ];
 
 const DEAL_WORDS: [string, string][] = [
@@ -62,6 +74,41 @@ function numAt(raw: string, mult?: string) {
   if (isNaN(n)) return undefined;
   return mult ? n * (MULT[mult] ?? 1) : n;
 }
+
+type TreeWord = { n: string; cat: string; sub: string; path: string[]; label: string; kind: string };
+
+/** yalnızca "2+1", "125", "0-5 yas" gibi sayısal etiketleri ele */
+const numericOnly = (n: string) => /^[\d+.,\-\s/]*$/.test(n);
+
+/** ağaçtaki adlar (marka, seri, model) — doğal dilde aranabilsin */
+const TREE_WORDS: TreeWord[] = (() => {
+  const out: TreeWord[] = [];
+  for (const c of CATEGORIES) {
+    for (const s of c.subs) {
+      const kinds = s.treeLabels ?? ["Kategori", "Alt tür", "Model"];
+      for (const root of s.tree ?? []) {
+        const rn = normalize(root.label);
+        if (rn.length >= 3 && !numericOnly(rn)) {
+          out.push({ n: rn, cat: c.slug, sub: s.slug, path: [root.slug], label: root.label, kind: kinds[0] });
+        }
+        for (const kid of root.kids ?? []) {
+          const kn = normalize(kid.label);
+          if (kn.length < 2 || numericOnly(kn)) continue;
+          out.push({ n: `${rn} ${kn}`, cat: c.slug, sub: s.slug, path: [root.slug, kid.slug], label: `${root.label} ${kid.label}`, kind: kinds[1] ?? "Seri" });
+          // "iphone 15 pro", "golf gti" gibi tek başına ayırt edici yaprak adları
+          for (const leaf of kid.kids ?? []) {
+            const ln = normalize(leaf.label);
+            if (ln.length < 6 || numericOnly(ln) || !/\d/.test(ln) || !/[a-z]/.test(ln)) continue;
+            out.push({ n: `${kn} ${ln}`.trim(), cat: c.slug, sub: s.slug, path: [root.slug, kid.slug, leaf.slug], label: `${kid.label} ${leaf.label}`, kind: kinds[2] ?? "Model" });
+            out.push({ n: ln, cat: c.slug, sub: s.slug, path: [root.slug, kid.slug, leaf.slug], label: `${kid.label} ${leaf.label}`, kind: kinds[2] ?? "Model" });
+          }
+        }
+      }
+    }
+  }
+  // uzun eşleşmeler önce denensin ki "bmw 3 serisi" > "bmw"
+  return out.sort((a, b) => b.n.length - a.n.length);
+})();
 
 export type Chip = { label: string; kind: string };
 
@@ -100,14 +147,42 @@ export function parseNatural(input: string, base: Query = emptyQuery()): { query
     if (new RegExp(`\\b${w}`).test(t)) { q.deal = deal; chips.push({ label: deal, kind: "İşlem" }); eat(new RegExp(`\\b${w}\\w*`, "g")); break; }
   }
 
+  // 1) alt kategori ipucu — henüz metni tüketmiyoruz, ağaç eşleşmesi de aynı kelimelere bakacak
+  let hintCat: string | undefined, hintSub: string | undefined, hintWord: string | undefined;
   for (const [w, cat, sub] of SUB_WORDS) {
-    if (new RegExp(`\\b${w}\\b`).test(t)) {
-      q.cat = cat; q.sub = sub;
-      const label = findSub(cat, sub)?.label ?? sub;
-      chips.push({ label, kind: "Kategori" });
-      if (!["ev", "oto", "motor", "tv"].includes(w)) eat(new RegExp(`\\b${w}\\b`, "g"));
-      break;
+    if (new RegExp(`\\b${w}\\b`).test(t)) { hintCat = cat; hintSub = sub; hintWord = w; break; }
+  }
+
+  // 2) ağaçtan marka / seri / model eşleşmesi — "bmw 3 serisi", "iphone 15 pro", "ford transit"
+  //    önce ipucunun işaret ettiği alt kategoride, bulunamazsa ağacın tamamında ara
+  const matchTree = (restrict?: string) => {
+    for (const tw of TREE_WORDS) {
+      if (!t.includes(tw.n)) continue; // ucuz ön eleme — binlerce ad var
+      if (q.cat && q.cat !== tw.cat) continue;
+      if (q.sub && q.sub !== tw.sub) continue;
+      if (restrict && tw.sub !== restrict) continue;
+      const rx = `\\b${tw.n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`;
+      if (!new RegExp(rx).test(t)) continue;
+      q.cat = tw.cat; q.sub = tw.sub; q.path = tw.path;
+      chips.push({ label: tw.label, kind: tw.kind });
+      eat(new RegExp(rx, "g"));
+      return true;
     }
+    return false;
+  };
+  if (!(hintSub && matchTree(hintSub))) matchTree();
+
+  // 3) ipucu kategoriyi kesinleştirsin
+  if (hintCat && hintSub && q.cat === hintCat && q.sub !== hintSub && q.path?.length) {
+    // ağaç daha kesin konuştu ("Ford Transit" → minivan), ipucunu yut
+  } else if (hintCat && hintSub && !q.path?.length) {
+    q.cat = hintCat; q.sub = hintSub;
+    chips.push({ label: findSub(hintCat, hintSub)?.label ?? hintSub, kind: "Kategori" });
+  } else if (hintCat && !q.cat) {
+    q.cat = hintCat; q.sub = hintSub;
+  }
+  if (hintWord && !["ev", "oto", "motor", "tv", "bot", "yat", "saat"].includes(hintWord)) {
+    eat(new RegExp(`\\b${hintWord}\\b`, "g"));
   }
 
   // rooms  3+1
@@ -201,7 +276,7 @@ export function parseNatural(input: string, base: Query = emptyQuery()): { query
 
 function textHit(l: Listing, q: string) {
   if (!q) return true;
-  const hay = normalize([l.title, l.city, l.district, l.desc, ...Object.values(l.attrs).map(String)].join(" "));
+  const hay = normalize([l.title, l.city, l.district, l.desc, ...(l.pathLabels ?? []), ...Object.values(l.attrs).map(String)].join(" "));
   return q.split(" ").every((w) => hay.includes(w));
 }
 
@@ -211,6 +286,10 @@ export function runQuery(pool: Listing[], query: Query, verifiedIds?: Set<string
 
   if (cat) res = res.filter((l) => l.cat === cat);
   if (sub) res = res.filter((l) => l.sub === sub);
+  if (query.path?.length) {
+    const want = query.path;
+    res = res.filter((l) => want.every((seg, i) => l.path?.[i] === seg));
+  }
   if (deal) res = res.filter((l) => l.deal === deal);
   if (city) res = res.filter((l) => l.city === city);
   if (district) res = res.filter((l) => l.district === district);
@@ -278,6 +357,7 @@ export function queryToParams(q: Query): URLSearchParams {
   if (q.district) p.set("ilce", q.district);
   if (q.min != null) p.set("min", String(q.min));
   if (q.max != null) p.set("max", String(q.max));
+  if (q.path?.length) p.set("p", q.path.join("."));
   if (q.sort !== "new") p.set("s", q.sort);
   if (q.verifiedOnly) p.set("v", "1");
   const a = Object.entries(q.attrs).filter(([, v]) => v?.length);
@@ -298,6 +378,8 @@ export function paramsToQuery(p: URLSearchParams): Query {
   const min = p.get("min"), max = p.get("max");
   if (min) q.min = +min;
   if (max) q.max = +max;
+  const path = p.get("p");
+  if (path) q.path = path.split(".").filter(Boolean);
   q.sort = (p.get("s") as Sort) ?? "new";
   q.verifiedOnly = p.get("v") === "1";
   for (const part of (p.get("f") ?? "").split(",").filter(Boolean)) {
