@@ -64,6 +64,12 @@ function Detail() {
         <Link href="/" className="hover:text-ink">Anasayfa</Link><span>/</span>
         <Link href={`/arama/?k=${l.cat}`} className="hover:text-ink">{labelFor(l.cat)}</Link><span>/</span>
         <Link href={`/arama/?k=${l.cat}&a=${l.sub}`} className="hover:text-ink">{labelFor(l.cat, l.sub).split(" · ")[1]}</Link><span>/</span>
+        {(l.pathLabels ?? []).map((seg, i) => (
+          <span key={i} className="flex items-center gap-1.5">
+            <Link href={`/arama/?k=${l.cat}&a=${l.sub}&p=${(l.path ?? []).slice(0, i + 1).join(".")}`} className="hover:text-ink">{seg}</Link>
+            <span>/</span>
+          </span>
+        ))}
         <Link href={`/arama/?il=${encodeURIComponent(l.city)}`} className="hover:text-ink">{l.city}</Link>
         <span className="num ml-auto normal-case tracking-normal">İlan no {l.id}</span>
       </nav>
@@ -72,7 +78,7 @@ function Detail() {
         {/* ---------------------------------------------- left */}
         <div>
           <div className="relative border border-line">
-            <Artwork seed={l.art + shot * 977} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="aspect-[16/10] w-full" label={l.title} />
+            <Artwork seed={l.art + shot * 977} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="aspect-[16/10] w-full" label={l.title} />
             <span className="absolute left-0 top-0 bg-ink/85 px-2 py-1 font-mono text-2xs text-paper">{l.deal}</span>
             <span className="num absolute bottom-0 right-0 bg-ink/85 px-2 py-1 text-2xs text-paper">{shot + 1} / {l.photos}</span>
             <FavButton id={l.id} className="absolute right-2 top-2" />
@@ -81,7 +87,7 @@ function Detail() {
             {Array.from({ length: l.photos }).map((_, i) => (
               <button key={i} onClick={() => setShot(i)}
                 className={`shrink-0 border transition ${i === shot ? "border-ink" : "border-line opacity-60 hover:opacity-100"}`}>
-                <Artwork seed={l.art + i * 977} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-14 w-20" />
+                <Artwork seed={l.art + i * 977} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-14 w-20" />
               </button>
             ))}
           </div>
