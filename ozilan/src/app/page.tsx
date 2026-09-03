@@ -9,7 +9,7 @@ import {
 } from "@/components/Motion";
 import { useStore } from "@/lib/store";
 import { readMarket } from "@/lib/market";
-import { CATEGORIES } from "@/data/taxonomy";
+import { CATEGORIES, TREE_STATS } from "@/data/taxonomy";
 import { CITIES } from "@/data/geo";
 import { num, tlShort, tl } from "@/lib/format";
 
@@ -197,7 +197,7 @@ export default function Home() {
             {[
               { v: active.length, l: "aktif ilan", f: (n: number) => num(n) },
               { v: medAll, l: "ortanca fiyat", f: (n: number) => tlShort(n) },
-              { v: CATEGORIES.reduce((a, c) => a + c.subs.length, 0), l: "alt kategori", f: (n: number) => String(n) },
+              { v: TREE_STATS.leaves, l: "model & paket", f: (n: number) => num(n) },
               { v: CITIES.length, l: "şehir", f: (n: number) => String(n) },
             ].map((s, i) => (
               <Reveal key={s.l} delay={i * 90} kind="rise">
@@ -305,7 +305,7 @@ export default function Home() {
                     >
                       <div className="glass overflow-hidden rounded-xl p-6">
                         <div className="flex items-start gap-5">
-                          <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-24 w-32 shrink-0 rounded-md" />
+                          <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-24 w-32 shrink-0 rounded-md" />
                           <div className="min-w-0 flex-1">
                             <p className="text-[0.8125rem] text-white/45">{l.district}, {l.city}</p>
                             <h3 className="mt-1 truncate text-[1.125rem] font-medium text-white">{l.title}</h3>
