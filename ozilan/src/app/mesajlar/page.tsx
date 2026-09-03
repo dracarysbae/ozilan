@@ -54,7 +54,7 @@ export default function Inbox() {
                 <li key={t.id}>
                   <button onClick={() => setActive(t.id)}
                     className={`flex w-full gap-3 border-b border-line p-3 text-left transition ${on ? "bg-ink text-paper" : "hover:bg-paper-2"}`}>
-                    {l && <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-12 w-14 shrink-0" />}
+                    {l && <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-12 w-14 shrink-0" />}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.82rem] font-medium">{l?.title ?? "Kaldırılmış ilan"}</p>
                       <p className={`truncate text-[0.75rem] ${on ? "text-paper/55" : "text-mute"}`}>{last?.body ?? "—"}</p>
@@ -69,7 +69,7 @@ export default function Inbox() {
           <div className="flex min-h-[60vh] flex-col bg-paper">
             {listing && (
               <Link href={`/ilan/?id=${listing.id}`} className="flex items-center gap-3 border-b border-line p-3 hover:bg-paper-2">
-                <Artwork seed={listing.art} sub={listing.sub} kind={String(listing.attrs.tur ?? listing.attrs.tip ?? "")} className="h-12 w-16 shrink-0" />
+                <Artwork seed={listing.art} sub={listing.sub} kind={String(listing.pathLabels?.join(" ") ?? listing.attrs.tip ?? "")} className="h-12 w-16 shrink-0" />
                 <div className="min-w-0">
                   <p className="truncate text-[0.9rem] font-medium">{listing.title}</p>
                   <p className="num text-[0.85rem] text-mute">{tl(listing.price)} · {sellers[listing.sellerId]?.name}</p>
