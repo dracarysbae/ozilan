@@ -36,7 +36,7 @@ export function CompareTray() {
           <div className="flex -space-x-2">
             {items.map((l) => (
               <div key={l.id} className="h-11 w-14 overflow-hidden rounded-md border-2 border-paper-2 shadow-plaque-sm">
-                <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-full w-full" />
+                <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-full w-full" />
               </div>
             ))}
           </div>
@@ -71,7 +71,7 @@ export function CompareTray() {
                     {items.map((l) => (
                       <th key={l.id} className="pb-3 pl-2 pr-2 text-left font-normal">
                         <div className="panel-flat overflow-hidden">
-                          <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-28 w-full" />
+                          <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-28 w-full" />
                           <div className="p-3">
                             <p className="eyebrow">{l.district}, {l.city}</p>
                             <Link href={`/ilan/?id=${l.id}`} onClick={() => setOpen(false)}

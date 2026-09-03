@@ -61,7 +61,35 @@ const GLYPH: Record<string, string[]> = {
   ],
 };
 
-/* product-type specific silhouettes — picked over the sub-category default when present */
+/* yeni alt kategorilerin siluetleri */
+const EXTRA_GLYPH: Record<string, string[]> = {
+  "arazi-suv-pickup": [
+    "M8 74V52c0-4 3-7 7-7l10-16c2-3 5-5 9-5h32c4 0 7 2 9 5l10 16c4 0 7 3 7 7v22z M20 80a8 8 0 1016 0 8 8 0 10-16 0 M64 80a8 8 0 1016 0 8 8 0 10-16 0 M28 30h44l6 15H22z M8 60h84",
+    "M6 72V44h44l10 12h32v16z M18 78a8 8 0 1016 0 8 8 0 10-16 0 M62 78a8 8 0 1016 0 8 8 0 10-16 0 M14 48h30v10H14z M54 56h24",
+  ],
+  "minivan-panelvan": [
+    "M6 74V36h48v38z M54 48h18l10 14v12H54z M16 78a7 7 0 1014 0 7 7 0 10-14 0 M60 78a7 7 0 1014 0 7 7 0 10-14 0",
+    "M8 74V38h58l16 16v20z M18 44h18v14H18z M42 44h18v14H42z M20 78a7 7 0 1014 0 7 7 0 10-14 0 M58 78a7 7 0 1014 0 7 7 0 10-14 0",
+  ],
+  karavan: [
+    "M6 70V34h60v36z M66 46h14l8 12v12H66z M22 78a8 8 0 1016 0 8 8 0 10-16 0 M62 78a8 8 0 1016 0 8 8 0 10-16 0 M16 42h20v14H16z M44 42h14v14H44z M6 62h84",
+    "M10 72V40c0-4 3-6 7-6h50c4 0 7 2 7 6v32z M74 56h14v16H74z M24 80a8 8 0 1016 0 8 8 0 10-16 0 M20 46h16v12H20z M46 46h16v12H46z M10 66h64",
+  ],
+  "deniz-araci": [
+    "M10 74h80l-12 16H22z M50 12v50 M50 20l26 34H50z M50 26L26 54h24 M14 66h72",
+    "M8 70c14 4 24 6 42 6s28-2 42-6l-10 18H18z M22 44h56l-6 22H28z M40 44V26h20v18 M50 12v14",
+  ],
+  devremulk: [
+    "M8 92V44l22-16 22 16v48z M30 92V66h14v26z M60 40h30v52H60z M68 50h6v6h-6z M80 50h6v6h-6z M68 66h6v6h-6z",
+    "M12 92V38h30v54z M46 92V54h30v38z M20 46h6v6h-6z M32 46h6v6h-6z M54 62h6v6h-6z M66 62h6v6h-6z",
+  ],
+  "turistik-kiralik": [
+    "M10 92V46l24-18 24 18v46z M34 92V70h12v22 M64 60h26v32H64z M70 68h6v6h-6z M78 68h6v6h-6z M6 92h88",
+    "M14 88c8-6 16-6 24 0s16 6 24 0 16-6 24 0 M12 74h76 M50 20v14 M28 40h44l6 34H22z",
+  ],
+};
+
+/* product-type specific silhouettes — picked by keyword over the sub-category default */
 const TYPE_GLYPH: Record<string, string[]> = {
   "Telefon": ["M32 14h36a6 6 0 016 6v60a6 6 0 01-6 6H32a6 6 0 01-6-6V20a6 6 0 016-6z M42 20h16 M40 78h20"],
   "Dizüstü bilgisayar": ["M18 26h64v40H18z M8 70h84l-6 10H14z M28 34h44v22H28z"],
@@ -96,12 +124,56 @@ const TYPE_GLYPH: Record<string, string[]> = {
   "Minibüs": ["M8 74V38h58l16 16v20z M18 44h18v14H18z M42 44h18v14H42z M20 78a7 7 0 1014 0 7 7 0 10-14 0 M58 78a7 7 0 1014 0 7 7 0 10-14 0"],
 };
 
+/* ağaçtaki etiketler serbest metin — anahtar kelimeyle eşleştiriyoruz */
+const KEYWORDS: [RegExp, string][] = [
+  [/telefon|iphone|galaxy|smartphone/i, "Telefon"],
+  [/dizüstü|laptop|notebook|macbook/i, "Dizüstü bilgisayar"],
+  [/masaüstü|kasa|pc\b|imac/i, "Masaüstü"],
+  [/tablet|ipad/i, "Tablet"],
+  [/televizyon|\btv\b|projeksiyon/i, "Televizyon"],
+  [/kulaklık|hoparlör|ses sistemi|soundbar/i, "Kulaklık"],
+  [/fotoğraf|kamera|objektif|drone/i, "Fotoğraf makinesi"],
+  [/konsol|playstation|xbox|nintendo|oyun/i, "Oyun konsolu"],
+  [/ekran kartı|işlemci|anakart|bileşen|\bram\b|\bssd\b/i, "Ekran kartı"],
+  [/beyaz eşya|buzdolabı|çamaşır|bulaşık|fırın|ankastre|derin dondurucu/i, "Beyaz eşya"],
+  [/koltuk|kanepe|berjer|oturma|puf/i, "Koltuk takımı"],
+  [/yatak|gardırop|şifonyer|baza|karyola/i, "Yatak odası"],
+  [/yemek odası|masa|sandalye|vitrin|konsol takım/i, "Yemek odası"],
+  [/halı|kilim|yolluk/i, "Halı"],
+  [/aydınlatma|avize|lamba|abajur|sarkıt/i, "Aydınlatma"],
+  [/bisiklet|scooter/i, "Bisiklet"],
+  [/müzik|gitar|piyano|klavye|davul|keman|bağlama|amfi/i, "Müzik aleti"],
+  [/fitness|kondisyon|dambıl|ağırlık|koşu band|spor alet/i, "Fitness"],
+  [/kamp|çadır|uyku tulumu|outdoor|doğa|trekking/i, "Kamp"],
+  [/saat|kol saati|akıllı saat/i, "Saat"],
+  [/çanta|valiz|sırt çanta|cüzdan/i, "Çanta"],
+  [/ayakkabı|\bbot\b|sneaker|terlik|topuklu/i, "Ayakkabı"],
+  [/giyim|ceket|palto|mont|elbise|gömlek|pantolon|kazak|tişört/i, "Giyim"],
+  [/takı|mücevher|yüzük|kolye|bilezik|küpe|altın|pırlanta/i, "Takı"],
+  [/dükkan|mağaza|market|çarşı/i, "Dükkan"],
+  [/ofis|büro|plaza|iş merkezi|coworking/i, "Ofis"],
+  [/depo|antrepo|soğuk hava|fabrika|atölye|üretim|sanayi/i, "Depo"],
+  [/panelvan|minivan|combi|kombi van/i, "Panelvan"],
+  [/kamyon|çekici|tır|damper|tanker/i, "Kamyon"],
+  [/otobüs|midibüs/i, "Otobüs"],
+  [/minibüs|sprinter|transit/i, "Minibüs"],
+];
+
+function glyphFor(sub: string, kind?: string): string[] {
+  if (kind) {
+    const direct = TYPE_GLYPH[kind];
+    if (direct) return direct;
+    for (const [re, key] of KEYWORDS) if (re.test(kind)) return TYPE_GLYPH[key];
+  }
+  return EXTRA_GLYPH[sub] ?? GLYPH[sub] ?? GLYPH.elektronik;
+}
+
 export function Artwork({
   seed, sub, kind, className = "", label,
 }: { seed: number; sub: string; kind?: string; className?: string; label?: string }) {
   const p = PALETTES[seed % PALETTES.length];
   const [bg, fg] = p;
-  const glyphs = (kind ? TYPE_GLYPH[kind] : undefined) ?? GLYPH[sub] ?? GLYPH.elektronik;
+  const glyphs = glyphFor(sub, kind);
   const d = glyphs[seed % glyphs.length];
   const rot = ((seed >> 3) % 3) - 1;
   const id = `a${seed}`;

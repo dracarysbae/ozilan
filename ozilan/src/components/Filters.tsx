@@ -2,7 +2,9 @@
 import { useMemo, useState } from "react";
 import type { Query } from "@/lib/search";
 import type { Listing } from "@/lib/types";
-import { CATEGORIES, attrsFor, findSub } from "@/data/taxonomy";
+import { CATEGORIES, attrsFor, findSub, treeFor, treeLabelsFor } from "@/data/taxonomy";
+import { TreePicker } from "./TreePicker";
+import { childrenOf } from "@/data/tree";
 import { GEO, CITIES } from "@/data/geo";
 import { num } from "@/lib/format";
 
@@ -42,6 +44,9 @@ export function Filters({ q, set, pool, base }: Props) {
 
   const countFor = (fn: (l: Listing) => boolean) => base.filter(fn).length;
 
+  const tree = q.cat && q.sub ? treeFor(q.cat, q.sub) : [];
+  const treeLabels = q.cat && q.sub ? treeLabelsFor(q.cat, q.sub) : [];
+
   const districts = q.city ? GEO[q.city] ?? [] : [];
 
   const toggleAttr = (key: string, val: string) => {
@@ -69,16 +74,16 @@ export function Filters({ q, set, pool, base }: Props) {
     <div className="text-ink">
       <Section title="Kategori">
         <div className="space-y-1">
-          <Check on={!q.cat} label="Tüm kategoriler" count={base.length} onClick={() => set({ cat: undefined, sub: undefined, attrs: {}, ranges: {} })} />
+          <Check on={!q.cat} label="Tüm kategoriler" count={base.length} onClick={() => set({ cat: undefined, sub: undefined, path: undefined, attrs: {}, ranges: {} })} />
           {CATEGORIES.map((c) => (
             <div key={c.slug}>
               <Check on={q.cat === c.slug} label={c.label} count={countFor((l) => l.cat === c.slug)}
-                onClick={() => set({ cat: q.cat === c.slug ? undefined : c.slug, sub: undefined, attrs: {}, ranges: {} })} />
+                onClick={() => set({ cat: q.cat === c.slug ? undefined : c.slug, sub: undefined, path: undefined, attrs: {}, ranges: {} })} />
               {q.cat === c.slug && (
                 <div className="ml-6 mt-1 space-y-1 border-l border-line pl-3">
                   {c.subs.map((s) => (
                     <Check key={s.slug} on={q.sub === s.slug} label={s.label} count={countFor((l) => l.sub === s.slug)}
-                      onClick={() => set({ sub: q.sub === s.slug ? undefined : s.slug, attrs: {}, ranges: {} })} />
+                      onClick={() => set({ sub: q.sub === s.slug ? undefined : s.slug, path: undefined, attrs: {}, ranges: {} })} />
                   ))}
                 </div>
               )}
@@ -86,6 +91,19 @@ export function Filters({ q, set, pool, base }: Props) {
           ))}
         </div>
       </Section>
+
+      {tree.length > 0 && (
+        <Section title={`${treeLabels[(q.path ?? []).length] ?? "Seçim"} · ${childrenOf(tree, q.path ?? []).length || "tamam"}`}>
+          <TreePicker
+            compact
+            tree={tree}
+            labels={treeLabels}
+            path={q.path ?? []}
+            onChange={(path) => set({ path: path.length ? path : undefined })}
+            countFor={(path) => countFor((l) => path.every((seg, i) => l.path?.[i] === seg))}
+          />
+        </Section>
+      )}
 
       {cat?.dealTypes && (
         <Section title="İşlem türü">

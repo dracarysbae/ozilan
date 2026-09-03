@@ -63,23 +63,52 @@ export function Header() {
                   {c.label}
                 </Link>
                 <div
-                  className={`absolute left-0 top-full w-60 origin-top overflow-hidden rounded-lg border border-line bg-paper-2 py-1.5 shadow-lift ${
+                  className={`absolute left-0 top-full origin-top overflow-hidden rounded-xl border border-line bg-paper-2 shadow-lift ${
                     menu === c.slug ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
                   }`}
                   style={{
+                    width: `min(${c.subs.length > 4 ? 62 : 46}rem, calc(100vw - 3rem))`,
                     transform: menu === c.slug ? "translateY(0) scale(1)" : "translateY(-6px) scale(.98)",
                     transition: "opacity .32s var(--ease-apple), transform .32s var(--ease-apple)",
                   }}
                 >
-                  {c.subs.map((s) => (
-                    <Link
-                      key={s.slug}
-                      href={`/arama/?k=${c.slug}&a=${s.slug}`}
-                      className="block px-4 py-2 text-[0.8125rem] text-mute transition hover:bg-paper-3 hover:text-ink"
-                    >
-                      {s.label}
+                  <div className="grid gap-x-6 gap-y-5 p-5" style={{ gridTemplateColumns: `repeat(${Math.min(c.subs.length, 4)}, minmax(0, 1fr))` }}>
+                    {c.subs.map((s) => (
+                      <div key={s.slug} className="min-w-0">
+                        <Link
+                          href={`/arama/?k=${c.slug}&a=${s.slug}`}
+                          className="block truncate text-[0.8125rem] font-medium text-ink transition hover:text-signal"
+                        >
+                          {s.label}
+                        </Link>
+                        <div className="mt-1.5 space-y-0.5">
+                          {(s.tree ?? []).slice(0, 7).map((n) => (
+                            <Link
+                              key={n.slug}
+                              href={`/arama/?k=${c.slug}&a=${s.slug}&p=${n.slug}`}
+                              className="block truncate text-[0.78rem] text-mute transition hover:text-signal"
+                            >
+                              {n.label}
+                            </Link>
+                          ))}
+                          {(s.tree?.length ?? 0) > 7 && (
+                            <Link
+                              href={`/arama/?k=${c.slug}&a=${s.slug}`}
+                              className="block text-[0.78rem] text-signal transition hover:underline"
+                            >
+                              +{(s.tree?.length ?? 0) - 7} tümü →
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-line bg-paper px-5 py-2.5">
+                    <span className="text-2xs text-mute">{c.tagline}</span>
+                    <Link href={`/arama/?k=${c.slug}`} className="text-2xs text-signal transition hover:underline">
+                      Tüm {c.label.toLocaleLowerCase("tr")} ilanları →
                     </Link>
-                  ))}
+                  </div>
                 </div>
               </div>
             ))}
