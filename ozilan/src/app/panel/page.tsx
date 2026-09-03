@@ -82,7 +82,7 @@ export default function Panel() {
               const l = pool.find((x) => x.id === r.listingId);
               return (
                 <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
-                  {l && <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-12 w-16 shrink-0" />}
+                  {l && <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-12 w-16 shrink-0" />}
                   <div className="min-w-0 flex-1">
                     <Link href={`/ilan/?id=${r.listingId}`} className="truncate text-[0.9rem] font-medium hover:text-signal">{l?.title ?? r.listingId}</Link>
                     <p className="text-[0.78rem] text-mute">{r.reason}{r.note && ` — ${r.note}`}</p>
@@ -119,7 +119,7 @@ export default function Panel() {
                 <tr key={l.id} className="border-b border-line/70 align-top last:border-0 hover:bg-paper-2/60">
                   <td className="px-3 py-3">
                     <Link href={`/ilan/?id=${l.id}`} className="flex gap-2.5">
-                      <Artwork seed={l.art} sub={l.sub} kind={String(l.attrs.tur ?? l.attrs.tip ?? "")} className="h-10 w-14 shrink-0" />
+                      <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-10 w-14 shrink-0" />
                       <span className="min-w-0">
                         <span className="block max-w-[240px] truncate text-[0.85rem] font-medium hover:text-signal">{l.title}</span>
                         <span className="num block text-2xs text-mute">{l.id} · {l.district}, {l.city}</span>
