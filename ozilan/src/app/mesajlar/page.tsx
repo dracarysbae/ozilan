@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Artwork } from "@/components/Artwork";
 import { useStore } from "@/lib/store";
-import { ago, tl } from "@/lib/format";
+import { tl } from "@/lib/format";
+import { Ago } from "@/components/Ago";
 
 export default function Inbox() {
   const { state, pool, sellers, me, send, ready } = useStore();
@@ -58,7 +59,7 @@ export default function Inbox() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.82rem] font-medium">{l?.title ?? "Kaldırılmış ilan"}</p>
                       <p className={`truncate text-[0.75rem] ${on ? "text-paper/55" : "text-mute"}`}>{last?.body ?? "—"}</p>
-                      <p className={`num text-2xs ${on ? "text-paper/40" : "text-mute-2"}`}>{ago(t.updatedAt)}</p>
+                      <p className={`num text-2xs ${on ? "text-paper/40" : "text-mute-2"}`}><Ago ts={t.updatedAt} /></p>
                     </div>
                   </button>
                 </li>
@@ -85,7 +86,7 @@ export default function Inbox() {
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[75%] border px-3 py-2 text-[0.86rem] ${mine ? "border-ink bg-ink text-paper" : "border-line bg-paper-2"}`}>
                       <p className="whitespace-pre-line">{m.body}</p>
-                      <p className={`num mt-1 text-2xs ${mine ? "text-paper/40" : "text-mute-2"}`}>{ago(m.at)}</p>
+                      <p className={`num mt-1 text-2xs ${mine ? "text-paper/40" : "text-mute-2"}`}><Ago ts={m.at} /></p>
                     </div>
                   </div>
                 );
