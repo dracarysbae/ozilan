@@ -18,6 +18,7 @@
   }
   body {
     @apply bg-paper text-ink font-sans antialiased;
+    overflow-x: clip;
     font-feature-settings: "cv05" 1, "cv11" 1, "ss01" 1;
     letter-spacing: -0.011em;
   }
@@ -52,6 +53,13 @@
 
   /* gradyan metin — sadece kahraman başlıkta */
   .grad-text {
+    background: linear-gradient(180deg, #FFFFFF 0%, #C7D6F2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  /* kelime kelime animasyonda gradyan her kelimeye ayrı uygulanır
+     (kompozit katmanlar üst elemanın background-clip'ini almaz) */
+  .grad-text:has(.split-i) { background: none; color: #fff; }
+  .grad-text .split-i {
     background: linear-gradient(180deg, #FFFFFF 0%, #C7D6F2 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
@@ -143,61 +151,113 @@
   .halftone { background-image: none; }
   .rows > * + * { @apply border-t border-line; }
 
-  /* ---------------------------------------------------- kaydırma hareketi */
-  /* Varsayılan: hareket kapalı gibi görün (JS gelmeden içerik görünür kalsın) */
-  .rv { opacity: 1; }
+  /* ---------------------------------------------------- hareket katmanı v6
+     Reveal/SplitText stillerini JS her karede inline yazar; burada yalnızca
+     temel, perde, spot ışık, marquee ve süs animasyonları var. */
+  .rv { will-change: transform, opacity; backface-visibility: hidden; }
   .split-w {
     display: inline-block; overflow: hidden; vertical-align: bottom;
-    padding: .1em .04em .2em; margin: -.1em -.04em -.2em;
+    padding: .1em .04em .22em; margin: -.1em -.04em -.22em;
   }
-  .split-i { display: inline-block; }
+  .split-i { display: inline-block; will-change: transform, opacity; transform-origin: 0% 100%; }
 
-  html[data-motion="full"] .rv {
-    opacity: 0;
-    will-change: opacity, transform, filter;
-    transition:
-      opacity 1s var(--ease-out),
-      transform 1.15s var(--ease-out),
-      filter 1s var(--ease-out);
-  }
-  html[data-motion="full"] .rv.is-in { opacity: 1; transform: none; filter: none; }
-
-  html[data-motion="full"] .rv[data-rv="up"]    { transform: translate3d(0, 52px, 0); }
-  html[data-motion="full"] .rv[data-rv="rise"]  { transform: translate3d(0, 90px, 0) scale(.96); filter: blur(7px); }
-  html[data-motion="full"] .rv[data-rv="zoom"]  { transform: scale(.84); filter: blur(10px); }
-  html[data-motion="full"] .rv[data-rv="tilt"]  { transform: perspective(1200px) rotateX(16deg) translate3d(0, 70px, -80px) scale(.94); }
-  html[data-motion="full"] .rv[data-rv="flipL"] { transform: perspective(1200px) rotateY(-26deg) translate3d(-70px, 26px, -90px); }
-  html[data-motion="full"] .rv[data-rv="flipR"] { transform: perspective(1200px) rotateY(26deg) translate3d(70px, 26px, -90px); }
-  html[data-motion="full"] .rv[data-rv="spin"]  { transform: perspective(1000px) rotateX(-24deg) rotateZ(-6deg) translate3d(0, 80px, -120px) scale(.9); }
-
-  /* kelime kelime başlık */
-  html[data-motion="full"] .split-i {
-    transform: translate3d(0, 105%, 0) rotateZ(4deg);
-    opacity: 0;
-    transition: transform 1.05s var(--ease-out), opacity .8s var(--ease-out);
-  }
-  html[data-motion="full"] .split-i.is-in { transform: none; opacity: 1; }
-
-  /* fare ile 3B eğim */
-  .tilt-host { position: relative; transform-style: preserve-3d; }
+  /* fare ile 3B eğim + spot ışık */
+  .tilt-host { position: relative; transform-style: preserve-3d; --mx: 50%; --my: 50%; --spot: 0; }
+  .tilt-host > * { border-radius: inherit; }
   .tilt-glare {
-    position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    transition: opacity .45s var(--ease-apple); mix-blend-mode: overlay;
+    position: absolute; inset: 0; border-radius: 12px; pointer-events: none; z-index: 3;
+    background:
+      radial-gradient(420px circle at var(--mx) var(--my), rgba(255,255,255,.22), rgba(255,255,255,0) 55%);
+    opacity: var(--spot);
+    mix-blend-mode: soft-light;
+  }
+  .band-dark .tilt-glare {
+    background: radial-gradient(380px circle at var(--mx) var(--my), rgba(120,170,255,.35), transparent 58%);
+    mix-blend-mode: screen;
   }
 
-  /* sayfa geçişi */
-  html[data-motion="full"] .page-anim { animation: pageIn .7s var(--ease-out) both; }
-  @keyframes pageIn {
-    from { opacity: 0; transform: translate3d(0, 18px, 0) scale(.992); }
-    to   { opacity: 1; transform: none; }
+  /* sayfa geçiş perdesi */
+  .curtain {
+    position: fixed; inset: 0; z-index: 90; pointer-events: none;
+    transform: translate3d(0, 100%, 0);
+    background:
+      radial-gradient(900px 500px at 20% 0%, rgba(44,107,245,.45), transparent 60%),
+      linear-gradient(168deg, #0A1220 0%, #0F1B2E 55%, #16253C 100%);
+    display: grid; place-items: center;
+    will-change: transform;
+  }
+  .curtain-mark {
+    font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.035em; color: #fff;
+  }
+  .curtain-mark b { color: #5A8DFF; font-weight: 700; }
+
+  /* üst ilerleme çubuğu */
+  .scroll-bar {
+    position: fixed; left: 0; top: 0; height: 2px; width: 100%; z-index: 95;
+    transform-origin: 0 50%; transform: scaleX(0);
+    background: linear-gradient(90deg, #2C6BF5, #5A8DFF 60%, #9BC0FF);
+    box-shadow: 0 0 12px rgba(90,141,255,.6);
+    pointer-events: none;
   }
 
-  /* hareket kapalıyken süsleri de durdur */
+  /* kayan şerit */
+  .marquee { display: flex; overflow: hidden; gap: 2.5rem; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .marquee-track { display: flex; flex-shrink: 0; gap: 2.5rem; align-items: center; min-width: 100%; animation: marquee var(--dur, 40s) linear infinite; animation-direction: var(--dir, normal); }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee { from { transform: translate3d(0,0,0); } to { transform: translate3d(calc(-100% - 2.5rem),0,0); } }
+
+  /* canlı gradyan ağı (kahraman) */
+  .mesh {
+    position: absolute; inset: -20%; pointer-events: none;
+    background:
+      radial-gradient(38% 42% at 22% 28%, rgba(44,107,245,.55), transparent 70%),
+      radial-gradient(34% 38% at 78% 22%, rgba(120,90,255,.38), transparent 70%),
+      radial-gradient(40% 46% at 62% 78%, rgba(60,200,255,.28), transparent 70%),
+      radial-gradient(30% 34% at 18% 82%, rgba(90,141,255,.35), transparent 70%);
+    filter: blur(40px) saturate(120%);
+    animation: mesh 22s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  @keyframes mesh {
+    0%   { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+    50%  { transform: translate3d(3%,-2%,0) rotate(8deg) scale(1.06); }
+    100% { transform: translate3d(-2%,3%,0) rotate(-6deg) scale(1.03); }
+  }
+  /* ince tanecik — düz gradyanları "basılı" hissettirir */
+  .grain::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  /* havada süzülen cam kartlar */
+  .float-a { animation: floatA 9s ease-in-out infinite; }
+  .float-b { animation: floatB 11s ease-in-out infinite; }
+  .float-c { animation: floatC 13s ease-in-out infinite; }
+  @keyframes floatA { 0%,100% { transform: translate3d(0,0,0) rotate(-3deg); } 50% { transform: translate3d(6px,-18px,0) rotate(-1deg); } }
+  @keyframes floatB { 0%,100% { transform: translate3d(0,0,0) rotate(2.5deg); } 50% { transform: translate3d(-8px,-14px,0) rotate(4deg); } }
+  @keyframes floatC { 0%,100% { transform: translate3d(0,0,0) rotate(1deg); } 50% { transform: translate3d(4px,-22px,0) rotate(-1.5deg); } }
+
+  /* parlayan kenar — kahraman arama kutusu */
+  .ring-anim { position: relative; }
+  .ring-anim::before {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+    background: conic-gradient(from var(--a, 0deg), rgba(90,141,255,.0), rgba(90,141,255,.9), rgba(155,192,255,.6), rgba(90,141,255,0) 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: spinA 6s linear infinite; pointer-events: none;
+  }
+  @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes spinA { to { --a: 360deg; } }
+
+  /* hareket kapalıyken tüm süsler durur, JS de stil yazmayı bırakır */
   html[data-motion="reduced"] .animate-drift,
   html[data-motion="reduced"] .animate-rise,
-  html[data-motion="reduced"] .animate-ping { animation: none !important; }
-  html[data-motion="reduced"] .rv,
-  html[data-motion="reduced"] .split-i { opacity: 1 !important; transform: none !important; filter: none !important; }
+  html[data-motion="reduced"] .animate-ping,
+  html[data-motion="reduced"] .mesh,
+  html[data-motion="reduced"] .marquee-track,
+  html[data-motion="reduced"] .float-a, html[data-motion="reduced"] .float-b, html[data-motion="reduced"] .float-c,
+  html[data-motion="reduced"] .ring-anim::before { animation: none !important; }
+  html[data-motion="reduced"] .curtain { display: none; }
 }
 
 @layer utilities {

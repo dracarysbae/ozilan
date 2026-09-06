@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
 import { Artwork } from "@/components/Artwork";
 import {
-  Reveal, SplitText, Tilt, CountUp, useScrollY, useProgress, useMedia, useMotionOK,
+  Reveal, SplitText, Tilt, CountUp, useProgress, useMedia, useMotionOK, useFrame, useScrub, Magnetic, Marquee,
 } from "@/components/Motion";
 import { useStore } from "@/lib/store";
 import { readMarket } from "@/lib/market";
@@ -54,7 +54,6 @@ function Section({
 
 export default function Home() {
   const { pool, ready, state } = useStore();
-  const y = useScrollY();
   const isDesk = useMedia("(min-width: 1024px)");
   const motionOK = useMotionOK();
 
@@ -62,11 +61,17 @@ export default function Home() {
   const deck = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
+  const railBar = useRef<HTMLDivElement>(null);
+  const heroBody = useRef<HTMLDivElement>(null);
+  const heroBg1 = useRef<HTMLDivElement>(null);
+  const heroBg2 = useRef<HTMLDivElement>(null);
+  const heroCards = useRef<HTMLDivElement>(null);
+  const deckCardEls = useRef<(HTMLDivElement | null)[]>([]);
+  const deckDots = useRef<(HTMLSpanElement | null)[]>([]);
+  const mouse = useRef({ x: 0, y: 0 });
 
-  const pShow = useProgress(showcase);
-  const pDeck = useProgress(deck);
-  const pRail = useProgress(rail);
-  const [railShift, setRailShift] = useState(0);
+  const pShow = useProgress(showcase, 12);
+  const railShift = useRef(0);
 
   const active = useMemo(() => pool.filter((l) => l.status === "active"), [pool]);
 
@@ -106,7 +111,7 @@ export default function Home() {
     const calc = () => {
       const t = track.current;
       if (!t) return;
-      setRailShift(Math.max(0, t.scrollWidth - window.innerWidth + 80));
+      railShift.current = Math.max(0, t.scrollWidth - window.innerWidth + 80);
     };
     calc();
     window.addEventListener("resize", calc);
@@ -114,47 +119,88 @@ export default function Home() {
     return () => { window.removeEventListener("resize", calc); clearTimeout(id); };
   }, [fresh.length]);
 
-  /* ---- kahraman hareketi ---- */
-  const hs = motionOK ? Math.min(y, 900) : 0;
-  const k = hs / 900;
-  const heroStyle: React.CSSProperties = motionOK
-    ? {
-        transform: `perspective(1400px) translate3d(0, ${hs * -0.16}px, ${-k * 220}px) rotateX(${k * 11}deg) scale(${1 - k * 0.06})`,
-        opacity: Math.max(0, 1 - k * 1.5),
-        filter: `blur(${k * 7}px)`,
-        transformOrigin: "50% 0%",
-      }
-    : {};
+  /* ---- kahraman: kaydırdıkça geriye yatıp uzaklaşır, fareyle paralaks ---- */
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { mouse.current = { x: e.clientX / window.innerWidth - 0.5, y: e.clientY / window.innerHeight - 0.5 }; };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+  useFrame(({ sy }) => {
+    const b = heroBody.current; if (!b) return;
+    if (!motionOK) { b.style.cssText = ""; return; }
+    const hs = Math.min(sy, 900), k = hs / 900;
+    const { x: mx, y: my } = mouse.current;
+    b.style.transformOrigin = "50% 0%";
+    b.style.transform = `perspective(1400px) translate3d(0, ${(hs * -0.16).toFixed(1)}px, ${(-k * 220).toFixed(1)}px) rotateX(${(k * 11).toFixed(2)}deg) scale(${(1 - k * 0.06).toFixed(4)})`;
+    b.style.opacity = String(Math.max(0, 1 - k * 1.5));
+    b.style.filter = k > 0.02 ? `blur(${(k * 7).toFixed(2)}px)` : "";
+    if (heroBg1.current) heroBg1.current.style.transform = `translate3d(${(hs * 0.06 + mx * -40).toFixed(1)}px, ${(hs * 0.3 + my * -30).toFixed(1)}px, 0)`;
+    if (heroBg2.current) heroBg2.current.style.transform = `translate3d(${(hs * -0.05 + mx * 50).toFixed(1)}px, ${(hs * 0.18 + my * 36).toFixed(1)}px, 0)`;
+    if (heroCards.current) heroCards.current.style.transform = `translate3d(${(mx * 26).toFixed(1)}px, ${(my * 18 + hs * 0.22).toFixed(1)}px, 0)`;
+  }, [motionOK]);
 
   const step = Math.min(2, Math.floor(pShow * 3.0001));
 
-  /* ---- 3B kart destesi ---- */
+  /* ---- 3B kart destesi: her kare DOM'a yazılır ---- */
   const deckCards = deals.slice(0, 4);
-  const deckPos = pDeck * Math.max(0, deckCards.length - 1);
+  useScrub(deck, (p) => {
+    const pos = p * Math.max(0, deckCards.length - 1);
+    deckCardEls.current.forEach((el, i) => {
+      if (!el) return;
+      const d = i - pos, ad = Math.abs(d);
+      el.style.transform = `translate3d(calc(-50% + ${(d * 168).toFixed(1)}px), calc(-50% + ${(ad * 18).toFixed(1)}px), ${(-ad * 300).toFixed(1)}px) rotateY(${(d * -27).toFixed(2)}deg) rotateX(${(ad * 6).toFixed(2)}deg) scale(${Math.max(0.55, 1 - ad * 0.06).toFixed(4)})`;
+      const far = Math.max(0, ad - 0.45);               // ön kart her zaman net
+      el.style.opacity = String(d < -1.1 ? 0 : Math.max(0, 1 - far * 0.7));
+      el.style.filter = far > 0.02 ? `blur(${Math.min(6, far * 3.2).toFixed(2)}px) saturate(${Math.max(0.4, 1 - far * 0.4).toFixed(2)})` : "";
+      el.style.zIndex = String(100 - Math.round(ad * 10));
+      el.style.pointerEvents = ad < 0.5 ? "auto" : "none";
+    });
+    deckDots.current.forEach((el, i) => {
+      if (!el) return;
+      const on = Math.round(pos) === i;
+      el.style.width = on ? "32px" : "12px";
+      el.style.background = on ? "#5A8DFF" : "rgba(255,255,255,.22)";
+    });
+  }, [deckCards.length]);
+
+  /* ---- yatay ray ---- */
+  useScrub(rail, (p) => {
+    const t = track.current; if (!t) return;
+    if (!(isDesk && motionOK)) { t.style.transform = ""; return; }
+    t.style.transform = `translate3d(${(-p * railShift.current).toFixed(1)}px,0,0)`;
+    if (railBar.current) railBar.current.style.width = `${Math.max(6, p * 100)}%`;
+  }, [isDesk, motionOK]);
+
+  const HERO_CARDS = [
+    { cls: "float-a", top: "14%", left: "6%", k: "Piyasa konumu", v: "%14 daha ucuz", tone: "text-moss" },
+    { cls: "float-b", top: "22%", right: "5%", k: "Güven skoru", v: "86 / 100", tone: "text-signal-glow" },
+    { cls: "float-c", bottom: "24%", left: "10%", k: "Anlaşıldı", v: "Karşıyaka · 3+1 · ≤ 5 mn", tone: "text-white" },
+  ];
 
   return (
     <>
       {/* ═════════════════════════════════════════════════════ kahraman */}
-      <section className="band-dark relative -mt-16 overflow-hidden pt-16">
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div
-            className="animate-drift absolute -left-40 -top-32 h-[46rem] w-[46rem] rounded-full opacity-70 blur-3xl"
-            style={{
-              background: "radial-gradient(circle, rgba(44,107,245,.45), transparent 62%)",
-              transform: `translate3d(${hs * 0.06}px, ${hs * 0.3}px, 0)`,
-            }}
-          />
-          <div
-            className="animate-drift absolute -right-40 top-24 h-[38rem] w-[38rem] rounded-full opacity-60 blur-3xl"
-            style={{
-              background: "radial-gradient(circle, rgba(90,141,255,.34), transparent 64%)",
-              animationDelay: "-8s",
-              transform: `translate3d(${hs * -0.05}px, ${hs * 0.18}px, 0)`,
-            }}
-          />
+      <section className="band-dark grain relative -mt-16 overflow-hidden pt-16">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="mesh" />
+          <div ref={heroBg1} className="absolute -left-40 -top-32 h-[46rem] w-[46rem] rounded-full opacity-70 blur-3xl"
+            style={{ background: "radial-gradient(circle, rgba(44,107,245,.45), transparent 62%)" }} />
+          <div ref={heroBg2} className="absolute -right-40 top-24 h-[38rem] w-[38rem] rounded-full opacity-60 blur-3xl"
+            style={{ background: "radial-gradient(circle, rgba(90,141,255,.34), transparent 64%)" }} />
+          {/* süzülen cam kartlar — sadece geniş ekranda */}
+          <div ref={heroCards} className="absolute inset-0 hidden lg:block">
+            {HERO_CARDS.map((c) => (
+              <div key={c.k} className={`glass absolute w-56 rounded-xl p-4 shadow-lift ${c.cls}`}
+                style={{ top: c.top, left: c.left, right: c.right, bottom: c.bottom }}>
+                <p className="text-[0.75rem] text-white/50">{c.k}</p>
+                <p className={`mt-1 text-[1.0625rem] font-semibold ${c.tone}`}>{c.v}</p>
+                <div className="mt-3 h-1 rounded-full bg-white/15"><div className="h-full w-2/3 rounded-full bg-signal-glow/80" /></div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="relative mx-auto max-w-shell px-5 pb-40 pt-20 text-center lg:px-8 lg:pb-48 lg:pt-28" style={heroStyle}>
+        <div ref={heroBody} className="relative mx-auto max-w-shell px-5 pb-40 pt-20 text-center lg:px-8 lg:pb-48 lg:pt-28">
           <div className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-1.5 text-[0.8125rem] text-white/80 backdrop-blur">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal-glow opacity-75" />
@@ -175,7 +221,7 @@ export default function Home() {
 
           <Reveal delay={440} kind="zoom">
             <div className="mx-auto mt-11 max-w-2xl text-left">
-              <div className="rounded-full p-[1px]" style={{ background: "linear-gradient(120deg, rgba(90,141,255,.55), rgba(255,255,255,.12) 40%, rgba(90,141,255,.35))" }}>
+              <div className="ring-anim rounded-full p-[1px]" style={{ background: "linear-gradient(120deg, rgba(90,141,255,.55), rgba(255,255,255,.12) 40%, rgba(90,141,255,.35))" }}>
                 <Omnibox big dark />
               </div>
             </div>
@@ -211,18 +257,26 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        <div className="relative border-t border-white/10 py-5">
+          <Marquee speed={46} className="text-[0.9375rem] font-medium text-white/40">
+            {["Volkswagen", "BMW", "Mercedes-Benz", "Toyota", "Renault", "Fiat", "Audi", "Hyundai", "Tesla", "Ford", "Honda", "Peugeot", "Kia", "Skoda", "Volvo", "Porsche", "Dacia", "Nissan"].map((b) => (
+              <span key={b} className="flex items-center gap-10 whitespace-nowrap">{b}<span className="h-1 w-1 rounded-full bg-signal-glow/60" /></span>
+            ))}
+          </Marquee>
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════ kategoriler */}
       <Section
         title="Nereye bakmak istersin?"
-        lead="Üç ana başlık, on alt kategori. Yanlarındaki rakam o an açık olan ilan sayısı."
+        lead="Üç ana başlık, on altı alt kategori, binlerce model ve paket. Yanlarındaki rakam o an açık olan ilan sayısı."
         href="/arama/"
         hrefLabel="Tüm ilanlar"
       >
         <div className="grid gap-5 lg:grid-cols-3">
           {byCat.map(({ c, n, med }, i) => (
-            <Reveal key={c.slug} delay={i * 140} kind={i === 0 ? "flipL" : i === 2 ? "flipR" : "tilt"} className="h-full">
+            <Reveal key={c.slug} delay={i * 140} kind={i === 0 ? "flipL" : i === 2 ? "flipR" : "tilt"} className="h-full" once>
               <Tilt max={7} className="h-full">
                 <div className="plaque-link group flex h-full flex-col overflow-hidden">
                   <div className="relative h-36 overflow-hidden">
@@ -287,21 +341,12 @@ export default function Home() {
               {/* masaüstü: 3B deste */}
               <div className="relative mt-12 hidden h-[19rem] lg:block" style={{ perspective: "1700px" }}>
                 {deckCards.map(({ l, m }, i) => {
-                  const d = i - deckPos;
-                  const ad = Math.abs(d);
                   return (
                     <div
                       key={l.id}
+                      ref={(n) => { deckCardEls.current[i] = n; }}
                       className="absolute left-1/2 top-1/2 w-[30rem]"
-                      style={{
-                        transform: `translate3d(calc(-50% + ${d * 168}px), calc(-50% + ${ad * 18}px), ${-ad * 300}px) rotateY(${d * -27}deg) rotateX(${ad * 6}deg) scale(${Math.max(0.55, 1 - ad * 0.06)})`,
-                        opacity: d < -1.1 ? 0 : Math.max(0, 1 - ad * 0.5),
-                        filter: `blur(${Math.min(6, ad * 2.6)}px) saturate(${Math.max(0.4, 1 - ad * 0.3)})`,
-                        zIndex: 100 - Math.round(ad * 10),
-                        transition: "transform .16s linear, opacity .16s linear, filter .16s linear",
-                        transformStyle: "preserve-3d",
-                        pointerEvents: ad < 0.5 ? "auto" : "none",
-                      }}
+                      style={{ transformStyle: "preserve-3d", willChange: "transform, opacity, filter" }}
                     >
                       <div className="glass overflow-hidden rounded-xl p-6">
                         <div className="flex items-start gap-5">
@@ -344,12 +389,9 @@ export default function Home() {
                 {deckCards.map((_, i) => (
                   <span
                     key={i}
+                    ref={(n) => { deckDots.current[i] = n; }}
                     className="h-1 rounded-full"
-                    style={{
-                      width: Math.round(deckPos) === i ? 32 : 12,
-                      background: Math.round(deckPos) === i ? "#5A8DFF" : "rgba(255,255,255,.22)",
-                      transition: "width .4s var(--ease-apple), background-color .4s var(--ease-apple)",
-                    }}
+                    style={{ width: 12, background: "rgba(255,255,255,.22)", transition: "width .4s var(--ease-apple), background-color .4s var(--ease-apple)" }}
                   />
                 ))}
               </div>
@@ -504,11 +546,7 @@ export default function Home() {
           <div
             ref={track}
             className="flex gap-5 px-5 lg:px-8"
-            style={
-              isDesk && motionOK
-                ? { transform: `translate3d(${-pRail * railShift}px,0,0)`, transition: "transform .12s linear", width: "max-content" }
-                : { overflowX: "auto", scrollbarWidth: "thin" }
-            }
+            style={isDesk && motionOK ? { width: "max-content", willChange: "transform" } : { overflowX: "auto", scrollbarWidth: "thin" }}
           >
             {fresh.map((l, i) => (
               <div key={l.id} className="w-[19rem] shrink-0">
@@ -521,7 +559,7 @@ export default function Home() {
 
           <div className="mx-auto mt-10 hidden w-full max-w-shell px-5 lg:block lg:px-8">
             <div className="h-1 w-full rounded-full bg-line">
-              <div className="h-full rounded-full bg-signal" style={{ width: `${Math.max(6, pRail * 100)}%`, transition: "width .12s linear" }} />
+              <div ref={railBar} className="h-full rounded-full bg-signal" style={{ width: "6%" }} />
             </div>
           </div>
         </div>
@@ -596,8 +634,8 @@ export default function Home() {
           </Reveal>
           <Reveal delay={360} kind="zoom">
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/ilan-ver/" className="btn-signal px-7">İlan ver</Link>
-              <Link href="/arama/" className="btn-ghost px-7">İlanlara göz at</Link>
+              <Magnetic><Link href="/ilan-ver/" className="btn-signal px-7">İlan ver</Link></Magnetic>
+              <Magnetic strength={0.25}><Link href="/arama/" className="btn-ghost px-7">İlanlara göz at</Link></Magnetic>
             </div>
           </Reveal>
         </section>
