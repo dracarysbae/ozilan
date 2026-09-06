@@ -10,7 +10,8 @@ import { useStore } from "@/lib/store";
 import { readMarket } from "@/lib/market";
 import { scoreListing } from "@/lib/trust";
 import { attrsFor, labelFor } from "@/data/taxonomy";
-import { ago, dateTR, num, tl } from "@/lib/format";
+import { dateTR, num, tl } from "@/lib/format";
+import { Ago } from "@/components/Ago";
 import { LoanCalc } from "@/components/LoanCalc";
 
 const REASONS = ["Sahte / yanıltıcı ilan", "Yanlış kategori", "Fiyat gerçekçi değil", "Dolandırıcılık şüphesi", "Ürün satılmış", "Uygunsuz içerik"];
@@ -97,7 +98,7 @@ function Detail() {
             <h1 className="mt-2 font-serif text-[clamp(1.8rem,3.4vw,2.9rem)] leading-[1.05]">{l.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-2xs text-mute">
               <span>Yayın {dateTR(l.createdAt)}</span>
-              <span>Güncelleme {ago(l.bumpedAt)}</span>
+              <span>Güncelleme <Ago ts={l.bumpedAt} /></span>
               <span>{num(l.views)} görüntülenme</span>
             </div>
           </div>
