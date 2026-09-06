@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filters } from "@/components/Filters";
+import { Reveal } from "@/components/Motion";
 import { ListingCard } from "@/components/ListingCard";
 import { useStore } from "@/lib/store";
 import { emptyQuery, paramsToQuery, parseNatural, queryToParams, runQuery, type Query, type Sort } from "@/lib/search";
@@ -228,7 +229,11 @@ function Results() {
           ) : (
             <>
               <div className={view === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
-                {shown.map((l) => <ListingCard key={l.id} l={l} pool={pool} variant={view} />)}
+                {shown.map((l, i) => (
+                  <Reveal key={l.id} kind={view === "grid" ? "tilt" : "up"} delay={(i % 6) * 70} once exit={false}>
+                    <ListingCard l={l} pool={pool} variant={view} />
+                  </Reveal>
+                ))}
               </div>
               {shown.length < results.length && (
                 <div className="mt-8 flex justify-center">
