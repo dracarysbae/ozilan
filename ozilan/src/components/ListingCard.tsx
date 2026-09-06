@@ -8,7 +8,8 @@ import { TrustChip } from "./Trust";
 import { readMarket } from "@/lib/market";
 import { scoreListing } from "@/lib/trust";
 import { useStore } from "@/lib/store";
-import { ago, num, tl } from "@/lib/format";
+import { num, tl } from "@/lib/format";
+import { Ago } from "@/components/Ago";
 import { attrsFor, labelFor } from "@/data/taxonomy";
 
 function Star({ on }: { on: boolean }) {
@@ -120,7 +121,7 @@ export function ListingCard({ l, pool, variant = "grid" }: { l: Listing; pool: L
             <div className="flex items-center gap-3 text-right">
               <div className="text-[0.72rem] text-mute">
                 <p>{l.district}, {l.city}</p>
-                <p className="num">{ago(l.bumpedAt)}</p>
+                <p className="num"><Ago ts={l.bumpedAt} /></p>
               </div>
               <TrustChip t={t} />
             </div>
@@ -154,7 +155,7 @@ export function ListingCard({ l, pool, variant = "grid" }: { l: Listing; pool: L
           </div>
           <div className="mt-2 flex items-center justify-between">
             {m && m.confidence !== "low" ? <GaugeInline m={m} /> : <span />}
-            <span className="num text-[0.75rem] text-mute-2">{ago(l.bumpedAt)}</span>
+            <span className="num text-[0.75rem] text-mute-2"><Ago ts={l.bumpedAt} /></span>
           </div>
         </div>
       </div>
