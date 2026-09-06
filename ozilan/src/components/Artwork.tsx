@@ -1,15 +1,5 @@
 import React from "react";
 
-const PALETTES: [string, string][] = [
-  ["#E7EDF8", "#5A6E90"],
-  ["#EAF0F9", "#4F6488"],
-  ["#E4EBF7", "#54688A"],
-  ["#EDF1F8", "#5F7396"],
-  ["#E6EDF6", "#4C6188"],
-  ["#EBEFF7", "#5B6F92"],
-  ["#E3EAF6", "#506587"],
-  ["#EEF2F9", "#63779A"],
-]
 /* silhouettes drawn on a 0..100 box, anchored bottom */
 const GLYPH: Record<string, string[]> = {
   konut: [
@@ -168,29 +158,71 @@ function glyphFor(sub: string, kind?: string): string[] {
   return EXTRA_GLYPH[sub] ?? GLYPH[sub] ?? GLYPH.elektronik;
 }
 
+/* kategoriye göre renk dünyası — koyu, derin, ışıklı */
+const WORLD: Record<string, { base: string; a: string; b: string; c: string; ink: string }> = {
+  emlak:       { base: "#0F1B2E", a: "#2C6BF5", b: "#3CC8FF", c: "#7A5AFF", ink: "#DCE9FF" },
+  vasita:      { base: "#0B1426", a: "#3A5BFF", b: "#7A5AFF", c: "#2CC4F5", ink: "#E4ECFF" },
+  "ikinci-el": { base: "#121A2C", a: "#6D5AFF", b: "#2C9BF5", c: "#3CE0C8", ink: "#E6E9FF" },
+};
+const SUB_WORLD: Record<string, keyof typeof WORLD> = {
+  konut: "emlak", isyeri: "emlak", arsa: "emlak", devremulk: "emlak", "turistik-kiralik": "emlak",
+  otomobil: "vasita", "arazi-suv-pickup": "vasita", motosiklet: "vasita", "minivan-panelvan": "vasita",
+  ticari: "vasita", karavan: "vasita", "deniz-araci": "vasita",
+};
+
 export function Artwork({
   seed, sub, kind, className = "", label,
 }: { seed: number; sub: string; kind?: string; className?: string; label?: string }) {
-  const p = PALETTES[seed % PALETTES.length];
-  const [bg, fg] = p;
+  const w = WORLD[SUB_WORLD[sub] ?? "ikinci-el"];
   const glyphs = glyphFor(sub, kind);
   const d = glyphs[seed % glyphs.length];
   const rot = ((seed >> 3) % 3) - 1;
   const id = `a${seed}`;
+  // tohuma göre blob konumları — her ilan farklı ama deterministik
+  const r1 = (seed % 37) / 37, r2 = ((seed >> 2) % 41) / 41, r3 = ((seed >> 5) % 43) / 43;
+  const x1 = 14 + r1 * 30, y1 = 12 + r2 * 26;
+  const x2 = 58 + r2 * 32, y2 = 8 + r3 * 30;
+  const x3 = 30 + r3 * 44, y3 = 66 + r1 * 26;
 
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className={className} role="img"
       aria-label={label ?? "ilan görseli"}>
       <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#FBFCFE" />
-          <stop offset="100%" stopColor={bg} />
+        <radialGradient id={`b1${id}`} cx={x1} cy={y1} r="46" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={w.a} stopOpacity=".95" /><stop offset="100%" stopColor={w.a} stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`b2${id}`} cx={x2} cy={y2} r="42" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={w.b} stopOpacity=".8" /><stop offset="100%" stopColor={w.b} stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`b3${id}`} cx={x3} cy={y3} r="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={w.c} stopOpacity=".75" /><stop offset="100%" stopColor={w.c} stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={`sh${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity=".22" /><stop offset="45%" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
+        <linearGradient id={`st${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" /><stop offset="100%" stopColor={w.ink} />
+        </linearGradient>
+        <filter id={`bl${id}`} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9" /></filter>
+        <filter id={`gl${id}`} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2" /></filter>
+        <filter id={`gr${id}`}><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter>
+        <pattern id={`dots${id}`} width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".45" fill="#fff" fillOpacity=".16" /></pattern>
       </defs>
-      <rect width="100" height="100" fill={`url(#g${id})`} />
-      <g transform={`translate(2 1) rotate(${rot} 50 58) scale(0.9)`} fill="none" stroke={fg}
-        strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" opacity="0.8">
-        <path d={d} />
+
+      <rect width="100" height="100" fill={w.base} />
+      <g filter={`url(#bl${id})`}>
+        <rect width="100" height="100" fill={`url(#b1${id})`} />
+        <rect width="100" height="100" fill={`url(#b2${id})`} />
+        <rect width="100" height="100" fill={`url(#b3${id})`} />
+      </g>
+      <rect width="100" height="100" fill={`url(#dots${id})`} />
+      <rect width="100" height="100" filter={`url(#gr${id})`} opacity=".09" style={{ mixBlendMode: "overlay" }} />
+      <rect width="100" height="100" fill={`url(#sh${id})`} />
+
+      {/* ışık halesi + glif */}
+      <g transform={`translate(2 1) rotate(${rot} 50 58) scale(0.9)`} fill="none" strokeLinejoin="round" strokeLinecap="round">
+        <path d={d} stroke={w.b} strokeWidth="4" opacity=".55" filter={`url(#gl${id})`} />
+        <path d={d} stroke={`url(#st${id})`} strokeWidth="1.9" opacity=".95" />
       </g>
     </svg>
   );
