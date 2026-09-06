@@ -6,7 +6,8 @@ import { scoreListing } from "@/lib/trust";
 import { readMarket } from "@/lib/market";
 import { Artwork } from "@/components/Artwork";
 import { TrustChip } from "@/components/Trust";
-import { ago, num, tl } from "@/lib/format";
+import { num, tl } from "@/lib/format";
+import { Ago } from "@/components/Ago";
 import { labelFor } from "@/data/taxonomy";
 
 type Tab = "risk" | "reports" | "all";
@@ -86,7 +87,7 @@ export default function Panel() {
                   <div className="min-w-0 flex-1">
                     <Link href={`/ilan/?id=${r.listingId}`} className="truncate text-[0.9rem] font-medium hover:text-signal">{l?.title ?? r.listingId}</Link>
                     <p className="text-[0.78rem] text-mute">{r.reason}{r.note && ` — ${r.note}`}</p>
-                    <p className="num text-2xs text-mute-2">{ago(r.at)}</p>
+                    <p className="num text-2xs text-mute-2"><Ago ts={r.at} /></p>
                   </div>
                   <span className={`chip ${r.state === "open" ? "!border-gold !text-gold" : "!border-moss !text-moss"}`}>{r.state === "open" ? "açık" : "kapandı"}</span>
                   {r.state === "open" && (
