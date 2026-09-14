@@ -1,26 +1,30 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Artwork } from "@/components/Artwork";
+import { Suspense, useMemo, useState } from "react";
+import {useSearchParams} from "next/navigation";
+import { ListingImage } from "@/components/ListingImage";
 import { useStore } from "@/lib/store";
 import { tl } from "@/lib/format";
 import { Ago } from "@/components/Ago";
 
-export default function Inbox() {
-  const { state, pool, sellers, me, send, ready } = useStore();
+function Inbox() {
+  const { state, pool, sellers, me, send, ready, refresh, busy } = useStore();
+  const params=useSearchParams();
+  const [sending,setSending]=useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [text, setText] = useState("");
 
   const threads = useMemo(
-    () => [...state.threads].sort((a, b) => b.updatedAt - a.updatedAt),
-    [state.threads],
+    () => state.threads.filter(t=>me&&(t.buyerId===me.id||t.sellerId===me.id)).sort((a, b) => b.updatedAt - a.updatedAt),
+    [state.threads,me],
   );
-  const current = threads.find((t) => t.id === (active ?? threads[0]?.id));
+  const current = threads.find((t) => t.id === (active ?? params.get("gorusme")))??threads[0];
   const msgs = useMemo(
     () => state.messages.filter((m) => m.threadId === current?.id).sort((a, b) => a.at - b.at),
     [state.messages, current],
   );
   const listing = pool.find((l) => l.id === current?.listingId);
+  const correspondent = current ? sellers[current.sellerId === me?.id ? current.buyerId : current.sellerId] : undefined;
 
   if (!ready) return <div className="px-4 py-24 text-mute">Yükleniyor…</div>;
 
@@ -36,6 +40,7 @@ export default function Inbox() {
       <div className="border-b border-line pb-4">
         <p className="eyebrow">Kutu</p>
         <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">Mesajlar</h1>
+        <button className="btn-quiet mt-2" disabled={busy} onClick={()=>void refresh()}>{busy?"Yenileniyor…":"Mesajları yenile ↻"}</button><p className="text-xs text-mute">Bu ekran açıkken yeni mesajlar 30 saniyede bir kontrol edilir.</p>
       </div>
 
       {threads.length === 0 ? (
@@ -55,7 +60,7 @@ export default function Inbox() {
                 <li key={t.id}>
                   <button onClick={() => setActive(t.id)}
                     className={`flex w-full gap-3 border-b border-line p-3 text-left transition ${on ? "bg-ink text-paper" : "hover:bg-paper-2"}`}>
-                    {l && <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-12 w-14 shrink-0" />}
+                    {l && <ListingImage listing={l} className="h-12 w-14 shrink-0" />}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.82rem] font-medium">{l?.title ?? "Kaldırılmış ilan"}</p>
                       <p className={`truncate text-[0.75rem] ${on ? "text-paper/55" : "text-mute"}`}>{last?.body ?? "—"}</p>
@@ -67,13 +72,13 @@ export default function Inbox() {
             })}
           </ul>
 
-          <div className="flex min-h-[60vh] flex-col bg-paper">
+          <div className="flex min-h-[60vh] min-w-0 flex-col bg-paper">
             {listing && (
               <Link href={`/ilan/?id=${listing.id}`} className="flex items-center gap-3 border-b border-line p-3 hover:bg-paper-2">
-                <Artwork seed={listing.art} sub={listing.sub} kind={String(listing.pathLabels?.join(" ") ?? listing.attrs.tip ?? "")} className="h-12 w-16 shrink-0" />
+                <ListingImage listing={listing} className="h-12 w-16 shrink-0" />
                 <div className="min-w-0">
                   <p className="truncate text-[0.9rem] font-medium">{listing.title}</p>
-                  <p className="num text-[0.85rem] text-mute">{tl(listing.price)} · {sellers[listing.sellerId]?.name}</p>
+                  <p className="num text-[0.85rem] text-mute">{tl(listing.price)} · {correspondent?.name ?? "Üye"}</p>
                 </div>
                 <span className="ml-auto shrink-0 font-mono text-2xs text-mute">ilana git →</span>
               </Link>
@@ -85,7 +90,7 @@ export default function Inbox() {
                 return (
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[75%] border px-3 py-2 text-[0.86rem] ${mine ? "border-ink bg-ink text-paper" : "border-line bg-paper-2"}`}>
-                      <p className="whitespace-pre-line">{m.body}</p>
+                      <p className="whitespace-pre-line [overflow-wrap:anywhere]">{m.body}</p>
                       <p className={`num mt-1 text-2xs ${mine ? "text-paper/40" : "text-mute-2"}`}><Ago ts={m.at} /></p>
                     </div>
                   </div>
@@ -93,10 +98,10 @@ export default function Inbox() {
               })}
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); if (current) { send(current.id, text); setText(""); } }}
+            <form onSubmit={async(e) => { e.preventDefault(); if(current&&!sending){setSending(true);if(await send(current.id,text))setText("");setSending(false);} }}
               className="flex gap-2 border-t border-line p-3">
-              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Mesajını yaz…" className="field" />
-              <button className="btn-primary shrink-0">Gönder</button>
+              <input aria-label="Mesajın" maxLength={2000} required value={text} onChange={(e) => setText(e.target.value)} placeholder="Mesajını yaz…" className="field min-w-0" />
+              <button disabled={sending||!text.trim()} className="btn-primary shrink-0">{sending?"Gönderiliyor…":"Gönder"}</button>
             </form>
           </div>
         </div>
@@ -104,3 +109,4 @@ export default function Inbox() {
     </div>
   );
 }
+export default function Page(){return <Suspense fallback={<div className="auth-loading">Mesajlar hazırlanıyor…</div>}><Inbox/></Suspense>;}

@@ -4,6 +4,8 @@ import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "
 import { useRouter, useSearchParams } from "next/navigation";
 import { MarketplaceArt } from "./MarketplaceArt";
 import { ScrollExperience } from "./ScrollExperience";
+import {backendConfigured} from "@/lib/backend";
+import {LiveMarketplace} from "./LiveMarketplace";
 import { MARKET_AREAS, MARKET_ITEMS, areaFor, filterMarket, isGoods, marketMoney, readMarketFilters, marketSearchHref, type MarketArea, type MarketItem } from "@/data/marketplace";
 
 type CartLine={id:string;quantity:number;note:string;date:string};
@@ -119,4 +121,4 @@ function MarketplaceContent(){
     <Sheet notice={notice} error={storageError} open={sheet==="drafts"} title="Taslaklarım" onClose={()=>setSheet(null)}><p className="market-form-note">Bu cihazda saklanan planların. Siparişler verilmedi, talepler gönderilmedi.</p>{local.drafts.length===0?<div className="market-empty"><h3>İlk fikrine yer aç.</h3><p>Bir sepet veya hizmet talebi hazırladığında burada saklayabilirsin.</p></div>:<div className="market-drafts">{local.drafts.map(d=><details key={d.id}><summary><span>{d.kind==="order"?"SEPET TASLAĞI":"TALEP TASLAĞI"}<strong>{d.title}</strong></span><span>＋</span></summary><p>{d.description}</p>{d.provider&&<p>Örnek uzman: {d.provider}</p>}{d.city&&<p>Konum: {d.city}</p>}{d.date&&<p>Tarih tercihi: {d.date}</p>}<p><strong>{d.kind==="order"?"Ürün toplamı":"Bütçe"}: {marketMoney(d.budget)}</strong></p><button onClick={()=>persist({...local,drafts:local.drafts.filter(x=>x.id!==d.id)})}>Taslağı kaldır</button></details>)}</div>}</Sheet>
   </div>;
 }
-export default function MarketplaceHub(){return <Suspense fallback={<div className="market-loading">Keşif alanın hazırlanıyor…</div>}><MarketplaceContent/></Suspense>;}
+export default function MarketplaceHub(){return <Suspense fallback={<div className="market-loading">Keşif alanın hazırlanıyor…</div>}>{backendConfigured?<LiveMarketplace/>:<MarketplaceContent/>}</Suspense>;}

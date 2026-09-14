@@ -9,7 +9,7 @@ import { dateTR, num, tl } from "@/lib/format";
 
 export default function Account() {
   const router = useRouter();
-  const { me, pool, state, sellers, signOut, removeListing, bump, setStatus, dropSearch, reset, ready } = useStore();
+  const { me, pool, state, sellers, signOut, removeListing, bump, setStatus, dropSearch, reset, ready, busy, live } = useStore();
 
   const mine = useMemo(() => pool.filter((l) => me && l.sellerId === me.id), [pool, me]);
   const recent = useMemo(() => state.recent.map((id) => pool.find((l) => l.id === id)).filter(Boolean).slice(0, 8) as typeof pool, [state.recent, pool]);
@@ -39,14 +39,14 @@ export default function Account() {
         <div className="flex gap-2">
           {me.role === "admin" && <Link href="/panel/" className="btn-ghost">Yönetim paneli</Link>}
           <Link href="/ilan-ver/" className="btn-signal">Yeni ilan</Link>
-          <button onClick={() => { signOut(); router.push("/"); }} className="btn-ghost">Çıkış</button>
+          <button onClick={async () => { await signOut(); router.push("/"); }} className="btn-ghost">Çıkış</button>
         </div>
       </div>
 
       <div className="mt-6 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Aktif ilan", num(mine.filter((l) => l.status === "active").length)],
-          ["Toplam görüntülenme", num(views)],
+          [live?"Kayıtlı arama":"Toplam görüntülenme", live?num(state.searches.length):num(views)],
           ["Portföy değeri", tl(mine.reduce((s, l) => s + l.price, 0))],
           ["Ortalama güven skoru", mine.length ? `${avgTrust}/100` : "—"],
         ].map(([k, v]) => (
@@ -77,12 +77,12 @@ export default function Account() {
                   <span className={`chip ${l.status === "active" ? "!text-moss !border-moss" : "!text-signal !border-signal"}`}>
                     {l.status === "active" ? "Yayında" : l.status === "pending" ? "İncelemede" : "Kaldırıldı"}
                   </span>
-                  <button onClick={() => bump(l.id)} className="btn-quiet !h-8 text-[0.78rem]">Öne çıkar</button>
-                  <button onClick={() => setStatus(l.id, l.status === "active" ? "removed" : "active")} className="btn-quiet !h-8 text-[0.78rem]">
+                  <Link href={`/ilan-ver/?duzenle=${l.id}`} className="btn-quiet !h-8 text-[0.78rem]">Düzenle</Link>
+                  <button disabled={busy} onClick={() => bump(l.id)} className="btn-quiet !h-8 text-[0.78rem]">Tarihini güncelle · 24 saatte bir</button>
+                  <button disabled={busy} onClick={() => setStatus(l.id, l.status === "active" ? "removed" : "active")} className="btn-quiet !h-8 text-[0.78rem]">
                     {l.status === "active" ? "Yayından kaldır" : "Yeniden yayınla"}
                   </button>
-                  <button onClick={() => removeListing(l.id)} className="btn-quiet !h-8 text-[0.78rem] text-signal">Sil</button>
-                  <span className="num ml-auto text-2xs text-mute">{num(l.views)} görüntülenme</span>
+                  {!live&&<span className="num ml-auto text-2xs text-mute">{num(l.views)} görüntülenme</span>}
                 </div>
               </div>
             ))}
@@ -122,11 +122,10 @@ export default function Account() {
       <section className="mt-16 border border-line p-5">
         <p className="eyebrow">Veri</p>
         <p className="mt-2 max-w-2xl text-[0.85rem] leading-relaxed text-mute">
-          Bu demoda hesabın, ilanların, favorilerin ve mesajların yalnızca bu tarayıcının yerel deposunda tutulur.
-          Sıfırlarsan başlangıç kataloğuna dönersin.
+          İlanların, favorilerin, aramaların ve görüşmelerin hesabına bağlıdır. Başka cihazdan giriş yaptığında da erişebilirsin.
+          Aşağıdaki işlem yalnızca bu cihazdaki son gezdiklerini ve karşılaştırma listesini temizler.
         </p>
-        <button onClick={() => { if (confirm("Tüm yerel veriler silinecek. Emin misin?")) { reset(); router.push("/"); } }}
-          className="btn-ghost mt-4 text-signal">Tüm verileri sıfırla</button>
+        <button onClick={reset} className="btn-ghost mt-4">Bu cihazdaki keşif geçmişini temizle</button>
       </section>
     </div>
   );

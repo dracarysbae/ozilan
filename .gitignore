@@ -5,4 +5,6 @@ out/
 .preview-root/
 *.tsbuildinfo
 *.log
+.env*
+!.env.example
 .DS_Store

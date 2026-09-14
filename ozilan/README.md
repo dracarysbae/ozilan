@@ -1,97 +1,67 @@
-# OzIlan
+# OzBirArada uygulaması
 
-Çok kategorili ilan platformu — emlak, vasıta ve ikinci el. Klasik ilan sitelerinden farkı:
-**fiyatı göstermekle kalmaz, fiyatın ne anlama geldiğini gösterir.**
+Next.js 16 / React 19 / TypeScript / Tailwind. GitHub Pages için `/ozilan/` altında statik çıktı; ortak veri için Supabase Auth, PostgreSQL ve Storage.
 
-> Demo amaçlı bir projedir. Katalogdaki ilanlar kurgusaldır; kullanıcı verisi yalnızca
-> tarayıcının yerel deposunda tutulur, hiçbir sunucuya gönderilmez.
+## Çalışan kod akışları
 
-## Öne çıkan özellikler
+- E-posta ile üyelik, giriş, çıkış, doğrulama yönlendirmesi ve şifre kurtarma arayüzü.
+- Yedi alanda fotoğraflı ilan oluşturma, düzenleme, yayından kaldırma ve yeniden yayınlama.
+- JPG/PNG/WebP fotoğrafları sırayla en fazla 1600 piksele dönüştürme, üst verileri atma; en fazla 6 fotoğraf, her çıktıda en fazla 2 MB.
+- Arama, alt kategori, şehir ve fiyat filtreleri; favoriler ve hesaba bağlı kayıtlı aramalar.
+- İlan sahibine özel görüşme; ikinci el teklifini mesaj olarak gönderme. Otomatik satıcı yanıtı yok.
+- Şikâyet ve yönetici moderasyonu. İzinler istemci rolüne değil PostgreSQL RLS politikalarına dayanır.
+- Mevcut 3D kart, ışık, kaydırma ve kategori geçişleri korunur. Mobil varlık kurtarma ve görünmeyen sahnelerin durdurulması devam eder.
 
-| | |
-|---|---|
-| **Cümleyle arama** | "İzmir Karşıyaka 3+1 daire 5 milyon altı" → şehir, ilçe, oda sayısı, bütçe, model yılı, kilometre, yakıt ve vites otomatik ayrıştırılır; ne anlaşıldığı kullanıcıya geri gösterilir. |
-| **Piyasa konumu** | Her ilan için kendi karşılaştırma kümesi kurulur (aynı marka, ±3 model yılı, benzer km, aynı oda tipi…) ve fiyat o kümenin ortancasına göre konumlandırılır. Emlakta m² ve şehir endeksiyle normalize edilir. |
-| **Güven taraması** | Satıcı geçmişi, ilan bütünlüğü, görsel sayısı, baskı dili, platform dışı iletişim / IBAN kalıpları, fiyat anomalisi ve kopya ilan taraması tek bir 0–100 skoruna indirgenir. |
-| **Fiyat önerisi** | İlan verirken girilen özelliklere göre alt çeyrek / ortanca / üst çeyrek fiyat önerilir; girilen fiyatın ortancaya uzaklığı anlık gösterilir. |
-| **Canlı güven önizlemesi** | İlan formu doldurulurken skor gerçek zamanlı hesaplanır, eksikler yazarken bildirilir. |
-| **Moderasyon paneli** | Risk kuyruğu (skoru düşük ilanlar), şikâyet yönetimi ve toplu ilan tablosu. |
+Bu sürüm doğrudan ilan sahibiyle iletişim kurar. Kart ödemesi, stok rezervasyonu, kargo siparişi veya emanet ödeme oluşturmaz. Bunlar entegrasyonu tamamlanmış hizmetler gibi sunulmaz.
 
-Bunların yanında: dinamik kategori filtreleri, favoriler, kayıtlı aramalar, ilan içi
-mesajlaşma, kullanıcı portföyü ve tam responsive arayüz.
+## Geliştirme
 
-## Teknoloji
+Node 22 kullanılır. Bu dizinde:
 
-- **Next.js 16** (App Router) — `output: "export"` ile tamamen statik çıktı
-- **React 19** + **TypeScript** (strict)
-- **Tailwind CSS 3** — özel tasarım sistemi (`tailwind.config.ts`)
-- Sunucu, veritabanı ve dış API bağımlılığı **yok**
-
-### Veri katmanı
-
-Katalog, `src/data/seed.ts` içindeki deterministik üreteçle derleme anında oluşturulur
-(sabit tohumlu PRNG → her derlemede aynı sonuç). Kullanıcının oluşturduğu ilanlar,
-favoriler, mesajlar ve hesap `localStorage` üzerinde saklanır (`src/lib/store.tsx`).
-
-Gerçek bir arka uca geçmek istersen değiştirmen gereken tek yer `src/lib/store.tsx`:
-arayüz katmanı veri kaynağından bağımsızdır.
-
-## Yerelde çalıştırma
-
-```bash
-npm install
-npm run dev        # http://localhost:3000
-npm run build      # statik çıktı → out/
+```sh
+npm ci
+npm test
+npm run lint
+npm run dev
 ```
 
-## GitHub Pages'e yayınlama
+`.env.example` dosyasını `.env.local` olarak kopyalayıp yalnızca projenin public URL ve publishable anahtarını gir. Gerçek kurulum adımları [supabase/README.md](../supabase/README.md) içinde.
 
-Depoda hazır bir GitHub Actions iş akışı var (`.github/workflows/deploy.yml`).
-
-1. Bu projeyi kendi GitHub deponuza push edin (varsayılan dal: `main`).
-2. Depo → **Settings → Pages → Build and deployment → Source: GitHub Actions** seçin.
-3. `main` dalına her push'ta site otomatik derlenip yayınlanır.
-
-Adres: `https://<kullanıcı-adınız>.github.io/<depo-adı>/`
-
-İş akışı `NEXT_PUBLIC_BASE_PATH` değişkenini depo adından otomatik türetir; alt dizinde
-yayınlandığında varlık yolları bu sayede doğru kalır. Özel alan adı kullanacaksanız
-bu değişkeni boş bırakın.
-
-### Vercel'e yayınlama (alternatif)
-
-Depoyu Vercel'e bağlamak yeterli; ek yapılandırma gerekmez. Vercel'de statik export
-yerine sunucu tarafı çalıştırmak isterseniz `next.config.mjs` içindeki
-`output: "export"` ve `basePath` satırlarını kaldırın.
-
-## Dizin yapısı
-
-```
-src/
-  app/            sayfalar (App Router)
-    arama/        arama sonuçları + dinamik filtreler
-    ilan/         ilan detayı (?id=…)
-    ilan-ver/     4 adımlı ilan oluşturma sihirbazı
-    hesap/        kullanıcı portföyü
-    panel/        moderasyon paneli
-  components/     Header, Omnibox, ListingCard, Filters, MarketGauge, Trust, Artwork
-  lib/
-    search.ts     doğal dil ayrıştırıcı + sorgu motoru
-    market.ts     karşılaştırma kümesi ve piyasa konumu hesabı
-    trust.ts      güven skoru ve kopya ilan tespiti
-    store.tsx     istemci tarafı veri katmanı
-  data/
-    taxonomy.ts   kategori ve özellik şeması
-    seed.ts       deterministik katalog üreteci
-    geo.ts        il / ilçe verisi
+```sh
+NODE_ENV=production NEXT_PUBLIC_BASE_PATH=/ozilan npm run build
 ```
 
-## Tasarım notu
+Statik çıktı `out/` dizinine yazılır. `npm run build`, alt dizin yollarını ve kurtarma betiğinin yükleme sırasını da doğrular. `next start` statik export sunucusu değildir; `out/` bir statik HTTP sunucusuyla sunulmalıdır.
 
-Görseller dış kaynaktan gelmez; her ilan için kategorisine ve ürün tipine göre
-deterministik SVG kompozisyon üretilir (`src/components/Artwork.tsx`). Böylece proje
-tek bir dış istek yapmadan, tamamen kendi kendine yeter.
+Public backend değişkenleri eksikse örnek katalog okunabilir, üyelik formu kapalıdır. Demo şifreleri ve tarayıcıda değiştirilmiş admin işaretleri canlı hesaplara taşınmaz. Önceki yerel demo verilerinin bir kısmı cihazda kalır ancak sunucuya aktarılmaz.
 
-## Lisans
+## Testin kapsamı
 
-MIT
+`npm test`: 20 test. Arama bağlantıları/filtreleri, güvenli giriş dönüşü, kayıt eşleme, kart hareketleri, mobil varlık kurtarma ve gerçek PostgreSQL politikaları.
+
+Veritabanı testi PGlite içinde üretim SQL dosyasını çalıştırır. Başka kullanıcının ilanını değiştirme, mesajını okuma/gönderici taklidi, yabancı fotoğraf yükleme, admin tarafından kapatılan ilanı yeniden açma girişimleri engellenir. Sahiplik ve özel favoriler, görüşme katılımcıları ve anonim erişim denetlenir.
+
+### Tarayıcı entegrasyon testi
+
+`npm run test:local-api`, yalnızca `127.0.0.1:54329` üzerinde bellekte bir test API'si açar. Supabase HTTP/Auth/Storage taşımasını taklit eder, **gerçek kimlik doğrulama sunucusu değildir ve yayımlanmamalıdır**. Veritabanı üretim SQL/RLS kurallarını kullanır. Kabul ettiği ön yüz origin'i `http://127.0.0.1:4173`.
+
+İzole test derlemesinde değişkenler:
+
+```text
+NEXT_PUBLIC_BASE_PATH=/ozilan
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=integration-public-key
+```
+
+Hesaplar: `qa.seller@ozilan.test` ve `qa.buyer@ozilan.test`; test parolası `LocalQaOnly!24`. Yalnızca bellekteki yerel fixture içindir. Yeniden başlatma tüm test kayıtlarını sıfırlar. Test anahtarını veya fixture çıktısını GitHub Pages'e koyma.
+
+14 Eylül yerel tarayıcı kontrolü: gerçek dosya seçimiyle fotoğraflı ilan oluşturma, fiyat/başlık düzenleme, iki hesap arasında mesaj ve yanıt, favori, arama, kaldırılan ilanı anonim katalogdan gizleme ve yeniden yayınlama başarılı. Bu sonuç gerçek Supabase e-posta servisini veya fiziksel iPhone/Samsung cihazlarını doğrulamaz.
+
+## Mevcut sınırlar
+
+- Her yenilemede en yeni 1000 erişilebilir ilan ve en fazla 1000 profil alınır; 200 görüşme ve son 1000 mesaj sınırı vardır. Çok daha büyük katalog için sunucu tarafı sayfalama, tek ilan/görüşme yükleme ve geçmiş mesaj sayfalaması eklenmelidir.
+- Görünür oturumda 30 saniyelik kontrol ve elle yenileme var; push bildirim yok.
+- Taslaklar otomatik kaydedilmez. Yayınlanmadan bırakılan fotoğraflar için zamanlanmış orphan temizliği henüz yok; ücretsiz Storage kullanımı panelden izlenmelidir.
+- Satıcı kimliği ve değerlendirme puanı doğrulaması uygulanmadı. Skorlar kural temelli ilan incelemesidir, güvenlik garantisi değildir.
+- Arşivleme geri alınabilir; hesap silme/anonymizasyon süreci ve işletmeci iletişim/aydınlatma detayları ticari açılıştan önce tamamlanmalıdır.
+- E-posta kaydı/kurtarmanın canlı teslim testi, gerçek Supabase projesi ve SMTP bağlantısı bekliyor.

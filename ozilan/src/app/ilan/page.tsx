@@ -13,13 +13,15 @@ import { attrsFor, labelFor } from "@/data/taxonomy";
 import { dateTR, num, tl } from "@/lib/format";
 import { Ago } from "@/components/Ago";
 import { LoanCalc } from "@/components/LoanCalc";
+import {ListingImage} from "@/components/ListingImage";
 
 const REASONS = ["Sahte / yanıltıcı ilan", "Yanlış kategori", "Fiyat gerçekçi değil", "Dolandırıcılık şüphesi", "Ürün satılmış", "Uygunsuz içerik"];
 
 function Detail() {
   const id = useSearchParams().get("id") ?? "";
   const router = useRouter();
-  const { pool, sellers, me, view, openThread, send, report, ready } = useStore();
+  const { pool, sellers, me, view, openThread, send, report, ready, live } = useStore();
+  const [sending,setSending]=useState(false),[thread,setThread]=useState("");
 
   const l = useMemo(() => pool.find((x) => x.id === id), [pool, id]);
   const [shot, setShot] = useState(0);
@@ -29,6 +31,11 @@ function Detail() {
   const [reason, setReason] = useState(REASONS[0]);
   const [note, setNote] = useState("");
   const [phone, setPhone] = useState(false);
+
+  useEffect(() => {
+    setShot(0); setSent(false); setThread(""); setRep(false); setPhone(false);
+    setMsg("Merhaba, ilan hâlâ güncel mi?"); setNote(""); setReason(REASONS[0]);
+  }, [id]);
 
   useEffect(() => { if (l) view(l.id); /* eslint-disable-next-line */ }, [l?.id]);
 
@@ -53,10 +60,11 @@ function Detail() {
   const defs = attrsFor(l.cat, l.sub);
   const mine = me?.id === l.sellerId;
 
-  const doSend = () => {
-    if (!me) { router.push("/giris/"); return; }
-    const th = openThread(l.id);
-    if (th) { send(th, msg); setSent(true); }
+  const doSend = async () => {
+    if (!me) { router.push(`/giris/?sonra=${encodeURIComponent(`/ilan/?id=${l.id}`)}`); return; }
+    if(sending||!msg.trim())return;setSending(true);
+    const th = await openThread(l.id);
+    if(th&&await send(th,msg)){setThread(th);setSent(true);}setSending(false);
   };
 
   return (
@@ -79,16 +87,16 @@ function Detail() {
         {/* ---------------------------------------------- left */}
         <div>
           <div className="relative border border-line">
-            <Artwork seed={l.art + shot * 977} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="aspect-[16/10] w-full" label={l.title} />
+            <ListingImage listing={l} index={shot} className="aspect-[16/10] w-full" eager/>
             <span className="absolute left-0 top-0 bg-ink/85 px-2 py-1 font-mono text-2xs text-paper">{l.deal}</span>
             <span className="num absolute bottom-0 right-0 bg-ink/85 px-2 py-1 text-2xs text-paper">{shot + 1} / {l.photos}</span>
             <FavButton id={l.id} className="absolute right-2 top-2" />
           </div>
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
             {Array.from({ length: l.photos }).map((_, i) => (
-              <button key={i} onClick={() => setShot(i)}
+              <button key={i} onClick={() => setShot(i)} aria-label={`${i+1}. fotoğrafı göster`}
                 className={`shrink-0 border transition ${i === shot ? "border-ink" : "border-line opacity-60 hover:opacity-100"}`}>
-                <Artwork seed={l.art + i * 977} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-14 w-20" />
+                <ListingImage listing={l} index={i} className="h-14 w-20"/>
               </button>
             ))}
           </div>
@@ -99,7 +107,7 @@ function Detail() {
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-2xs text-mute">
               <span>Yayın {dateTR(l.createdAt)}</span>
               <span>Güncelleme <Ago ts={l.bumpedAt} /></span>
-              <span>{num(l.views)} görüntülenme</span>
+              {!live&&<span>{num(l.views)} görüntülenme</span>}
             </div>
           </div>
 
@@ -163,20 +171,22 @@ function Detail() {
             </div>
 
             <div className="space-y-2 p-4">
-              <button onClick={() => setPhone((p) => !p)} className="btn-ghost w-full">
+              {seller?.phone&&<button onClick={() => setPhone((p) => !p)} className="btn-ghost w-full">
                 {phone ? seller?.phone ?? "—" : "Telefonu göster"}
-              </button>
+              </button>}
+              {l.status!=="active"&&<p className="form-notice">Bu ilan şu anda yayında değil.</p>}
 
               {mine ? (
                 <p className="rounded-md border border-line bg-paper p-3 text-center text-[0.8rem] text-mute">Bu ilan size ait.</p>
               ) : sent ? (
                 <div className="rounded-md border border-moss bg-moss-soft p-3 text-[0.82rem] text-moss">
-                  Mesaj gönderildi. <Link href="/mesajlar/" className="underline underline-offset-2">Mesajlarım →</Link>
+                  Mesaj gönderildi. <Link href={`/mesajlar/?gorusme=${thread}`} className="underline underline-offset-2">Görüşmeyi aç →</Link>
                 </div>
               ) : (
                 <>
-                  <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} className="field resize-none" />
-                  <button onClick={doSend} className="btn-signal w-full">Satıcıya mesaj gönder</button>
+                  <textarea aria-label="Satıcıya mesajın" maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} className="field resize-none" />
+                  <button onClick={doSend} disabled={sending||!msg.trim()||l.status!=="active"||!live} className="btn-signal w-full">{sending?"Gönderiliyor…":"Satıcıya mesaj gönder"}</button>
+                  {!live&&<p className="form-notice">Bu örnek ilan için gerçek satıcıya mesaj gönderilmez.</p>}
                   {!me && <p className="text-center text-[0.72rem] text-mute">Mesaj için giriş yapmanız gerekir.</p>}
                 </>
               )}
@@ -195,10 +205,7 @@ function Detail() {
           <div className="border border-line p-4 rounded-lg bg-paper-2">
             <p className="eyebrow">Konum</p>
             <p className="mt-2 text-[0.95rem]">{l.district}, {l.city}</p>
-            <div className="relative mt-3 h-32 overflow-hidden rounded-md border border-line bg-paper halftone">
-              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal ring-4 ring-signal/20" />
-              <span className="absolute bottom-1 right-2 font-mono text-2xs text-mute">yaklaşık konum</span>
-            </div>
+            <a className="btn-ghost mt-3 w-full" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.district}, ${l.city}, Türkiye`)}`} target="_blank" rel="noopener noreferrer">İlçeyi haritada aç ↗</a><p className="mt-2 text-xs text-mute">İlçe merkezi gösterilir; satıcının açık adresi paylaşılmaz.</p>
             <Link href={`/arama/?il=${encodeURIComponent(l.city)}&ilce=${encodeURIComponent(l.district)}&k=${l.cat}&a=${l.sub}`}
               className="btn-ghost mt-3 w-full">Bu bölgedeki benzerleri</Link>
           </div>
@@ -229,7 +236,7 @@ function Detail() {
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Kısa açıklama (isteğe bağlı)" className="field mt-2 resize-none" />
             <div className="mt-4 flex gap-2">
               <button onClick={() => setRep(false)} className="btn-ghost flex-1">Vazgeç</button>
-              <button onClick={() => { report(l.id, reason, note); setRep(false); }} className="btn-signal flex-1">Gönder</button>
+              <button onClick={async () => { if(await report(l.id, reason, note))setRep(false); }} className="btn-signal flex-1">Gönder</button>
             </div>
           </div>
         </div>

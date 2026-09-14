@@ -81,11 +81,11 @@ function Scene({ type }: { type: number }) {
 function Arrow() { return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>; }
 
 export default function Home() {
-  const { pool, ready, state } = useStore();
+  const { pool, ready, state, live } = useStore();
   const [world, setWorld] = useState(0);
   const chosen = WORLDS[world];
   const active = useMemo(() => pool.filter(l => l.status === "active"), [pool]);
-  const counts = useMemo(() => WORLDS.map(w => w.marketArea?MARKET_ITEMS.filter(item=>item.area===w.marketArea).length:active.filter(l => l.cat === w.slug).length), [active]);
+  const counts = useMemo(() => WORLDS.map(w => !live&&w.marketArea?MARKET_ITEMS.filter(item=>item.area===w.marketArea).length:active.filter(l => l.cat === (w.marketArea??w.slug)).length), [active,live]);
   const deals = useMemo(() => ready ? active.filter(l => l.price > 0).map(l => ({ l, m: readMarket(l, pool) })).filter(x => x.m && x.m.confidence !== "low" && x.m.delta < -.15 && x.m.delta > -.45).sort((a,b) => a.m!.delta-b.m!.delta).slice(0,4) : [], [active,pool,ready]);
   const recent = useMemo(() => ready ? state.recent.map(id => pool.find(l => l.id === id)).filter(l => l !== undefined).slice(0,4) : [], [ready,state.recent,pool]);
   return <div className="editorial-home"><ScrollExperience />
@@ -117,7 +117,7 @@ export default function Home() {
           <div className="world-note"><span className="world-note-line" /> OzBirArada seçkisi <span>•</span> Kategori illüstrasyonu</div>
         </div>
       </div>
-      <div className="discovery-bottom"><span><b>{num(active.length)}</b> keşfedilecek örnek ilan</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
+      <div className="discovery-bottom"><span><b>{num(active.length)}</b> {live?"yayındaki ilan":"keşfedilecek örnek ilan"}</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
     </section>
 
     <section id="kesfet" className="discovery-section journey-heading-section">
@@ -126,7 +126,7 @@ export default function Home() {
     <ScrollJourney labels={WORLDS.map(w=>w.name)}>{WORLDS.map((w,i)=><article key={w.slug} className={`journey-panel journey-${w.tone}`} aria-label={w.name}>
       <div className="journey-environment" aria-hidden="true"><div className="journey-grid"/><div className="journey-ring"/><span className="journey-monogram">{w.number}</span></div>
       <div className="journey-copy"><p>{w.number} / {w.detail}</p><h3>{w.title}</h3><p className="journey-description">{w.caption}</p><Link className="journey-cta" href={w.href}>{w.name} keşfet <Arrow/></Link><div className="journey-tags">{w.tags.map(s=><Link key={s.label} href={s.href}>{s.label}</Link>)}</div></div>
-      <div className="journey-object"><div className="journey-plinth"/><Scene type={i}/><span className="journey-object-note">{num(counts[i])} örnek {w.marketArea?"seçenek":"ilan"} · Kategori illüstrasyonu</span></div>
+      <div className="journey-object"><div className="journey-plinth"/><Scene type={i}/><span className="journey-object-note">{num(counts[i])} {live?"yayındaki ilan":`örnek ${w.marketArea?"seçenek":"ilan"}`} · Kategori illüstrasyonu</span></div>
     </article>)}</ScrollJourney>
 
     <MarketplaceGateway />

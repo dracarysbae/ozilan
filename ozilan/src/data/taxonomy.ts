@@ -5,6 +5,7 @@ import { OTO_3 } from "./veh-oto-3";
 import { SUV, MOTO, MINIVAN, TICARI, KARAVAN, DENIZ } from "./veh-other";
 import { KONUT, ISYERI, ARSA, DEVREMULK, TURISTIK } from "./trees-emlak";
 import { ELEKTRONIK, EV_YASAM, HOBI_SPOR, MODA as MODA_TREE } from "./trees-ikinci-el";
+import {MARKET_AREAS} from "./marketplace";
 
 export type AttrType = "select" | "number" | "bool" | "text";
 
@@ -337,7 +338,11 @@ export function treeLabelsFor(cat: string, sub: string): string[] {
 
 export function labelFor(cat: string, sub?: string) {
   const c = CAT_MAP[cat];
-  if (!c) return cat;
+  if (!c) {
+    const area=MARKET_AREAS.find(a=>a.id===cat);if(!area)return cat;
+    const name=area.categories.find(label=>label.toLocaleLowerCase("tr").replace(/ı/g,"i").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")===sub);
+    return sub?`${area.label} · ${name??sub}`:area.label;
+  }
   if (!sub) return c.label;
   return `${c.label} · ${c.subs.find((s) => s.slug === sub)?.label ?? sub}`;
 }

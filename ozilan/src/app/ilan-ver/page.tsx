@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CATEGORIES, attrsFor, findSub, treeFor, treeLabelsFor } from "@/data/taxonomy";
 import { labelPath, childrenOf } from "@/data/tree";
 import { TreePicker } from "@/components/TreePicker";
@@ -13,12 +13,18 @@ import { Artwork } from "@/components/Artwork";
 import { TrustPanel } from "@/components/Trust";
 import { num, tl } from "@/lib/format";
 import type { AttrValue, Listing } from "@/lib/types";
+import {PUBLISH_CATEGORIES} from "@/lib/publish-categories";
+import {PhotoUploader} from "@/components/PhotoUploader";
+import {ListingImage} from "@/components/ListingImage";
 
 const STEPS = ["Kategori", "Detaylar", "Fiyat", "Önizleme"];
 
-export default function Compose() {
+function Compose() {
   const router = useRouter();
-  const { pool, publish, me, sellers } = useStore();
+  const { pool, publish, me, sellers, ready } = useStore();
+  const editId=useSearchParams().get("duzenle")??"";
+  const hydrated=useRef("");
+  const [saving,setSaving]=useState(false),[uploading,setUploading]=useState(false);
 
   const [step, setStep] = useState(0);
   const [cat, setCat] = useState("");
@@ -29,25 +35,31 @@ export default function Compose() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [price, setPrice] = useState<number | "">("");
-  const [photos, setPhotos] = useState(4);
+  const [photoPaths,setPhotoPaths]=useState<string[]>([]);
+  const photos=photoPaths.length;
   const [attrs, setAttrs] = useState<Record<string, AttrValue>>({});
   const [path, setPath] = useState<string[]>([]);
   const [err, setErr] = useState<string[]>([]);
+  useEffect(()=>{
+    if(!editId||!ready||!me||hydrated.current===editId)return;
+    const l=pool.find(l=>l.id===editId&&l.sellerId===me.id);if(!l)return;
+    hydrated.current=editId;setCat(l.cat);setSub(l.sub);setDeal(l.deal);setTitle(l.title);setDesc(l.desc);setCity(l.city);setDistrict(l.district);setPrice(l.price);setPhotoPaths(l.photoPaths??[]);setAttrs(l.attrs);setPath(l.path??[]);
+  },[editId,ready,me,pool]);
 
   const defs = cat && sub ? attrsFor(cat, sub) : [];
   const tree = cat && sub ? treeFor(cat, sub) : [];
   const treeLabels = cat && sub ? treeLabelsFor(cat, sub) : [];
   const pathLabels = tree.length ? labelPath(tree, path) : [];
   const pathDone = !tree.length || childrenOf(tree, path).length === 0;
-  const category = CATEGORIES.find((c) => c.slug === cat);
+  const category = PUBLISH_CATEGORIES.find((c) => c.slug === cat);
 
   const draft: Listing = useMemo(() => ({
-    id: "__draft__", title: title || "Başlıksız ilan", desc, cat, sub, path, pathLabels,
+    id: editId || "__draft__", title: title || "Başlıksız ilan", desc, cat, sub, path, pathLabels,
     deal: deal || "Satılık", price: typeof price === "number" ? price : 0,
     city: city || "İstanbul", district: district || "—", attrs,
     createdAt: Date.now(), bumpedAt: Date.now(), sellerId: me?.id ?? "anon",
-    views: 0, photos, status: "active", art: 424242,
-  }), [title, desc, cat, sub, deal, price, city, district, attrs, photos, me, path, pathLabels]);
+    views: 0, photos, photoPaths, status: "active", art: 424242,
+  }), [title, desc, cat, sub, deal, price, city, district, attrs, photos, photoPaths, me, path, pathLabels, editId]);
 
   const est = useMemo(
     () => (cat && sub ? estimate({ cat, sub, deal: deal || "Satılık", city: city || "İstanbul", attrs }, pool) : null),
@@ -66,6 +78,8 @@ export default function Compose() {
       if (title.trim().length < 10) e.push("Başlık en az 10 karakter olmalı.");
       if (desc.trim().length < 40) e.push("Açıklama en az 40 karakter olmalı.");
       if (!city) e.push("Şehir seçilmeli.");
+      if (!district) e.push("İlçe seçilmeli.");
+      if (!photos) e.push("En az bir gerçek fotoğraf ekle.");
       for (const d of defs.filter((x) => x.required))
         if (attrs[d.key] === undefined || attrs[d.key] === "") e.push(`${d.label} zorunlu.`);
     }
@@ -79,19 +93,24 @@ export default function Compose() {
     if (!e.length) setStep((s) => Math.min(3, s + 1));
   };
 
-  const submit = () => {
+  const submit = async () => {
+    if(saving||uploading)return;
     const e = validate(2);
     setErr(e);
     if (e.length) return;
-    const id = publish({
+    setSaving(true);
+    try { const id = await publish({
       title: title.trim(), desc: desc.trim(), cat, sub, deal, path, pathLabels,
       price: deal === "Ücretsiz" ? 0 : Number(price),
-      city, district: district || GEO[city][0], attrs, photos,
+      city, district, attrs, photos, photoPaths,
       featured: false,
-    });
+    },editId||undefined);
     router.push(`/ilan/?id=${id}`);
+    } catch(e){setErr([e instanceof Error?e.message:"İlan kaydedilemedi."]);}finally{setSaving(false);}
   };
 
+  if(!ready)return <div className="auth-loading">İlan formu hazırlanıyor…</div>;
+  if(editId&&me&&!pool.some(l=>l.id===editId&&l.sellerId===me.id))return <div className="auth-loading">Bu ilan bulunamadı veya düzenleme yetkin yok. <Link href="/hesap/">Hesabıma dön</Link></div>;
   if (!me) {
     return (
       <div className="mx-auto max-w-lg px-4 py-24 text-center">
@@ -99,18 +118,18 @@ export default function Compose() {
         <h1 className="mt-2 font-serif text-4xl leading-none">Önce giriş yapmalısın</h1>
         <p className="mt-3 text-mute">İlanlarını yönetebilmen için bir hesaba ihtiyacımız var.</p>
         <div className="mt-6 flex justify-center gap-2">
-          <Link href="/giris/" className="btn-primary">Giriş yap</Link>
-          <Link href="/giris/?mod=kayit" className="btn-ghost">Hesap oluştur</Link>
+          <Link href="/giris/?sonra=%2Filan-ver%2F" className="btn-primary">Giriş yap</Link>
+          <Link href="/giris/?mod=kayit&sonra=%2Filan-ver%2F" className="btn-ghost">Hesap oluştur</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
+    <div className="listing-compose mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
       <div className="border-b border-line pb-4">
         <p className="eyebrow">Yeni ilan</p>
-        <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">İlanını oluştur</h1>
+        <h1 className="mt-1 font-serif text-[clamp(1.9rem,3.4vw,3rem)] leading-none">{editId?"İlanını düzenle":"İlanını oluştur"}</h1>
       </div>
 
       {/* stepper */}
@@ -127,8 +146,8 @@ export default function Compose() {
         ))}
       </ol>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div>
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0">
           {err.length > 0 && (
             <ul className="mb-5 animate-rise border border-signal bg-signal-soft p-3 text-[0.82rem] text-signal-ink">
               {err.map((e, i) => <li key={i}>• {e}</li>)}
@@ -141,7 +160,7 @@ export default function Compose() {
               <div>
                 <p className="eyebrow">Kategori</p>
                 <div className="mt-3 grid gap-px bg-line sm:grid-cols-3">
-                  {CATEGORIES.map((c) => (
+                  {PUBLISH_CATEGORIES.map((c) => (
                     <button key={c.slug} onClick={() => { setCat(c.slug); setSub(""); setDeal(""); setAttrs({}); setPath([]); }}
                       className={`p-4 text-left transition ${cat === c.slug ? "bg-ink text-paper" : "bg-paper hover:bg-paper-2"}`}>
                       <p className="font-serif text-2xl leading-none">{c.label}</p>
@@ -194,30 +213,30 @@ export default function Compose() {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <label className="eyebrow">İlan başlığı</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={90}
+                <label htmlFor="listing-title" className="eyebrow">İlan başlığı</label>
+                <input id="listing-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={90}
                   placeholder={sub === "konut" ? "3+1 Site İçerisinde 145 m² Bakımlı Daire" : "Kısa ve net bir başlık"} className="field mt-2" />
                 <p className="mt-1 flex justify-between font-mono text-2xs text-mute"><span>Marka, model ve ayırt edici özelliği yaz</span><span className="num">{title.length}/90</span></p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="eyebrow">Şehir</label>
-                  <select value={city} onChange={(e) => { setCity(e.target.value); setDistrict(""); }} className="field mt-2">
+                  <label htmlFor="listing-city" className="eyebrow">Şehir</label>
+                  <select id="listing-city" value={city} onChange={(e) => { setCity(e.target.value); setDistrict(""); }} className="field mt-2">
                     <option value="">Seçiniz</option>
                     {CITIES.map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="eyebrow">İlçe</label>
-                  <select value={district} onChange={(e) => setDistrict(e.target.value)} disabled={!city} className="field mt-2 disabled:opacity-40">
+                  <label htmlFor="listing-district" className="eyebrow">İlçe</label>
+                  <select id="listing-district" value={district} onChange={(e) => setDistrict(e.target.value)} disabled={!city} className="field mt-2 disabled:opacity-40">
                     <option value="">Seçiniz</option>
                     {(GEO[city] ?? []).map((d) => <option key={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div>
+              {defs.length > 0 && <div>
                 <p className="eyebrow">{findSub(cat, sub)?.label} özellikleri</p>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   {defs.map((d) => (
@@ -248,22 +267,18 @@ export default function Compose() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div>}
 
               <div>
-                <label className="eyebrow">Açıklama</label>
-                <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={8}
+                <label htmlFor="listing-description" className="eyebrow">Açıklama</label>
+                <textarea id="listing-description" value={desc} maxLength={8000} onChange={(e) => setDesc(e.target.value)} rows={8}
                   placeholder="Ürünün durumu, kullanım geçmişi, eksikleri, teslim şekli…" className="field mt-2 resize-y" />
                 <p className="mt-1 flex justify-between font-mono text-2xs text-mute">
                   <span>Telefon/IBAN yazma — güven skorunu düşürür</span><span className="num">{desc.trim().split(/\s+/).filter(Boolean).length} kelime</span>
                 </p>
               </div>
 
-              <div>
-                <label className="eyebrow">Fotoğraf sayısı (demo)</label>
-                <input type="range" min={1} max={10} value={photos} onChange={(e) => setPhotos(+e.target.value)} className="mt-4 w-full" />
-                <p className="num mt-1 text-[0.8rem] text-mute">{photos} görsel · 6+ görsel güven skorunu artırır</p>
-              </div>
+              <PhotoUploader userId={me.id} paths={photoPaths} onChange={setPhotoPaths} onBusy={setUploading}/>
             </div>
           )}
 
@@ -271,8 +286,8 @@ export default function Compose() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="eyebrow">Fiyat (TL)</label>
-                <input type="number" value={price} disabled={deal === "Ücretsiz"}
+                <label htmlFor="listing-price" className="eyebrow">Fiyat (TL)</label>
+                <input id="listing-price" type="number" value={price} disabled={deal === "Ücretsiz"}
                   onChange={(e) => setPrice(e.target.value === "" ? "" : +e.target.value)}
                   className="field num mt-2 !text-2xl disabled:opacity-40" placeholder="0" />
               </div>
@@ -319,7 +334,7 @@ export default function Compose() {
           {step === 3 && (
             <div className="space-y-6">
               <div className="border border-line">
-                <Artwork seed={draft.art} sub={sub} kind={pathLabels.join(" ")} className="aspect-[16/9] w-full" />
+                <ListingImage listing={draft} className="aspect-[16/9] w-full"/>
                 <div className="p-4">
                   <p className="eyebrow">{city}, {district || "—"} · {deal}</p>
                   <h2 className="mt-1.5 font-serif text-2xl leading-tight">{draft.title}</h2>
@@ -334,16 +349,16 @@ export default function Compose() {
           <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
             <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="btn-ghost disabled:opacity-30">← Geri</button>
             {step < 3
-              ? <button onClick={next} className="btn-primary px-8">Devam →</button>
-              : <button onClick={submit} className="btn-signal px-8">İlanı yayınla</button>}
+              ? <button onClick={next} disabled={uploading} className="btn-primary px-8">Devam →</button>
+              : <button onClick={submit} disabled={saving||uploading} className="btn-signal px-8">{saving?"Kaydediliyor…":editId?"Değişiklikleri kaydet":"İlanı yayınla"}</button>}
           </div>
         </div>
 
         {/* live preview rail */}
-        <aside className="lg:sticky lg:top-[168px] lg:self-start">
+        <aside className="min-w-0 lg:sticky lg:top-[168px] lg:self-start">
           <div className="border border-line">
             <p className="eyebrow border-b border-line px-4 py-3">Canlı önizleme</p>
-            <Artwork seed={draft.art} sub={sub || "elektronik"} kind={pathLabels.join(" ")} className="aspect-[4/3] w-full" />
+            <ListingImage listing={draft} className="aspect-[4/3] w-full"/>
             <div className="p-4">
               <p className="eyebrow">{city || "Şehir"} · {deal || "İşlem"}</p>
               <p className="mt-1.5 line-clamp-2 text-[0.95rem] font-medium">{title || "İlan başlığı buraya gelecek"}</p>
@@ -377,3 +392,4 @@ export default function Compose() {
     </div>
   );
 }
+export default function Page(){return <Suspense fallback={<div className="auth-loading">İlan formu hazırlanıyor…</div>}><Compose/></Suspense>;}

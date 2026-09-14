@@ -16,6 +16,7 @@ export type Listing = {
   sellerId: string;
   views: number;
   photos: number;
+  photoPaths?: string[];
   status: "active" | "pending" | "removed";
   featured?: boolean;
   /** kategori ağacındaki seçim (marka → seri → paket gibi) */

@@ -1,260 +1,96 @@
 "use client";
+import React,{createContext,useCallback,useContext,useEffect,useMemo,useRef,useState} from "react";
+import type {User} from "@supabase/supabase-js";
+import type {Account,Listing,Message,Report,Seller,Thread} from "./types";
+import {SEED_LISTINGS,SEED_SELLERS} from "@/data/seed";
+import {authReturn,backend,backendConfigured,friendlyError} from "./backend";
+import {listingFromRow,messageFromRow,sellerFromRow,threadFromRow} from "./listing-data";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { Account, Listing, Message, Report, Seller, Thread } from "./types";
-import { SEED_LISTINGS, SEED_SELLERS } from "@/data/seed";
-
-const KEY = "ozilan.v1";
-
-type Persisted = {
-  account: Account | null;
-  accounts: (Account & { pass: string })[];
-  listings: Listing[];
-  overrides: Record<string, Partial<Listing>>;
-  favorites: string[];
-  threads: Thread[];
-  messages: Message[];
-  reports: Report[];
-  recent: string[];
-  searches: { id: string; label: string; href: string; at: number }[];
-  compare: string[];
+type State={favorites:string[];threads:Thread[];messages:Message[];reports:Report[];recent:string[];searches:{id:string;label:string;href:string;at:number}[];compare:string[]};
+const blank:State={favorites:[],threads:[],messages:[],reports:[],recent:[],searches:[],compare:[]};
+type Draft=Omit<Listing,"id"|"createdAt"|"bumpedAt"|"sellerId"|"views"|"status"|"art">;
+type Result=Promise<string|null>;
+type Ctx={ready:boolean;live:boolean;busy:boolean;error:string;clearError:()=>void;refresh:()=>Promise<void>;state:State;pool:Listing[];sellers:Record<string,Seller>;me:Account|null;
+  signIn:(email:string,pass:string)=>Result;signUp:(a:Omit<Account,"id"|"createdAt"|"role">&{pass:string})=>Result;signOut:()=>Promise<void>;
+  resetPassword:(email:string)=>Result;updatePassword:(pass:string)=>Result;
+  toggleFav:(id:string)=>Promise<void>;isFav:(id:string)=>boolean;toggleCompare:(id:string)=>void;clearCompare:()=>void;
+  publish:(draft:Draft,id?:string)=>Promise<string>;removeListing:(id:string)=>Promise<void>;setStatus:(id:string,s:Listing["status"])=>Promise<boolean>;bump:(id:string)=>Promise<void>;view:(id:string)=>void;
+  openThread:(listingId:string)=>Promise<string>;send:(id:string,body:string)=>Promise<boolean>;report:(id:string,reason:string,note:string)=>Promise<boolean>;resolveReport:(id:string)=>Promise<void>;
+  saveSearch:(label:string,href:string)=>Promise<void>;dropSearch:(id:string)=>Promise<void>;reset:()=>void;
 };
+const Context=createContext<Ctx|null>(null);
+const PREFS="ozilan.preferences.v2";
+const accountFor=(u:User,profile?:Seller):Account=>({id:u.id,name:profile?.name??u.user_metadata.name??"Üye",email:u.email??"",phone:"",kind:profile?.kind??"bireysel",createdAt:Date.parse(u.created_at),role:u.app_metadata.role==="admin"?"admin":"user"});
+function requireUser(me:Account|null){if(!me)throw new Error("Bu işlem için giriş yapmalısın.");return me;}
 
-const blank: Persisted = {
-  account: null, accounts: [], listings: [], overrides: {}, favorites: [],
-  threads: [], messages: [], reports: [], recent: [], searches: [], compare: [],
-};
-
-type Ctx = {
-  ready: boolean;
-  state: Persisted;
-  pool: Listing[];
-  sellers: Record<string, Seller>;
-  me: Account | null;
-  signIn: (email: string, pass: string) => string | null;
-  signUp: (a: Omit<Account, "id" | "createdAt" | "role"> & { pass: string }) => string | null;
-  signOut: () => void;
-  demoSignIn: () => void;
-  toggleFav: (id: string) => void;
-  isFav: (id: string) => boolean;
-  toggleCompare: (id: string) => void;
-  clearCompare: () => void;
-  publish: (l: Omit<Listing, "id" | "createdAt" | "bumpedAt" | "sellerId" | "views" | "status" | "art">) => string;
-  removeListing: (id: string) => void;
-  setStatus: (id: string, s: Listing["status"]) => void;
-  bump: (id: string) => void;
-  view: (id: string) => void;
-  openThread: (listingId: string) => string;
-  send: (threadId: string, body: string) => void;
-  report: (listingId: string, reason: string, note: string) => void;
-  resolveReport: (id: string) => void;
-  saveSearch: (label: string, href: string) => void;
-  dropSearch: (id: string) => void;
-  reset: () => void;
-};
-
-const C = createContext<Ctx | null>(null);
-
-const uid = (p: string) => p + Math.random().toString(36).slice(2, 9).toUpperCase();
-
-const REPLIES = [
-  "Merhaba, ilan hâlâ güncel. Ne zaman görmek istersiniz?",
-  "İyi günler, pazarlık payı var. Ciddi alıcıysanız arayabilirsiniz.",
-  "Merhaba, ürün elimde mevcut. Kargo ile de gönderebilirim.",
-  "Selam, hafta sonu müsaitim. Adresi mesajla paylaşayım mı?",
-];
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<Persisted>(blank);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
+export function StoreProvider({children}:{children:React.ReactNode}) {
+  const [state,setState]=useState<State>(blank),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const [me,setMe]=useState<Account|null>(null),[listings,setListings]=useState<Listing[]>([]),[profiles,setProfiles]=useState<Record<string,Seller>>({});
+  const sessionUser=useRef<User|null>(null),generation=useRef(0),pending=useRef(new Set<string>());
+  const refresh=useCallback(async()=>{
+    if(!backendConfigured){setReady(true);return;}
+    const ticket=++generation.current,user=sessionUser.current,db=backend();setBusy(true);
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setState({ ...blank, ...JSON.parse(raw) });
-    } catch { /* ignore */ }
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota */ }
-  }, [state, ready]);
-
-  const sellers = useMemo(() => {
-    const m: Record<string, Seller> = Object.fromEntries(SEED_SELLERS.map((s) => [s.id, s]));
-    for (const a of state.accounts) {
-      m[a.id] = {
-        id: a.id, name: a.name, kind: a.kind, city: "İstanbul", joinedAt: a.createdAt,
-        verified: false, rating: 0, reviews: 0, responseMins: 15, phone: a.phone,
-      };
-    }
-    return m;
-  }, [state.accounts]);
-
-  const pool = useMemo(() => {
-    const merged = [...state.listings, ...SEED_LISTINGS].map((l) =>
-      state.overrides[l.id] ? { ...l, ...state.overrides[l.id] } : l,
-    );
-    return merged.sort((a, b) => b.bumpedAt - a.bumpedAt);
-  }, [state.listings, state.overrides]);
-
-  const patch = useCallback((fn: (s: Persisted) => Persisted) => setState(fn), []);
-
-  const signIn: Ctx["signIn"] = (email, pass) => {
-    const a = state.accounts.find((x) => x.email.toLowerCase() === email.trim().toLowerCase());
-    if (!a) return "Bu e-posta ile kayıtlı hesap yok.";
-    if (a.pass !== pass) return "Şifre hatalı.";
-    const { pass: _p, ...acc } = a;
-    patch((s) => ({ ...s, account: acc }));
-    return null;
-  };
-
-  const signUp: Ctx["signUp"] = (input) => {
-    if (state.accounts.some((x) => x.email.toLowerCase() === input.email.trim().toLowerCase()))
-      return "Bu e-posta zaten kayıtlı.";
-    const acc: Account & { pass: string } = {
-      id: uid("u"), name: input.name, email: input.email.trim(), phone: input.phone,
-      kind: input.kind, createdAt: Date.now(), role: "user", pass: input.pass,
-    };
-    const { pass: _p, ...pub } = acc;
-    patch((s) => ({ ...s, accounts: [...s.accounts, acc], account: pub }));
-    return null;
-  };
-
-  const demoSignIn = () => {
-    const existing = state.accounts.find((a) => a.email === "demo@ozilan.app");
-    if (existing) { const { pass: _p, ...pub } = existing; patch((s) => ({ ...s, account: pub })); return; }
-    const acc: Account & { pass: string } = {
-      id: "u-demo", name: "Demo Kullanıcı", email: "demo@ozilan.app", phone: "0532 000 00 00",
-      kind: "bireysel", createdAt: Date.now() - 400 * 86400000, role: "admin", pass: "demo1234",
-    };
-    const { pass: _p, ...pub } = acc;
-    // seed a couple of conversations so the inbox is not a dead end
-    const picks = SEED_LISTINGS.slice(0, 3);
-    const threads: Thread[] = picks.map((l, i) => ({
-      id: `t-demo-${i}`, listingId: l.id, buyerId: acc.id, sellerId: l.sellerId,
-      updatedAt: Date.now() - i * 3600_000,
-    }));
-    const messages: Message[] = threads.flatMap((t, i) => [
-      { id: uid("m"), threadId: t.id, from: acc.id, body: "Merhaba, ilan hâlâ güncel mi?", at: t.updatedAt - 900_000 },
-      { id: uid("m"), threadId: t.id, from: t.sellerId, body: REPLIES[i % REPLIES.length], at: t.updatedAt },
-    ]);
-    patch((s) => ({
-      ...s, accounts: [...s.accounts, acc], account: pub,
-      threads: [...s.threads, ...threads], messages: [...s.messages, ...messages],
-      favorites: Array.from(new Set([...s.favorites, ...SEED_LISTINGS.slice(4, 9).map((l) => l.id)])),
-    }));
-  };
-
-  const signOut = () => patch((s) => ({ ...s, account: null }));
-
-  const toggleCompare = (id: string) =>
-    patch((s) => ({
-      ...s,
-      compare: s.compare.includes(id)
-        ? s.compare.filter((x) => x !== id)
-        : s.compare.length >= 3
-          ? [...s.compare.slice(1), id]
-          : [...s.compare, id],
-    }));
-
-  const clearCompare = () => patch((s) => ({ ...s, compare: [] }));
-
-  const toggleFav = (id: string) =>
-    patch((s) => ({ ...s, favorites: s.favorites.includes(id) ? s.favorites.filter((x) => x !== id) : [id, ...s.favorites] }));
-
-  const publish: Ctx["publish"] = (draft) => {
-    const id = uid("L");
-    const now = Date.now();
-    const l: Listing = {
-      ...draft, id, createdAt: now, bumpedAt: now,
-      sellerId: state.account?.id ?? "anon", views: 0, status: "active",
-      art: Math.floor(Math.random() * 999999),
-    };
-    patch((s) => ({ ...s, listings: [l, ...s.listings] }));
-    return id;
-  };
-
-  const setStatus = (id: string, st: Listing["status"]) =>
-    patch((s) => ({ ...s, overrides: { ...s.overrides, [id]: { ...s.overrides[id], status: st } } }));
-
-  const removeListing = (id: string) =>
-    patch((s) => ({
-      ...s,
-      listings: s.listings.filter((l) => l.id !== id),
-      overrides: s.listings.some((l) => l.id === id) ? s.overrides : { ...s.overrides, [id]: { ...s.overrides[id], status: "removed" } },
-      favorites: s.favorites.filter((f) => f !== id),
-    }));
-
-  const bump = (id: string) =>
-    patch((s) => ({ ...s, overrides: { ...s.overrides, [id]: { ...s.overrides[id], bumpedAt: Date.now() } } }));
-
-  const view = (id: string) =>
-    patch((s) => (s.recent[0] === id ? s : { ...s, recent: [id, ...s.recent.filter((x) => x !== id)].slice(0, 24) }));
-
-  const openThread: Ctx["openThread"] = (listingId) => {
-    const me = state.account;
-    const listing = pool.find((l) => l.id === listingId);
-    if (!me || !listing) return "";
-    const found = state.threads.find((t) => t.listingId === listingId && t.buyerId === me.id);
-    if (found) return found.id;
-    const t: Thread = { id: uid("t"), listingId, buyerId: me.id, sellerId: listing.sellerId, updatedAt: Date.now() };
-    patch((s) => ({ ...s, threads: [t, ...s.threads] }));
-    return t.id;
-  };
-
-  const send: Ctx["send"] = (threadId, body) => {
-    const me = state.account;
-    if (!me || !body.trim()) return;
-    const t = state.threads.find((x) => x.id === threadId);
-    const msg: Message = { id: uid("m"), threadId, from: me.id, body: body.trim(), at: Date.now() };
-    patch((s) => ({
-      ...s, messages: [...s.messages, msg],
-      threads: s.threads.map((x) => (x.id === threadId ? { ...x, updatedAt: msg.at } : x)),
-    }));
-    if (t) {
-      const reply: Message = {
-        id: uid("m"), threadId, from: t.sellerId,
-        body: REPLIES[Math.floor(Math.random() * REPLIES.length)], at: Date.now() + 1200,
-      };
-      setTimeout(() => patch((s) => ({
-        ...s, messages: [...s.messages, reply],
-        threads: s.threads.map((x) => (x.id === threadId ? { ...x, updatedAt: reply.at } : x)),
-      })), 1400);
-    }
-  };
-
-  const report: Ctx["report"] = (listingId, reason, note) =>
-    patch((s) => ({
-      ...s,
-      reports: [{ id: uid("r"), listingId, reason, note, at: Date.now(), by: s.account?.id ?? "anon", state: "open" }, ...s.reports],
-    }));
-
-  const resolveReport = (id: string) =>
-    patch((s) => ({ ...s, reports: s.reports.map((r) => (r.id === id ? { ...r, state: "resolved" } : r)) }));
-
-  const saveSearch: Ctx["saveSearch"] = (label, href) =>
-    patch((s) => (s.searches.some((x) => x.href === href) ? s : { ...s, searches: [{ id: uid("q"), label, href, at: Date.now() }, ...s.searches].slice(0, 20) }));
-
-  const dropSearch = (id: string) => patch((s) => ({ ...s, searches: s.searches.filter((x) => x.id !== id) }));
-
-  const reset = () => { setState(blank); try { localStorage.removeItem(KEY); } catch { /* */ } };
-
-  const value: Ctx = {
-    ready, state, pool, sellers, me: state.account,
-    signIn, signUp, signOut, demoSignIn,
-    toggleFav, isFav: (id) => state.favorites.includes(id),
-    toggleCompare, clearCompare,
-    publish, removeListing, setStatus, bump, view,
-    openThread, send, report, resolveReport, saveSearch, dropSearch, reset,
-  };
-
-  return <C.Provider value={value}>{children}</C.Provider>;
+      const results=await Promise.all([
+        db.from("listings").select("*").order("bumped_at",{ascending:false}).limit(1000),
+        db.from("profiles").select("id,name,kind,city,created_at").limit(1000),
+        ...(user ? [db.from("favorites").select("listing_id"),db.from("threads").select("*").order("updated_at",{ascending:false}).limit(200),
+          db.from("messages").select("*").order("created_at",{ascending:false}).limit(1000),db.from("saved_searches").select("*").order("created_at",{ascending:false}),db.from("reports").select("*").limit(500)] : []),
+      ]);
+      if(ticket!==generation.current)return;
+      const failure=results.find(r=>r.error);if(failure?.error)throw failure.error;
+      const sellerMap=Object.fromEntries((results[1].data??[]).map(r=>{const s=sellerFromRow(r);return[s.id,s];}));
+      setListings((results[0].data??[]).map(listingFromRow));setProfiles(sellerMap);setMe(user?accountFor(user,sellerMap[user.id]):null);
+      setState(s=>({...s,favorites:(results[2]?.data??[]).map(r=>r.listing_id),threads:(results[3]?.data??[]).map(threadFromRow),messages:(results[4]?.data??[]).map(messageFromRow),
+        searches:(results[5]?.data??[]).map(r=>({id:r.id,label:r.label,href:r.href,at:Date.parse(r.created_at)})),
+        reports:(results[6]?.data??[]).map(r=>({id:r.id,listingId:r.listing_id,reason:r.reason,note:r.note,at:Date.parse(r.created_at),by:r.user_id,state:r.state})),}));setError("");
+    }catch(e){if(ticket===generation.current)setError(friendlyError(e));}
+    finally{if(ticket===generation.current){setBusy(false);setReady(true);}}
+  },[]);
+  useEffect(()=>{
+    // Old demo credentials and client-side admin flags never become live accounts.
+    try{
+      const p=JSON.parse(localStorage.getItem(PREFS)??"{}");
+      const ids=(value:unknown)=>Array.isArray(value)?value.filter(x=>typeof x==="string").slice(0,24):[];
+      setState(s=>({...s,recent:ids(p.recent),compare:ids(p.compare).slice(0,3)}));
+      const old=localStorage.getItem("ozilan.v1");if(old){const demo=JSON.parse(old);delete demo.accounts;delete demo.account;localStorage.setItem("ozilan.v1",JSON.stringify(demo));}
+    }catch{setError("Tarayıcı depolaması kullanılamıyor; son gezdiklerin bu cihazda hatırlanamayabilir.");}
+    if(!backendConfigured){setReady(true);return;}
+    let alive=true;const db=backend();
+    const {data:{subscription}}=db.auth.onAuthStateChange((_event,session)=>{
+      if(!alive)return;const changed=sessionUser.current?.id!==session?.user.id;sessionUser.current=session?.user??null;
+      if(changed){generation.current++;setMe(session?.user?accountFor(session.user):null);setState(s=>({...blank,recent:s.recent,compare:s.compare}));setListings([]);}
+      // Avoid awaiting Supabase while its auth lock is held.
+      setTimeout(()=>{if(alive)void refresh();},0);
+    });
+    db.auth.getSession().then(({data,error:failure})=>{if(!alive)return;if(failure)setError(friendlyError(failure));sessionUser.current=data.session?.user??null;void refresh();});
+    const sync=()=>{if(document.visibilityState==="visible")void refresh();};window.addEventListener("online",sync);window.addEventListener("focus",sync);
+    const timer=window.setInterval(()=>{if(sessionUser.current)sync();},30000);
+    return()=>{alive=false;generation.current++;subscription.unsubscribe();clearInterval(timer);window.removeEventListener("online",sync);window.removeEventListener("focus",sync);};
+  },[refresh]);
+  useEffect(()=>{if(ready)try{localStorage.setItem(PREFS,JSON.stringify({recent:state.recent,compare:state.compare}));}catch{}},[ready,state.recent,state.compare]);
+  const pool=useMemo(()=>backendConfigured?listings:SEED_LISTINGS,[listings]);
+  const sellers=useMemo(()=>backendConfigured?profiles:Object.fromEntries(SEED_SELLERS.map(s=>[s.id,s])),[profiles]);
+  async function mutation(key:string,run:()=>Promise<void>){if(pending.current.has(key))return;pending.current.add(key);setError("");try{requireUser(me);await run();await refresh();}catch(e){setError(friendlyError(e));}finally{pending.current.delete(key);}}
+  const signIn:Ctx["signIn"]=async(email,password)=>{try{const {error}=await backend().auth.signInWithPassword({email:email.trim(),password});if(error)throw error;return null;}catch(e){return friendlyError(e);}};
+  const signUp:Ctx["signUp"]=async a=>{try{if(a.name.trim().length<2||a.pass.length<8)throw new Error("Adın en az 2, şifren en az 8 karakter olmalı.");const {error}=await backend().auth.signUp({email:a.email.trim(),password:a.pass,options:{emailRedirectTo:authReturn(),data:{name:a.name.trim(),kind:a.kind}}});if(error)throw error;return null;}catch(e){return friendlyError(e);}};
+  const signOut=async()=>{const {error}=await backend().auth.signOut({scope:"local"});if(error){setError(friendlyError(error));return;}sessionUser.current=null;generation.current++;setMe(null);setState(blank);setListings([]);await refresh();};
+  const resetPassword:Ctx["resetPassword"]=async email=>{try{const {error}=await backend().auth.resetPasswordForEmail(email.trim(),{redirectTo:authReturn("/giris/?mod=yenile")});if(error)throw error;return null;}catch(e){return friendlyError(e);}};
+  const updatePassword:Ctx["updatePassword"]=async password=>{try{const {error}=await backend().auth.updateUser({password});if(error)throw error;return null;}catch(e){return friendlyError(e);}};
+  const toggleFav=async(id:string)=>mutation(`favorite:${id}`,async()=>{const db=backend();const {error}=state.favorites.includes(id)?await db.from("favorites").delete().eq("user_id",me!.id).eq("listing_id",id):await db.from("favorites").insert({listing_id:id});if(error)throw error;});
+  const toggleCompare=(id:string)=>setState(s=>({...s,compare:s.compare.includes(id)?s.compare.filter(x=>x!==id):[...s.compare.slice(-2),id]}));
+  const publish:Ctx["publish"]=async(draft,id)=>{try{requireUser(me);const row={title:draft.title,description:draft.desc,category:draft.cat,subcategory:draft.sub,deal:draft.deal,price:draft.price,city:draft.city,district:draft.district,attributes:draft.attrs,path:draft.path??[],path_labels:draft.pathLabels??[],photo_paths:draft.photoPaths??[]};const db=backend();const {data,error}=id?await db.from("listings").update(row).eq("id",id).select("*").single():await db.from("listings").insert(row).select("*").single();if(error)throw error;const listing=listingFromRow(data);setListings(s=>[listing,...s.filter(l=>l.id!==listing.id)]);return listing.id;}catch(e){const text=friendlyError(e);setError(text);throw new Error(text);}};
+  const setStatus=async(id:string,status:Listing["status"])=>{let changed=false;await mutation(`listing:${id}`,async()=>{const {error}=await backend().from("listings").update({status}).eq("id",id).select("id").single();if(error)throw error;changed=true;});return changed;};
+  const bump=async(id:string)=>mutation(`listing:${id}`,async()=>{const {error}=await backend().from("listings").update({bumped_at:new Date().toISOString()}).eq("id",id).select("id").single();if(error)throw error;});
+  const view=(id:string)=>setState(s=>s.recent[0]===id?s:{...s,recent:[id,...s.recent.filter(x=>x!==id)].slice(0,24)});
+  const openThread=async(listingId:string)=>{try{requireUser(me);const {data,error}=await backend().rpc("start_thread",{listing:listingId});if(error)throw error;return data as string;}catch(e){setError(friendlyError(e));return "";}};
+  const send=async(threadId:string,body:string)=>{if(pending.current.has(`send:${threadId}`))return false;pending.current.add(`send:${threadId}`);try{requireUser(me);if(!body.trim()||body.length>2000)throw new Error("Mesaj 1–2000 karakter olmalı.");const {error}=await backend().from("messages").insert({thread_id:threadId,body:body.trim()});if(error)throw error;await refresh();return true;}catch(e){setError(friendlyError(e));return false;}finally{pending.current.delete(`send:${threadId}`);}};
+  const report=async(listingId:string,reason:string,note:string)=>{try{requireUser(me);const {error}=await backend().from("reports").insert({listing_id:listingId,reason,note});if(error)throw error;await refresh();return true;}catch(e){setError(friendlyError(e));return false;}};
+  const resolveReport=async(id:string)=>mutation(`report:${id}`,async()=>{const {error}=await backend().from("reports").update({state:"resolved"}).eq("id",id).select("id").single();if(error)throw error;});
+  const saveSearch=async(label:string,href:string)=>mutation(`search:${href}`,async()=>{if(state.searches.some(s=>s.href===href))return;const {error}=await backend().from("saved_searches").insert({label:label.slice(0,200),href});if(error)throw error;});
+  const dropSearch=async(id:string)=>mutation(`search:${id}`,async()=>{const {error}=await backend().from("saved_searches").delete().eq("id",id);if(error)throw error;});
+  const reset=()=>setState(s=>({...s,recent:[],compare:[]}));
+  const value:Ctx={ready,live:backendConfigured,busy,error,clearError:()=>setError(""),refresh,state,pool,sellers,me,signIn,signUp,signOut,resetPassword,updatePassword,toggleFav,isFav:id=>state.favorites.includes(id),toggleCompare,clearCompare:()=>setState(s=>({...s,compare:[]})),publish,removeListing:async id=>{await setStatus(id,"removed");},setStatus,bump,view,openThread,send,report,resolveReport,saveSearch,dropSearch,reset};
+  return <Context.Provider value={value}>{children}{error&&<div className="account-feedback" role="alert"><p>{error}</p>{!me&&<a href={`${process.env.NEXT_PUBLIC_BASE_PATH??""}/giris/`}>Giriş yap</a>}<button onClick={()=>setError("")} aria-label="Bildirimi kapat">×</button></div>}</Context.Provider>;
 }
-
-export function useStore() {
-  const c = useContext(C);
-  if (!c) throw new Error("useStore must be used inside StoreProvider");
-  return c;
-}
+export function useStore(){const value=useContext(Context);if(!value)throw new Error("StoreProvider gerekli");return value;}

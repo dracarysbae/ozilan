@@ -2,8 +2,10 @@
 import { MotionToggle } from "./Motion";
 import Link from "next/link";
 import { CATEGORIES } from "@/data/taxonomy";
+import {useStore} from "@/lib/store";
 
 export function Footer() {
+  const {live}=useStore();
   return (
     <footer className="mt-20 border-t border-line bg-ink text-paper">
       <div className="mx-auto grid max-w-shell gap-10 px-4 py-14 md:grid-cols-4 lg:px-6">
@@ -36,10 +38,10 @@ export function Footer() {
 
       <div className="border-t border-ink-line">
         <div className="mx-auto flex max-w-shell flex-col gap-3 px-4 py-5 text-[0.72rem] text-paper/45 md:flex-row md:items-center md:justify-between lg:px-6">
-          <p>© 2026 OzBirArada — demo amaçlı örnek platform. Veriler kurgusaldır, tarayıcınızda saklanır.</p>
+          <p>© 2026 OzBirArada {live?"— Keşfet, paylaş, bağlantı kur.":"— Örnek katalog. Ortak veri bağlantısı hazırlanıyor."}</p>
           <div className="flex items-center gap-4">
             <MotionToggle className="!border-white/15 !bg-white/5 !text-paper/70" />
-            <span>Statik dağıtım · GitHub Pages</span>
+            <Link href="/gizlilik/">Veri kullanımı</Link>
           </div>
         </div>
       </div>

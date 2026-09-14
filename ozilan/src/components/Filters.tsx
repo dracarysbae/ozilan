@@ -1,8 +1,10 @@
 "use client";
+import { PUBLISH_CATEGORIES as CATEGORIES } from "@/lib/publish-categories";
+
 import { useMemo, useState } from "react";
 import type { Query } from "@/lib/search";
 import type { Listing } from "@/lib/types";
-import { CATEGORIES, attrsFor, findSub, treeFor, treeLabelsFor } from "@/data/taxonomy";
+import { attrsFor, findSub, treeFor, treeLabelsFor } from "@/data/taxonomy";
 import { TreePicker } from "./TreePicker";
 import { childrenOf } from "@/data/tree";
 import { GEO, CITIES } from "@/data/geo";

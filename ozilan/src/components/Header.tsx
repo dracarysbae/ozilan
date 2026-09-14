@@ -123,7 +123,7 @@ export function Header() {
           {!home && <div className="ml-auto hidden max-w-sm flex-1 md:block"><Omnibox /></div>}
 
           <div className={`hidden items-center gap-0.5 xl:flex ${home ? "ml-auto" : "ml-3"}`}>
-            {NAV.map((n) => (
+            {NAV.filter(n=>n.href!=="/panel/"||me?.role==="admin").map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
@@ -198,7 +198,7 @@ export function Header() {
               <Link href="/kesfet/?alan=hizmet" className="py-3 text-sm">Yerel hizmetler ↗</Link>
               <Link href="/kesfet/?alan=freelance" className="py-3 text-sm">Freelance ↗</Link>
             </div>
-            {NAV.map((n) => (
+            {NAV.filter(n=>n.href!=="/panel/"||me?.role==="admin").map((n) => (
               <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>
             ))}
             <Link href={me ? "/hesap/" : "/giris/"} className="block py-3 text-[0.9375rem] text-mute">
