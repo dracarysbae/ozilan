@@ -127,17 +127,25 @@ export default function Home() {
   }, []);
   useFrame(({ sy }) => {
     const b = heroBody.current; if (!b) return;
-    if (!motionOK) { b.style.cssText = ""; return; }
+    if (!motionOK) {
+      b.style.cssText = "";
+      if (heroBg1.current) heroBg1.current.style.transform = "";
+      if (heroBg2.current) heroBg2.current.style.transform = "";
+      if (heroCards.current) heroCards.current.style.transform = "";
+      return;
+    }
     const hs = Math.min(sy, 900), k = hs / 900;
     const { x: mx, y: my } = mouse.current;
     b.style.transformOrigin = "50% 0%";
-    b.style.transform = `perspective(1400px) translate3d(0, ${(hs * -0.16).toFixed(1)}px, ${(-k * 220).toFixed(1)}px) rotateX(${(k * 11).toFixed(2)}deg) scale(${(1 - k * 0.06).toFixed(4)})`;
+    b.style.transform = isDesk
+      ? `perspective(1400px) translate3d(0, ${(hs * -0.16).toFixed(1)}px, ${(-k * 220).toFixed(1)}px) rotateX(${(k * 11).toFixed(2)}deg) scale(${(1 - k * 0.06).toFixed(4)})`
+      : `translate3d(0, ${(hs * -0.08).toFixed(1)}px, 0) scale(${(1 - k * 0.025).toFixed(4)})`;
     b.style.opacity = String(Math.max(0, 1 - k * 1.5));
-    b.style.filter = k > 0.02 ? `blur(${(k * 7).toFixed(2)}px)` : "";
-    if (heroBg1.current) heroBg1.current.style.transform = `translate3d(${(hs * 0.06 + mx * -40).toFixed(1)}px, ${(hs * 0.3 + my * -30).toFixed(1)}px, 0)`;
-    if (heroBg2.current) heroBg2.current.style.transform = `translate3d(${(hs * -0.05 + mx * 50).toFixed(1)}px, ${(hs * 0.18 + my * 36).toFixed(1)}px, 0)`;
-    if (heroCards.current) heroCards.current.style.transform = `translate3d(${(mx * 26).toFixed(1)}px, ${(my * 18 + hs * 0.22).toFixed(1)}px, 0)`;
-  }, [motionOK]);
+    b.style.filter = isDesk && k > 0.02 ? `blur(${(k * 5).toFixed(2)}px)` : "";
+    if (heroBg1.current) heroBg1.current.style.transform = `translate3d(${(hs * 0.04 + (isDesk ? mx * -34 : 0)).toFixed(1)}px, ${(hs * 0.2 + (isDesk ? my * -24 : 0)).toFixed(1)}px, 0)`;
+    if (heroBg2.current) heroBg2.current.style.transform = `translate3d(${(hs * -0.035 + (isDesk ? mx * 42 : 0)).toFixed(1)}px, ${(hs * 0.13 + (isDesk ? my * 28 : 0)).toFixed(1)}px, 0)`;
+    if (heroCards.current) heroCards.current.style.transform = `translate3d(${(mx * 22).toFixed(1)}px, ${(my * 15 + hs * 0.18).toFixed(1)}px, 0)`;
+  }, [motionOK, isDesk]);
 
   const step = Math.min(2, Math.floor(pShow * 3.0001));
 
@@ -180,9 +188,11 @@ export default function Home() {
   return (
     <>
       {/* ═════════════════════════════════════════════════════ kahraman */}
-      <section className="band-dark grain relative -mt-16 overflow-hidden pt-16">
+      <section className="night-hero band-dark grain relative -mt-16 overflow-hidden pt-16">
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
           <div className="mesh" />
+          <div className="hero-grid" />
+          <div className="hero-vignette" />
           <div ref={heroBg1} className="absolute -left-40 -top-32 h-[46rem] w-[46rem] rounded-full opacity-70 blur-3xl"
             style={{ background: "radial-gradient(circle, rgba(44,107,245,.45), transparent 62%)" }} />
           <div ref={heroBg2} className="absolute -right-40 top-24 h-[38rem] w-[38rem] rounded-full opacity-60 blur-3xl"
@@ -190,7 +200,7 @@ export default function Home() {
           {/* süzülen cam kartlar — sadece geniş ekranda */}
           <div ref={heroCards} className="absolute inset-0 hidden lg:block">
             {HERO_CARDS.map((c) => (
-              <div key={c.k} className={`glass absolute w-56 rounded-xl p-4 shadow-lift ${c.cls}`}
+              <div key={c.k} className={`hero-float glass absolute w-56 rounded-xl p-4 shadow-lift ${c.cls}`}
                 style={{ top: c.top, left: c.left, right: c.right, bottom: c.bottom }}>
                 <p className="text-[0.75rem] text-white/50">{c.k}</p>
                 <p className={`mt-1 text-[1.0625rem] font-semibold ${c.tone}`}>{c.v}</p>
@@ -200,8 +210,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div ref={heroBody} className="relative mx-auto max-w-shell px-5 pb-40 pt-20 text-center lg:px-8 lg:pb-48 lg:pt-28">
-          <div className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-1.5 text-[0.8125rem] text-white/80 backdrop-blur">
+        <div ref={heroBody} className="relative mx-auto max-w-shell px-5 pb-28 pt-14 text-center sm:pb-36 sm:pt-20 lg:px-8 lg:pb-48 lg:pt-28">
+          <div className="hero-kicker animate-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-1.5 text-[0.75rem] text-white/80 backdrop-blur sm:text-[0.8125rem]">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal-glow opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal-glow" />
@@ -209,26 +219,37 @@ export default function Home() {
             {num(active.length)} aktif ilan · piyasa endeksi canlı
           </div>
 
-          <h1 className="display grad-text mx-auto mt-7 max-w-[18ch] text-balance text-[clamp(2.6rem,7vw,5.25rem)]">
+          <h1 className="display grad-text mx-auto mt-7 max-w-[18ch] text-balance text-[clamp(2.55rem,7vw,5.25rem)]">
             <SplitText text="Ne aradığını cümleyle yaz." step={70} />
           </h1>
 
           <Reveal delay={340}>
-            <p className="mx-auto mt-6 max-w-[52ch] text-[clamp(1.0625rem,2vw,1.375rem)] leading-relaxed text-white/60">
+            <p className="mx-auto mt-5 max-w-[52ch] text-[clamp(1rem,2vw,1.375rem)] leading-relaxed text-white/60 sm:mt-6">
               Fiyatın piyasada nerede durduğunu ve satıcının güven skorunu, ilanın yanında görürsün.
             </p>
           </Reveal>
 
           <Reveal delay={440} kind="zoom">
-            <div className="mx-auto mt-11 max-w-2xl text-left">
-              <div className="ring-anim rounded-full p-[1px]" style={{ background: "linear-gradient(120deg, rgba(90,141,255,.55), rgba(255,255,255,.12) 40%, rgba(90,141,255,.35))" }}>
+            <div className="mx-auto mt-9 max-w-2xl text-left sm:mt-11">
+              <div className="hero-search-shell ring-anim rounded-full p-[1px]">
                 <Omnibox big dark />
               </div>
             </div>
           </Reveal>
 
-          <Reveal delay={560}>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-7 gap-y-2.5 text-[0.9375rem]">
+          <Reveal delay={510}>
+            <div className="hero-capabilities mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-6 sm:gap-3">
+              {["Cümleyi anlar", "Piyasayı karşılaştırır", "Güveni tarar"].map((label, i) => (
+                <span key={label} className="hero-capability">
+                  <span className={`capability-mark capability-mark-${i + 1}`} aria-hidden />
+                  {label}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delay={600}>
+            <div className="mt-7 hidden flex-wrap items-center justify-center gap-x-7 gap-y-2.5 text-[0.9375rem] sm:flex">
               {PROMPTS.map((q) => (
                 <Link key={q} href={`/arama/?nl=${encodeURIComponent(q)}`} className="link-u text-white/55 transition hover:text-white">
                   {q}
@@ -238,7 +259,7 @@ export default function Home() {
           </Reveal>
         </div>
 
-        <div className="relative border-t border-white/10">
+        <div className="hero-stats relative border-t border-white/10">
           <div className="mx-auto grid max-w-shell grid-cols-2 gap-px px-5 lg:grid-cols-4 lg:px-8">
             {[
               { v: active.length, l: "aktif ilan", f: (n: number) => num(n) },
