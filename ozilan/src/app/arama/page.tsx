@@ -120,7 +120,7 @@ function Results() {
       )}
 
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
-        <div>
+        <div className="min-w-0">
           <p className="eyebrow">Arama sonuçları</p>
           <h1 className="mt-1 font-serif text-[clamp(1.7rem,3vw,2.6rem)] leading-none">{heading}</h1>
         </div>
@@ -139,7 +139,7 @@ function Results() {
           </div>
         </aside>
 
-        <div>
+        <div className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <button onClick={() => setDrawer(true)} className="btn-ghost lg:hidden">Filtreler</button>
             {active.map((a, i) => (
