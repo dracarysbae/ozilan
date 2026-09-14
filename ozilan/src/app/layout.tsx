@@ -8,10 +8,10 @@ import { MotionProvider, PageTransition, ScrollProgress } from "@/components/Mot
 
 
 export const metadata: Metadata = {
-  title: { default: "OzIlan — piyasayı gösteren ilan platformu", template: "%s · OzIlan" },
+  title: { default: "OzBirArada — hayatının her alanında", template: "%s · OzBirArada" },
   description:
-    "Emlak, vasıta ve ikinci el ilanları. Her ilanda fiyatın piyasaya göre konumu, otomatik güven taraması ve cümleyle arama.",
-  applicationName: "OzIlan",
+    "İlanlar, alışveriş, çiçek ve hediyeler, yerel hizmetler ve freelance uzmanlıklar. OzBirArada ile keşfet, karşılaştır, planla.",
+  applicationName: "OzBirArada",
 };
 
 export const viewport: Viewport = {
