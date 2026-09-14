@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Omnibox } from "./Omnibox";
-import { useScrollY } from "./Motion";
+import { useScrollThreshold } from "./Motion";
 import { useStore } from "@/lib/store";
 import { CATEGORIES } from "@/data/taxonomy";
 
@@ -18,13 +18,13 @@ export function Header() {
   const { me, state, ready } = useStore();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState<string | null>(null);
-  const y = useScrollY();
+  const pastHero = useScrollThreshold(88);
   useEffect(() => { setOpen(false); setMenu(null); }, [path]);
 
   const unread = ready ? state.threads.length : 0;
   const home = path === "/";
   /* ana sayfada koyu kahraman bandının üstündeyken şeffaf + beyaz metin */
-  const onDark = home && y < 90 && !open;
+  const onDark = home && !pastHero && !open;
 
   const tone = onDark ? "text-white/70 hover:text-white" : "text-mute hover:text-ink";
 
@@ -44,11 +44,12 @@ export function Header() {
         <div className="mx-auto flex h-16 max-w-shell items-center gap-3 px-5 lg:px-8">
           <Link
             href="/"
-            className={`shrink-0 text-[1.125rem] font-semibold tracking-[-0.035em] transition-colors duration-500 ${
+            className={`group/brand flex shrink-0 items-center gap-2 text-[1.125rem] font-semibold tracking-[-0.035em] transition-colors duration-500 ${
               onDark ? "text-white" : "text-ink"
             }`}
           >
-            Oz<span className={onDark ? "text-signal-glow" : "text-signal"}>Ilan</span>
+            <span className="brand-glyph" aria-hidden><span /></span>
+            <span>Oz<span className={onDark ? "text-signal-glow" : "text-signal"}>Ilan</span></span>
           </Link>
 
           <nav className="ml-6 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
@@ -169,6 +170,8 @@ export function Header() {
       </div>
 
       <div
+        aria-hidden={!open}
+        inert={!open}
         className="overflow-hidden border-line bg-paper/95 backdrop-blur-xl lg:hidden"
         style={{
           maxHeight: open ? 620 : 0,

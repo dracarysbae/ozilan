@@ -14,7 +14,12 @@ export const metadata: Metadata = {
   applicationName: "OzIlan",
 };
 
-export const viewport: Viewport = { themeColor: "#0A1220" };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#020713",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
