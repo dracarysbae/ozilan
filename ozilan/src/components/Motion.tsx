@@ -1,6 +1,6 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════════════
-   OzIlan hareket motoru v6 — "Akış"
+   OzBirArada hareket motoru v6 — "Akış"
 
    Tek bir requestAnimationFrame döngüsü. Kaydırma değeri lerp ile
    yumuşatılır; her abone her karede ölçüm alır ve stilini DOM'a doğrudan
@@ -448,8 +448,10 @@ export function PageTransition({ children }: { children: ReactNode }) {
       if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;
-      if (url.pathname === location.pathname && url.search === location.search) return;
-      let path = url.pathname + url.search;
+      // Query-only navigation keeps this layout mounted. Let Next handle it;
+      // waiting for a pathname change would leave the transition locked forever.
+      if (url.pathname === location.pathname) return;
+      let path = url.pathname + url.search + url.hash;
       if (BASE && path.startsWith(BASE)) path = path.slice(BASE.length) || "/";
       e.preventDefault();
       e.stopPropagation(); // Next Link kendi yönlendirmesini yapmasın
@@ -485,15 +487,15 @@ export function PageTransition({ children }: { children: ReactNode }) {
       p.style.transition = "transform .85s cubic-bezier(.16,.84,.32,1) .12s, opacity .6s ease .12s";
       p.style.transform = "";
       p.style.opacity = "1";
-      setTimeout(() => { c.style.transition = "none"; c.style.transform = "translate3d(0,100%,0)"; }, 700);
+      setTimeout(() => { c.style.transition = "none"; c.style.transform = "translate3d(0,100%,0)"; p.style.willChange="auto"; }, 1000);
     }));
   }, [pathname]);
 
   return (
     <>
-      <div ref={page} style={{ willChange: "transform, opacity" }}>{children}</div>
+      <div ref={page}>{children}</div>
       <div ref={curtain} className="curtain" aria-hidden>
-        <span className="curtain-mark">Oz<b>Ilan</b></span>
+        <span className="curtain-mark">Oz<b>BirArada</b></span>
       </div>
     </>
   );
