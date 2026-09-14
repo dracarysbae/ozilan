@@ -40,6 +40,24 @@ export const MARKET_ITEMS: MarketItem[] = [
 export const areaFor=(id:string|null)=>MARKET_AREAS.find(a=>a.id===id)??MARKET_AREAS[0];
 export const marketMoney=(value:number)=>new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:0}).format(value);
 export const isGoods=(area:MarketArea)=>area==="alisveris"||area==="cicek-hediye";
+export type MarketFilters={area:MarketArea;category:string;query:string;city:string;max:string;sort:string;fast:boolean};
+/** Accept only filters that belong to this area, including when opening shared links. */
+export function readMarketFilters(params:Pick<URLSearchParams,"get">):MarketFilters {
+  const area=areaFor(params.get("alan"));
+  const category=params.get("kategori")??"",city=params.get("il")??"",max=params.get("max")??"",sort=params.get("s")??"";
+  return {area:area.id,category:area.categories.includes(category)?category:"",query:(params.get("q")??"").trim().slice(0,200),
+    city:MARKET_ITEMS.some(item=>item.area===area.id&&item.city===city)?city:"",
+    max:max.trim()!==""&&Number.isFinite(Number(max))&&Number(max)>=0?String(Number(max)):"",
+    sort:["price-up","price-down","fast"].includes(sort)?sort:"curated",fast:params.get("fast")==="1"};
+}
+export function marketSearchHref(filters:Partial<MarketFilters>&{area:MarketArea}) {
+  const params=new URLSearchParams({alan:filters.area});
+  for(const [key,value] of [["kategori",filters.category],["q",filters.query],["il",filters.city],["max",filters.max],["s",filters.sort]]) {
+    if(value&&value!=="curated")params.set(key!,value);
+  }
+  if(filters.fast)params.set("fast","1");
+  return `/kesfet/?${params.toString()}`;
+}
 export function filterMarket(items:MarketItem[],filter:{area:MarketArea;category:string;query:string;city:string;max:string;sort:string;fast:boolean}) {
   const clean=(value:string)=>value.toLocaleLowerCase("tr").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
   const terms=clean(filter.query.trim()).split(/\s+/).filter(Boolean);

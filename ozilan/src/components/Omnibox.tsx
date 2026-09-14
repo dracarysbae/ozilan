@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseNatural, queryToParams, suggest } from "@/lib/search";
 import { useStore } from "@/lib/store";
+import { marketSearchHref, type MarketArea } from "@/data/marketplace";
 
 const EXAMPLES = [
   "İzmir Karşıyaka 3+1 daire 5 milyon altı",
@@ -12,7 +13,7 @@ const EXAMPLES = [
   "Bodrum villa imarlı arsa",
 ];
 
-export function Omnibox({ autoFocus = false, big = false, dark = false }: { autoFocus?: boolean; big?: boolean; dark?: boolean }) {
+export function Omnibox({ autoFocus = false, big = false, dark = false, marketArea, listingCategory, example }: { autoFocus?: boolean; big?: boolean; dark?: boolean; marketArea?:MarketArea; listingCategory?:string; example?:string }) {
   const router = useRouter();
   const { pool } = useStore();
   const [v, setV] = useState("");
@@ -31,13 +32,15 @@ export function Omnibox({ autoFocus = false, big = false, dark = false }: { auto
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const parsed = useMemo(() => (v.trim().length > 2 ? parseNatural(v) : null), [v]);
-  const tips = useMemo(() => (v.trim().length > 1 ? suggest(v, pool) : []), [v, pool]);
+  const parsed = useMemo(() => (!marketArea&&v.trim().length > 2 ? parseNatural(v) : null), [v,marketArea]);
+  const tips = useMemo(() => (!marketArea&&v.trim().length > 1 ? suggest(v, pool.filter(l=>!listingCategory||l.cat===listingCategory)) : []), [v, pool,marketArea,listingCategory]);
 
   const go = (text = v) => {
+    if(marketArea){router.push(marketSearchHref({area:marketArea,query:text.trim()}));setOpen(false);return;}
     const { query } = parseNatural(text);
+    if(listingCategory)query.cat=listingCategory;
     const sp = queryToParams(query);
-    if (text.trim()) sp.set("nl", text.trim());
+    if (text.trim()&&!listingCategory) sp.set("nl", text.trim());
     router.push(`/arama/?${sp.toString()}`);
     setOpen(false);
   };
@@ -64,8 +67,8 @@ export function Omnibox({ autoFocus = false, big = false, dark = false }: { auto
           autoFocus={autoFocus}
           onChange={(e) => { setV(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          placeholder={EXAMPLES[ph]}
-          aria-label="Doğal dille arama"
+          placeholder={example??EXAMPLES[ph]}
+          aria-label={marketArea?"Ürün veya hizmet ara":"Doğal dille arama"}
           className={`min-w-0 flex-1 bg-transparent py-0 outline-none ${
             dark ? "text-white placeholder:text-white/35" : "placeholder:text-mute-2"
           } ${big ? "h-[3.75rem] text-[0.9375rem] sm:h-[4.5rem] sm:text-[1.0625rem]" : "h-10 text-[0.9375rem]"}`}
@@ -111,7 +114,7 @@ export function Omnibox({ autoFocus = false, big = false, dark = false }: { auto
             <ul className="max-h-64 overflow-auto">
               {tips.map((s, i) => (
                 <li key={i}>
-                  <button onMouseDown={() => go(s)} className="block w-full truncate px-4 py-2.5 text-left text-[0.9375rem] transition hover:bg-paper-3">
+                  <button type="button" onClick={() => go(s)} className="block w-full truncate px-4 py-2.5 text-left text-[0.9375rem] transition hover:bg-paper-3">
                     {s}
                   </button>
                 </li>
