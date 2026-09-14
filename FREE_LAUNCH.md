@@ -20,7 +20,7 @@ Firebase Spark ücretsiz olsa da Cloud Storage artık Blaze/faturalandırma hesa
 2. Supabase Free üzerinde PostgreSQL ve Auth. Yeni fotoğraf yüklemeleri Cloudinary bağlantısına geçirildi. Supabase Storage eski fotoğrafları okumak ve temizlemek için korunur.
 3. Üyeler için Google ile giriş; yalnızca temel profil ve e-posta kapsamları. SMS, ücretli e-posta sağlayıcısı ve kart kaydı yok. Varsayılan `NEXT_PUBLIC_AUTH_METHOD=google`; e-posta üyeliği SMTP hazır olana kadar açılmaz.
 
-Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Cloudinary ve Supabase ücretsiz hizmet şartları ile GitHub temel profil/e-posta erişimi kullanıcı tarafından onaylandı; iki hizmetin girişi tamamlandı. Cloudinary Free hesabı ve Supabase Free projesi oluştu. Üç veritabanı geçişi ve fotoğraf Edge Function dağıtımı tamamlandı; gerçek projeye okuma/erişim denetimleri ve üretim build'i geçti. Cloudinary sunucu anahtarı aktarımı, Google OAuth istemcisi, Cloudflare yayın kurulumu ve gerçek fotoğraf kabul testi bekliyor. Güncel durum: [LIVE_SETUP.md](LIVE_SETUP.md). Hiçbir ücretli kaynak veya ödeme açılmadı.
+Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Cloudinary Free, Supabase Free ve Cloudflare Pages kurulumları yapıldı. Üç veritabanı geçişi, fotoğraf Edge Function dağıtımı, Cloudinary şifreli sunucu ayarları ve yayın kökeni denetimi tamamlandı. Site **https://ozbirarada.pages.dev/** adresine Pages Direct Upload ile yayımlandı. Google OAuth istemcisi, saatlik fotoğraf temizliği ve gerçek hesaplı kabul testleri henüz tamamlanmadı; Google'ın ayrı veri kullanımı politikası onayı bekleniyor. Güncel durum: [LIVE_SETUP.md](LIVE_SETUP.md). Hiçbir ücretli kaynak veya ödeme açılmadı.
 
 ## Daha fazla ücretsiz fotoğraf
 
@@ -36,7 +36,7 @@ Medya kaynakları: [Cloudinary ücretsiz plan](https://cloudinary.com/pricing), 
 
 ## Yayın ayarları
 
-Cloudflare Pages projesi seçildiğinde:
+Mevcut yayın **Pages Direct Upload** kullanır: `ozilan` klasöründe public üretim değişkenleriyle `npm run build` çalıştır, `out` klasörünün içeriğini ZIP yap ve Dashboard'da aynı projeye yeni deployment yükle. ZIP kökünde `index.html` ve `_next` olmalı; `.env`, kaynak dosyalar veya gizli anahtarlar yüklenmez. Git entegrasyonu kurulmadı. Aşağıdaki build ayarları yerelde veya gelecekte ayrıca kurulacak CI için geçerlidir:
 
 - Root directory: `ozilan`
 - Build command: `npm ci && npm test && npm run build`
