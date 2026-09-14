@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useId } from "react";
-import { MARKET_AREAS, type MarketArt } from "@/data/marketplace";
+import { type MarketArt } from "@/data/marketplace";
+import { EditorialMedia, EditorialArrow } from "./EditorialMedia";
 
 /** Original category illustrations; never presented as product photographs. */
 export function MarketplaceArt({art}:{art:MarketArt}) {
@@ -27,4 +28,21 @@ export function MarketplaceArt({art}:{art:MarketArt}) {
   </svg>;
 }
 
-export function MarketplaceGateway(){return <section className="market-gateway" aria-labelledby="gateway-title"><div className="editorial-heading"><div><p className="editorial-kicker">DAHA FAZLA OLASILIK, TEK BİR YER</p><h2 id="gateway-title">Hayatının her alanında.</h2><p>Bir hediye bul. Evini yenile. Fikrini hayata geçir.</p></div><Link href="/kesfet/">Tümünü keşfet <span aria-hidden="true">↗</span></Link></div><div className="gateway-grid">{MARKET_AREAS.map((a,i)=><Link key={a.id} href={`/kesfet/?alan=${a.id}`} className={`gateway-card market-${a.id}`}><span className="gateway-number">0{i+4} <span>↗</span></span><MarketplaceArt art={a.art}/><h3>{a.label}</h3><p>{a.categories.slice(0,3).join(" · ")}</p></Link>)}</div><nav className="gateway-existing" aria-label="İlan kategorileri"><span>İlan dünyası</span><Link href="/arama/?k=emlak">Emlak ↗</Link><Link href="/vasita/">Vasıta ↗</Link><Link href="/akis/">İkinci el akışı ↗</Link></nav><Link href="/akis/" className="gateway-resale"><span aria-hidden="true">∞</span><div><strong>İkinci el, yeni bir hikâye.</strong><p>İkinci elin yeni hikâyesi. Dolapları keşfet, beğen, teklifini hazırla.</p></div><span aria-hidden="true">↗</span></Link></section>;}
+export function MarketplaceGateway(){return <section className="market-gateway gateway-editorial" aria-labelledby="gateway-title">
+  <div className="gateway-masthead"><span>OZBİRARADA / KEŞİF ATLASI</span><span>Günlük ihtiyaçlar. Yeni olasılıklar.</span></div>
+  <div className="editorial-heading"><div><p className="editorial-kicker">BAZEN ARARSIN. BAZEN DENK GELİRSİN.</p><h2 id="gateway-title">Hayatının <em>her alanında.</em></h2></div><Link href="/kesfet/">Tümünü keşfet <EditorialArrow/></Link></div>
+  <div className="gateway-spread">
+    <Link href="/kesfet/?alan=alisveris" className="gateway-feature gateway-feature-shopping">
+      <EditorialMedia scene="objects"><span className="gateway-image-tab">01 / KENDİNE BİR ŞEY</span></EditorialMedia>
+      <div className="gateway-feature-copy"><div><span>ALIŞVERİŞ / SEÇKİ</span><h3>Gündelik olan,<br/><em>özenle seçilince.</em></h3><p>Teknoloji, ev ve yaşam için küçük keşifler.</p></div><EditorialArrow/></div>
+    </Link>
+    <Link href="/kesfet/?alan=cicek-hediye" className="gateway-feature gateway-feature-gift">
+      <div className="gateway-margin-note"><span>Birini düşündüğünde.</span><span aria-hidden="true">↘</span></div>
+      <EditorialMedia scene="flowers"><span className="gateway-image-tab">02 / BİRİNE BİR ŞEY</span></EditorialMedia>
+      <div className="gateway-feature-copy"><div><span>ÇİÇEK & HEDİYE</span><h3>Güzel bir günün<br/><em>küçük bahanesi.</em></h3><p>Bir buket, bir not, tam yerinde bir jest.</p></div><EditorialArrow/></div>
+    </Link>
+  </div>
+  <div className="gateway-workbench"><EditorialMedia scene="studio"/><div className="gateway-work-copy"><p className="editorial-kicker">BİRLİKTE DAHA İYİ OLUR.</p><h3>İşi bilen biriyle<br/><em>bir adım ileri.</em></h3><Link href="/kesfet/?alan=hizmet"><span><b>Yerel hizmetler</b><small>Ev, bakım, onarım ve günlük işler.</small></span><EditorialArrow/></Link><Link href="/kesfet/?alan=freelance"><span><b>Freelance</b><small>Tasarım, yazılım ve yaratıcı projeler.</small></span><EditorialArrow/></Link></div></div>
+  <nav className="gateway-existing" aria-label="İlan kategorileri"><span>Bir de ilanlara bak.</span><Link href="/arama/?k=emlak">Emlak ↗</Link><Link href="/vasita/">Vasıta ↗</Link><Link href="/akis/">İkinci el akışı ↗</Link></nav>
+  <Link href="/akis/" className="gateway-resale"><span aria-hidden="true">∞</span><div><strong>İyi eşyalar. Yeni sahipler.</strong><p>Dolapları gez, sevdiklerini sakla, teklifini hazırla.</p></div><EditorialArrow/></Link>
+</section>;}
