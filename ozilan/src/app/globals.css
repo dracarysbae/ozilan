@@ -577,3 +577,4 @@ html[data-motion="reduced"] .discovery-aurora::after,html[data-motion="reduced"]
 @media(max-width:767px) { .cinema-ready { transform:translate3d(0,42px,0) scale(.94); }.cinema-ready.cinema-visible { transform:translate3d(0,0,0) scale(1); }.decision-panel.cinema-ready { transform:translate3d(0,42px,0) scale(.95); }.decision-panel.cinema-visible { transform:translate3d(0,0,0) scale(1); } }
 .vehicle-options { scroll-margin-top:130px; }
 @media(min-width:1024px) { .vehicle-options { scroll-margin-top:88px; } }
+.vehicle-deal { min-width:0; }.vehicle-deal legend { float:none; width:auto; }.vehicle-deal .vehicle-pills { margin-top:0; }
