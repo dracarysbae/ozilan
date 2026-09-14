@@ -132,15 +132,18 @@ export function ListingCard({ l, pool, variant = "grid" }: { l: Listing; pool: L
   }
 
   return (
-    <Link href={href} className="plaque-link group flex h-full flex-col overflow-hidden">
-      <div className="relative overflow-hidden">
-        <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="aspect-[4/3] w-full transition-transform duration-700 ease-apple group-hover:scale-[1.07]" label={l.title} />
-        <span className="absolute left-3 top-3 rounded-full bg-navy-900/70 px-2.5 py-1 text-[0.6875rem] font-medium text-white backdrop-blur">{l.deal}</span>
+    <Link href={href} className="plaque-link listing-motion-card group flex h-full flex-col overflow-hidden">
+      <div className="listing-art-window relative overflow-hidden">
+        <div className="listing-art-plane">
+          <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="listing-artwork aspect-[4/3] w-full" label={l.title} />
+        </div>
+        <span className="listing-deal absolute left-3 top-3 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium text-white">{l.deal}</span>
         <FavButton id={l.id} className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100 focus:opacity-100" />
         <CompareButton id={l.id} className="absolute right-2 top-12 opacity-0 transition group-hover:opacity-100 focus:opacity-100" />
         {l.featured && <span className="absolute bottom-2 left-2 rounded-full bg-signal px-2.5 py-1 text-[0.6875rem] font-medium text-white">Öne çıkan</span>}
+        <span className="listing-reveal-veil" aria-hidden="true" />
       </div>
-
+      <span className="listing-reveal-light" aria-hidden="true" />
       <div className="flex flex-1 flex-col p-4">
         <p className="truncate text-[0.8125rem] text-mute-2">
           {l.pathLabels?.length ? l.pathLabels.slice(0, 2).join(" › ") : `${l.district}, ${l.city}`}

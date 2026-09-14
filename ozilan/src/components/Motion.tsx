@@ -449,7 +449,10 @@ export function PageTransition({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (!isFull() || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (!isFull() || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      // Capture runs before React's favourite/compare handlers. Let nested controls
+      // handle their own clicks instead of treating them as navigation on the card.
+      if ((e.target as Element).closest?.("button,input,select,textarea,[role=button]")) return;
       const a = (e.target as HTMLElement).closest?.("a[href]") as HTMLAnchorElement | null;
       if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
       const url = new URL(a.href, location.href);

@@ -1,5 +1,13 @@
 # Editorial visual refinement — 14 September 2026
 
+## Listing scroll performance — 14 September 2026
+
+The "İlk sen keşfet" listing entrance previously changed an inherited CSS variable every frame. That recomputed a clip-path, scaled an inline SVG with blur/noise filters, and ran a 700 ms transform transition that kept chasing scroll updates. The alternating perspective entrance now drives explicit cached card, artwork-plane, reveal-veil and light transforms. The directional wipe, 18% artwork zoom, 3D entry/exit, and light sweep remain; the SVG artwork and its filters are unchanged. A shaded deal badge avoids sampling the moving backdrop. Only nearby cards retain compositor hints; offscreen cards and settled artwork receive no recurring writes. Hover zoom remains for a fine pointer, and keyboard focus exposes the full card.
+
+Interaction QA also found that the capture-phase page-transition handler intercepted favourite/compare buttons inside listing links. It now leaves nested controls to their own handlers, while ordinary card navigation retains the transition curtain.
+
+Validation: production build and static export checks pass (15 pages, 207 asset references). All 17 tests pass, including four new motion tests covering mirrored entrances, reversible reveals, no repeated settled/offscreen DOM writes, and cleanup. Browser checks at 320×740, 390×844 and 1280×900 retain layout and effects without horizontal overflow. All tested listing artwork windows have computed clip-path:none; an entering artwork has no chasing CSS transition. The 320 px view retained two nearby card surfaces out of nine cards. Favourite and comparison toggles worked in place and were restored after testing; motion-off removes all card transforms/veils and motion-on restores them. These are browser and code checks, not physical iPhone/Samsung frame-rate measurements.
+
 ## Art direction
 
 Replace repeated pastel hero cards with material-focused still lifes, a navy editorial cover, asymmetrical shopping/gift compositions, a warm workshop feature and horizontal expertise listings. Keep the original home hero, ScrollJourney and ScrollExperience effects. Add a shared-frame cached scroll parallax, diagonal mask reveal, periodic light sweep, and secondhand category hotspots. No additional packages or paid services.

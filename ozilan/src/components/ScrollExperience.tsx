@@ -2,6 +2,7 @@
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
 import { refreshMotion, useFrame, useMotionOK } from "./Motion";
 import { isSceneResident } from "@/lib/scene-residency";
+import { clearListingMotion, updateListingMotion, type ListingMotion } from "@/lib/listing-motion";
 
 /** One observer for staggered entrances. The content stays visible without JavaScript. */
 export function ScrollExperience() {
@@ -9,7 +10,7 @@ export function ScrollExperience() {
   const hero = useRef<HTMLElement | null>(null);
   const cards = useRef<HTMLElement[]>([]);
   const ribbon = useRef<HTMLElement | null>(null);
-  const layout = useRef<{card:HTMLElement;top:number;height:number;last:string}[]>([]);
+  const layout = useRef<{card:HTMLElement;top:number;height:number;last:string;listing:ListingMotion|null}[]>([]);
   const heroBottom = useRef(0);
   const previousScroll = useRef(-1);
   const motion = useMotionOK();
@@ -21,7 +22,15 @@ export function ScrollExperience() {
     ribbon.current = root.querySelector<HTMLElement>(".discovery-ribbon");
     if (!motion) return;
     const measure = () => {
-      layout.current=cards.current.map(card=>{let top=0,node:HTMLElement|null=card;while(node){top+=node.offsetTop;node=node.offsetParent as HTMLElement|null;}return {card,top,height:card.offsetHeight,last:""};});
+      layout.current=cards.current.map(card=>{
+        let top=0,node:HTMLElement|null=card;
+        while(node){top+=node.offsetTop;node=node.offsetParent as HTMLElement|null;}
+        const art=card.querySelector<HTMLElement>(".listing-art-plane");
+        const veil=card.querySelector<HTMLElement>(".listing-reveal-veil");
+        const light=card.querySelector<HTMLElement>(".listing-reveal-light");
+        const listing:ListingMotion|null=art&&veil&&light ? {card,art,veil,light,resident:null,open:null,progress:-1,transform:""} : null;
+        return {card,top,height:card.offsetHeight,last:"",listing};
+      });
       heroBottom.current=hero.current ? hero.current.offsetTop+hero.current.offsetHeight : 0;
       previousScroll.current=-1;
       refreshMotion();
@@ -62,6 +71,7 @@ export function ScrollExperience() {
     resize.observe(root);
     return () => {
       observer.disconnect(); stageObserver.disconnect(); changes.disconnect(); resize.disconnect();
+      layout.current.forEach(item=>{if(item.listing)clearListingMotion(item.listing);});
       root.querySelectorAll<HTMLElement>(".cinema-ready").forEach(el=>{el.classList.remove("cinema-ready","cinema-visible");el.style.removeProperty("--entrance-delay");});
       cards.current.forEach(el=>{el.classList.remove("sculpted-card");["--card-open","--card-side","transform","will-change"].forEach(p=>el.style.removeProperty(p));});
       cards.current=[];
@@ -86,6 +96,7 @@ export function ScrollExperience() {
     layout.current.forEach((item,i)=>{
       const {card,height}=item;
       const top=item.top-sy;
+      if(item.listing){updateListingMotion(item.listing,top,height,h,i%2?1:-1);return;}
       const near=top<h+150&&top+height>-100;
       if(!near) {if(item.last!=="outside"){card.style.willChange="auto";item.last="outside";}return;}
       const p=Math.max(0,Math.min(1,(h-top)/(Math.min(h*.64,height*.9)+80)));
