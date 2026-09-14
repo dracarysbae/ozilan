@@ -24,6 +24,6 @@
 2. `supabase/MEDIA.md` içindeki ayrı temizlik anahtarı ve saatlik Cron işini tamamla. Cron henüz kurulmadı.
 3. İki hesapla giriş/fotoğraf/ilan/mesaj ve temizlik kabul testlerini tamamla. Henüz gerçek sağlayıcılı fotoğraf yüklemesi yapılmadı.
 4. Google girişi etkinleşmeden ilk kullanıcılara üyelik hazır denmemeli. İşletmeci iletişimi ve hesap/veri silme süreci de açık kalan ürün işleridir.
-5. Yerel backend commit'leri henüz GitHub'a itilmedi. Eski GitHub Pages tasarım önizlemesi yerinde duruyor; güncel derlenmiş ön yüz Cloudflare üzerinde yayımlandı. Sonraki yayınlar Pages Direct Upload üzerinden yapılır; tüm dosyalar güncel production build'den alınmalı.
+5. Yerel backend commit'leri henüz GitHub'a itilmedi. Uzak `629eb7f` tasarım ağacının yerel backend öncesi `51906db` ağacıyla satır sonları dışında aynı olduğu doğrulandı; geçmişler `44e5940` merge commit'iyle birleştirildi. Merge sonrası uygulama, sunucu ve workflow dosyalarında içerik değişikliği olmadığı ayrıca doğrulandı. Normal push, bu bilgisayarda GitHub kimlik doğrulaması bulunmadığı için tamamlanmadı (`gh auth status` da oturum yok dedi); force push yapılmadı. Eski GitHub Pages tasarım önizlemesi yerinde duruyor; güncel derlenmiş ön yüz Cloudflare üzerinde yayımlandı. Sonraki yayınlar Pages Direct Upload üzerinden yapılır; tüm dosyalar güncel production build'den alınmalı.
 
 Hiçbir kart, ücretli plan veya ödeme açılmadı. Bu kayıt canlıya çıkış tamamlandı anlamına gelmez.
