@@ -283,6 +283,27 @@ html[data-motion=full] .resale-intro-art>svg { animation:marketLevitate 7s ease-
 .resale-card.sculpted-card:hover>.resale-picture>a>svg { transform:scale(1.06); }
 .sculpted-card:focus-within { transform:none!important; --card-open:1!important; }
 .sculpted-card::after { z-index:3; }
+.listing-motion-card { position:relative; }
+.listing-motion-card.sculpted-card { transition:box-shadow .3s,border-color .3s; }
+.listing-motion-card.sculpted-card>.listing-art-window:first-child { clip-path:none; }
+.listing-motion-card.sculpted-card::after { content:none; }
+.listing-art-plane { transform-origin:50% 50%; }
+.listing-deal { background:linear-gradient(135deg,#12233bec,#243b59d9); box-shadow:inset 0 1px 0 #ffffff24; }
+.listing-reveal-veil,.listing-reveal-light { display:none; pointer-events:none; position:absolute; inset:0; }
+.listing-motion-card.sculpted-card .listing-reveal-veil { display:block; z-index:3; background:var(--listing-reveal-color,#fff); transform:translate3d(100%,0,0); }
+.listing-motion-card.sculpted-card>.listing-reveal-light { display:block; z-index:4; border-radius:inherit; background:linear-gradient(110deg,transparent 30%,#d4efff85 49%,transparent 68%); transform:translate3d(110%,0,0); }
+.listing-motion-card[data-listing-resident=true] { will-change:transform; }
+.listing-motion-card[data-listing-resident=true][data-listing-open=false] :is(.listing-art-plane,.listing-reveal-veil,.listing-reveal-light) { will-change:transform; }
+.listing-motion-card.sculpted-card:focus-within .listing-art-plane { transform:none!important; }
+.listing-motion-card.sculpted-card:focus-within :is(.listing-reveal-veil,.listing-reveal-light) { visibility:hidden; }
+@media(hover:hover) and (pointer:fine) {
+  .listing-artwork { transition:transform .7s var(--ease-apple); }
+  .listing-motion-card:hover .listing-artwork { transform:scale(1.07); }
+  .listing-motion-card.sculpted-card[data-listing-open=false] .listing-artwork { transform:none; transition:none; }
+}
+@media(max-width:440px) {
+  .editorial-listings .listing-art-plane>.listing-artwork { aspect-ratio:16/10; }
+}
 .restored-category-deck>.sculpted-card::after { transition:none; transform:translateX(calc(-110% + var(--card-open,1)*220%)); }
 .gateway-feature.cinema-ready { transform:perspective(1200px) translate3d(-44px,65px,-60px) rotateY(-12deg) scale(.94); }
 .gateway-feature-gift.cinema-ready { transform:perspective(1200px) translate3d(44px,65px,-60px) rotateY(12deg) scale(.94); }
