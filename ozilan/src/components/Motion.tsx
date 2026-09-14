@@ -48,6 +48,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       MODE = next;
       document.documentElement.dataset.motion = next;
       try { localStorage.setItem(KEY, next); } catch {}
+      wake(4);
       return next;
     });
   }, []);
@@ -83,7 +84,33 @@ export function MotionToggle({ className = "" }: { className?: string }) {
 export type Frame = { y: number; sy: number; v: number; w: number; h: number; t: number };
 type Sub = (f: Frame) => void;
 const subs = new Set<Sub>();
-let raf = 0, y = 0, sy = 0, lastY = 0, v = 0;
+let raf = 0, y = 0, sy = 0, lastY = 0, v = 0, wakeFrames = 0;
+
+/**
+ * Hareket motorunu yalnızca gerçekten hareket varken uyandırır. Önceki sürüm,
+ * sayfa sabit dururken bile bütün Reveal bileşenlerini ölçüyor ve mobil CPU/GPU'yu
+ * sürekli meşgul ediyordu.
+ */
+function wake(frames = 3) {
+  wakeFrames = Math.max(wakeFrames, frames);
+  if (!raf && subs.size && typeof window !== "undefined") raf = requestAnimationFrame(tick);
+}
+
+const onViewportActivity = () => wake(8);
+
+function attachActivityListeners() {
+  window.addEventListener("scroll", onViewportActivity, { passive: true });
+  window.addEventListener("resize", onViewportActivity, { passive: true });
+  window.addEventListener("pointermove", onViewportActivity, { passive: true });
+  window.addEventListener("touchmove", onViewportActivity, { passive: true });
+}
+
+function detachActivityListeners() {
+  window.removeEventListener("scroll", onViewportActivity);
+  window.removeEventListener("resize", onViewportActivity);
+  window.removeEventListener("pointermove", onViewportActivity);
+  window.removeEventListener("touchmove", onViewportActivity);
+}
 
 function tick(t: number) {
   y = window.scrollY;
@@ -92,12 +119,22 @@ function tick(t: number) {
   v = y - lastY; lastY = y;
   const f: Frame = { y, sy, v, w: window.innerWidth, h: window.innerHeight, t };
   subs.forEach((s) => { try { s(f); } catch { /* bir abone patlarsa döngü ölmesin */ } });
-  raf = subs.size ? requestAnimationFrame(tick) : 0;
+  wakeFrames = Math.max(0, wakeFrames - 1);
+  raf = subs.size && (wakeFrames > 0 || Math.abs(y - sy) >= 0.08) ? requestAnimationFrame(tick) : 0;
 }
 function subscribe(s: Sub) {
+  const wasEmpty = subs.size === 0;
   subs.add(s);
-  if (!raf) { sy = y = lastY = window.scrollY; raf = requestAnimationFrame(tick); }
-  return () => { subs.delete(s); if (!subs.size && raf) { cancelAnimationFrame(raf); raf = 0; } };
+  if (wasEmpty) attachActivityListeners();
+  if (!raf) { sy = y = lastY = window.scrollY; wake(3); }
+  return () => {
+    subs.delete(s);
+    if (!subs.size) {
+      detachActivityListeners();
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    }
+  };
 }
 /** her karede çağrılan geri çağrı — DOM'a doğrudan yazmak için */
 export function useFrame(cb: Sub, deps: unknown[] = []) {
@@ -149,7 +186,7 @@ export function Reveal({
   const done = useRef(false);
   const last = useRef("");
 
-  useFrame(({ h }) => {
+  useFrame(({ h, w }) => {
     const el = ref.current; if (!el) return;
     if (!isFull()) { if (last.current !== "off") { el.style.cssText = ""; last.current = "off"; } return; }
     if (done.current) return;
@@ -163,7 +200,9 @@ export function Reveal({
     const tx = (S.tx ?? 0) * k, ty = (S.ty ?? 0) * k - (exit ? x * 46 : 0);
     const tz = (S.tz ?? 0) * k, rx = (S.rx ?? 0) * k, ry = (S.ry ?? 0) * k, rz = (S.rz ?? 0) * k;
     const s = 1 - (1 - (S.s ?? 1)) * k - (exit ? x * 0.04 : 0);
-    const blur = (S.blur ?? 0) * k;
+    // Küçük ekranda inline blur her karede büyük bir rasterizasyon alanı üretir.
+    // Aynı derinlik transform + opacity ile korunur, pahalı filtre masaüstüne kalır.
+    const blur = w < 768 ? 0 : (S.blur ?? 0) * k;
     const op = Math.min(e * 1.15, 1) * (exit ? 1 - x * 0.7 : 1);
     const need3d = S.tz || S.rx || S.ry;
     const tr = `${need3d ? "perspective(1200px) " : ""}translate3d(${tx.toFixed(2)}px,${ty.toFixed(2)}px,${tz.toFixed(1)}px)`
@@ -252,8 +291,9 @@ export function Tilt({ children, max = 8, className = "", glare = true }: { chil
     const r = ref.current!.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
     target.current = { rx: (0.5 - py) * max * 2, ry: (px - 0.5) * max * 2, mx: px * 100, my: py * 100, on: 1 };
+    wake(28);
   };
-  const onLeave = () => { target.current = { ...target.current, rx: 0, ry: 0, on: 0 }; };
+  const onLeave = () => { target.current = { ...target.current, rx: 0, ry: 0, on: 0 }; wake(36); };
 
   return (
     <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} className={`tilt-host ${className}`}>
@@ -278,9 +318,10 @@ export function Magnetic({ children, strength = 0.35, className = "" }: { childr
     if (!isFull()) return;
     const r = ref.current!.getBoundingClientRect();
     t.current = { x: (e.clientX - (r.left + r.width / 2)) * strength, y: (e.clientY - (r.top + r.height / 2)) * strength };
+    wake(26);
   };
   return (
-    <div ref={ref} onMouseMove={onMove} onMouseLeave={() => { t.current = { x: 0, y: 0 }; }} className={`inline-block ${className}`}>
+    <div ref={ref} onMouseMove={onMove} onMouseLeave={() => { t.current = { x: 0, y: 0 }; wake(32); }} className={`inline-block ${className}`}>
       {children}
     </div>
   );
@@ -338,6 +379,17 @@ export function useScrollY(quant = 2) {
   const last = useRef(-1);
   useFrame(({ sy }) => { const q = Math.round(sy / quant) * quant; if (q !== last.current) { last.current = q; set(q); } }, [quant]);
   return val;
+}
+
+/** Yalnızca eşik geçildiğinde React render'ı üretir; yapışkan başlık için ideal. */
+export function useScrollThreshold(threshold = 90) {
+  const [past, setPast] = useState(false);
+  const last = useRef(false);
+  useFrame(({ sy }) => {
+    const next = sy >= threshold;
+    if (next !== last.current) { last.current = next; setPast(next); }
+  }, [threshold]);
+  return past;
 }
 
 export function useViewportPos(ref: React.RefObject<HTMLElement | null>) {

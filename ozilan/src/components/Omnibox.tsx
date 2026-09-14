@@ -46,16 +46,16 @@ export function Omnibox({ autoFocus = false, big = false, dark = false }: { auto
     <div ref={box} className="relative w-full">
       <form
         onSubmit={(e) => { e.preventDefault(); go(); }}
-        className={`flex items-stretch overflow-hidden rounded-full border transition ${
+        className={`omnibox-shell flex items-stretch overflow-hidden rounded-full border transition ${
           dark
-            ? "border-white/10 bg-navy-900/70 backdrop-blur-xl"
+            ? "omnibox-dark border-white/10 bg-navy-900/70 backdrop-blur-xl"
             : open
               ? "border-line-strong bg-paper-2 shadow-pop"
               : "border-transparent bg-paper-3"
         }`}
       >
-        <span className={`grid w-12 place-items-center ${dark ? "text-white/40" : "text-mute-2"}`}>
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <span className={`grid w-11 shrink-0 place-items-center sm:w-14 ${dark ? "text-white/45" : "text-mute-2"}`}>
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] sm:h-5 sm:w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
             <circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" />
           </svg>
         </span>
@@ -68,16 +68,21 @@ export function Omnibox({ autoFocus = false, big = false, dark = false }: { auto
           aria-label="Doğal dille arama"
           className={`min-w-0 flex-1 bg-transparent py-0 outline-none ${
             dark ? "text-white placeholder:text-white/35" : "placeholder:text-mute-2"
-          } ${big ? "h-16 text-[1.0625rem]" : "h-10 text-[0.9375rem]"}`}
+          } ${big ? "h-[3.75rem] text-[0.9375rem] sm:h-[4.5rem] sm:text-[1.0625rem]" : "h-10 text-[0.9375rem]"}`}
         />
         <span className={`flex shrink-0 items-center ${big ? "pr-2" : "pr-1.5"}`}>
           <button
             type="submit"
-            className={`rounded-full bg-signal font-medium text-white shadow-plaque-blue transition hover:bg-signal-ink ${
-              big ? "h-12 px-7 text-[0.9375rem]" : "h-8 px-4 text-[0.8125rem]"
+            className={`omnibox-submit group flex items-center gap-2 rounded-full bg-signal font-medium text-white shadow-plaque-blue transition hover:bg-signal-ink ${
+              big ? "h-11 px-4 text-[0.875rem] sm:h-14 sm:px-7 sm:text-[0.9375rem]" : "h-8 px-4 text-[0.8125rem]"
             }`}
           >
             Ara
+            {big && (
+              <svg viewBox="0 0 20 20" className="hidden h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 sm:block" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M4 10h11M11 6l4 4-4 4" />
+              </svg>
+            )}
           </button>
         </span>
       </form>
