@@ -2,10 +2,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
-import { ScrollExperience } from "@/components/ScrollExperience";
+import { ScrollExperience, ScrollJourney } from "@/components/ScrollExperience";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
-import { Reveal, Tilt } from "@/components/Motion";
+import { Tilt } from "@/components/Motion";
 import { useStore } from "@/lib/store";
 import { readMarket } from "@/lib/market";
 import { CATEGORIES } from "@/data/taxonomy";
@@ -82,6 +82,7 @@ export default function Home() {
     <section className="discovery-hero">
       <div className="discovery-aurora" aria-hidden="true" />
       <div className="discovery-orbit" aria-hidden="true" />
+      <div className="hero-caustics" aria-hidden="true"><i /><i /><i /><span /></div>
       <div className="discovery-inner">
         <div className="discovery-copy">
           <p className="discovery-eyebrow"><span /> DAHA İYİ BİR KEŞİF</p>
@@ -109,10 +110,15 @@ export default function Home() {
       <div className="discovery-bottom"><span><b>{num(active.length)}</b> keşfedilecek örnek ilan</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
     </section>
 
-    <section id="kesfet" className="discovery-section">
+    <div className="discovery-ribbon" aria-hidden="true"><span>Bir ev. <i>Bir yol.</i> Yeni bir hikâye. <i>Yeni bir sen.</i></span></div>
+    <section id="kesfet" className="discovery-section journey-heading-section">
       <div className="editorial-heading"><div><p className="editorial-kicker">SENİN DÜNYAN</p><h2>Ne arıyorsan,<br className="sm:hidden" /> buradan başla.</h2></div><Link href="/arama/">Tüm ilanlar <Arrow /></Link></div>
-      <div className="world-categories">{WORLDS.map((w,i) => <Reveal key={w.slug} once exit={false} kind="up" delay={i*70}><Link href={w.slug === "vasita" ? "/vasita/" : `/arama/?k=${w.slug}`} className={`category-editorial category-${w.tone}`}><div className="category-top"><span>{w.number}</span><span>{num(counts[i])} ilan</span></div><div className="category-art"><Scene type={i} /></div><div className="category-bottom"><div><h3>{w.name}</h3><p>{w.detail}</p></div><span className="category-arrow"><Arrow /></span></div></Link><div className="category-sublinks">{CATEGORIES[i].subs.slice(0,3).map(s => <Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></Reveal>)}</div>
     </section>
+    <ScrollJourney labels={WORLDS.map(w=>w.name)}>{WORLDS.map((w,i)=><article key={w.slug} className={`journey-panel journey-${w.tone}`} aria-label={w.name}>
+      <div className="journey-environment" aria-hidden="true"><div className="journey-grid"/><div className="journey-ring"/><span className="journey-monogram">{w.number}</span></div>
+      <div className="journey-copy"><p>{w.number} / {w.detail}</p><h3>{w.title}</h3><p className="journey-description">{w.caption}</p><Link className="journey-cta" href={w.slug==="vasita"?"/vasita/":`/arama/?k=${w.slug}`}>{w.name} keşfet <Arrow/></Link><div className="journey-tags">{CATEGORIES[i].subs.slice(0,3).map(s=><Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></div>
+      <div className="journey-object"><div className="journey-plinth"/><Scene type={i}/><span className="journey-object-note">{num(counts[i])} ilan · Kategori illüstrasyonu</span></div>
+    </article>)}</ScrollJourney>
 
     <section className="decision-section"><div className="decision-inner"><div className="decision-copy"><p className="editorial-kicker">FİYATTAN FAZLASINI GÖR</p><h2>İyi bir karar,<br /><span>iyi bir karşılaştırmayla başlar.</span></h2><p>Bir rakam tek başına her şeyi anlatmaz. Benzer ilanlarla karşılaştır, satıcı bilgilerini incele ve kararını daha bilinçli ver.</p><Link href="/arama/?s=value" className="btn-primary">Piyasayı keşfet <Arrow /></Link></div><div className="decision-panel"><div className="decision-panel-top"><span>Fiyatın piyasadaki yeri</span><span>Örnek analiz</span></div><div className="decision-price"><span>İlan fiyatı</span><strong>3.150.000 <small>TL</small></strong><p><span>↘ %14</span> benzer ilanların ortancasından düşük</p></div><div className="market-visual" aria-label="Örnek fiyat dağılımı"><div className="market-bars" aria-hidden="true">{[12,18,27,39,54,71,85,97,100,94,84,69,52,37,26,16,10,6].map((h,i)=><span key={i} style={{height:`${h}%`}} />)}</div><div className="market-marker"><span>Bu ilan</span></div><div className="market-baseline" /></div><div className="market-axis"><span>Düşük fiyat</span><span>Ortanca <b>3.680.000 TL</b></span><span>Yüksek fiyat</span></div><div className="decision-footnote"><span>34 benzer ilanla karşılaştırıldı</span><p>Örnek hesaplama. Piyasa konumu, ilan kalitesinin veya güvenliğinin garantisi değildir.</p></div></div></div></section>
 
