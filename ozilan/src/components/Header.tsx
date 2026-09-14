@@ -49,14 +49,14 @@ export function Header() {
             }`}
           >
             <span className="brand-glyph" aria-hidden><span /></span>
-            <span>Oz<span className={onDark ? "text-signal-glow" : "text-signal"}>Ilan</span></span>
+            <span>Oz<span className={onDark ? "text-signal-glow" : "text-signal"}>BirArada</span></span>
           </Link>
 
-          <nav className="ml-6 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
+          <nav className="ml-6 hidden items-center xl:flex" onMouseLeave={() => setMenu(null)}>
             {CATEGORIES.map((c) => (
               <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug === "vasita" ? null : c.slug)}>
                 <Link
-                  href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`}
+                  href={c.slug === "vasita" ? "/vasita/" : c.slug === "ikinci-el" ? "/akis/" : `/arama/?k=${c.slug}`}
                   className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${
                     menu === c.slug ? (onDark ? "text-white" : "text-ink") : tone
                   }`}
@@ -64,12 +64,14 @@ export function Header() {
                   {c.label}
                 </Link>
                 <div
-                  className={`absolute left-0 top-full origin-top overflow-hidden rounded-xl border border-line bg-paper-2 shadow-lift ${
+                  inert={menu !== c.slug}
+                  aria-hidden={menu !== c.slug}
+                  className={`fixed left-1/2 top-16 origin-top overflow-hidden rounded-xl border border-line bg-paper-2 shadow-lift ${
                     menu === c.slug ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
                   }`}
                   style={{
                     width: `min(${c.subs.length > 4 ? 62 : 46}rem, calc(100vw - 3rem))`,
-                    transform: menu === c.slug ? "translateY(0) scale(1)" : "translateY(-6px) scale(.98)",
+                    transform: menu === c.slug ? "translate(-50%,0) scale(1)" : "translate(-50%,-6px) scale(.98)",
                     transition: "opacity .32s var(--ease-apple), transform .32s var(--ease-apple)",
                   }}
                 >
@@ -106,21 +108,21 @@ export function Header() {
                   </div>
                   <div className="flex items-center justify-between border-t border-line bg-paper px-5 py-2.5">
                     <span className="text-2xs text-mute">{c.tagline}</span>
-                    <Link href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`} className="text-2xs text-signal transition hover:underline">
+                    <Link href={c.slug === "vasita" ? "/vasita/" : c.slug === "ikinci-el" ? "/akis/" : `/arama/?k=${c.slug}`} className="text-2xs text-signal transition hover:underline">
                       Tüm {c.label.toLocaleLowerCase("tr")} ilanları →
                     </Link>
                   </div>
                 </div>
               </div>
             ))}
-            <Link href="/arama/?s=value" className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${tone}`}>
-              Fırsatlar
+            <Link href="/kesfet/" className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${tone}`}>
+              Keşfet ↗
             </Link>
           </nav>
 
           {!home && <div className="ml-auto hidden max-w-sm flex-1 md:block"><Omnibox /></div>}
 
-          <div className={`hidden items-center gap-0.5 lg:flex ${home ? "ml-auto" : "ml-3"}`}>
+          <div className={`hidden items-center gap-0.5 xl:flex ${home ? "ml-auto" : "ml-3"}`}>
             {NAV.map((n) => (
               <Link
                 key={n.href}
@@ -156,7 +158,9 @@ export function Header() {
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label="Menü"
-            className={`ml-auto grid h-10 w-10 place-items-center rounded-full transition lg:hidden ${
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
+            className={`ml-auto grid h-10 w-10 place-items-center rounded-full transition xl:hidden ${
               onDark ? "text-white hover:bg-white/10" : "text-ink hover:bg-paper-3"
             }`}
           >
@@ -170,11 +174,14 @@ export function Header() {
       </div>
 
       <div
+        id="mobile-navigation"
         aria-hidden={!open}
         inert={!open}
-        className="overflow-hidden border-line bg-paper/95 backdrop-blur-xl lg:hidden"
+        onClick={e => { if ((e.target as HTMLElement).closest("a")) setOpen(false); }}
+        className="overflow-hidden border-line bg-paper/95 backdrop-blur-xl xl:hidden"
         style={{
-          maxHeight: open ? 620 : 0,
+          maxHeight: open ? "calc(100dvh - 64px)" : 0,
+          overflowY: open ? "auto" : "hidden",
           borderBottomWidth: open ? 1 : 0,
           transition: "max-height .5s var(--ease-apple), border-width .3s",
         }}
@@ -183,8 +190,14 @@ export function Header() {
           <div className="py-2"><Omnibox /></div>
           <div className="rows">
             {CATEGORIES.map((c) => (
-              <Link key={c.slug} href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
+              <Link key={c.slug} href={c.slug === "vasita" ? "/vasita/" : c.slug === "ikinci-el" ? "/akis/" : `/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
             ))}
+            <div className="grid grid-cols-2 gap-x-3 border-y border-line py-2">
+              <Link href="/kesfet/?alan=alisveris" className="py-3 text-sm">Alışveriş ↗</Link>
+              <Link href="/kesfet/?alan=cicek-hediye" className="py-3 text-sm">Çiçek & hediye ↗</Link>
+              <Link href="/kesfet/?alan=hizmet" className="py-3 text-sm">Yerel hizmetler ↗</Link>
+              <Link href="/kesfet/?alan=freelance" className="py-3 text-sm">Freelance ↗</Link>
+            </div>
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>
             ))}

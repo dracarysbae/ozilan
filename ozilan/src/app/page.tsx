@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { ScrollExperience, ScrollJourney } from "@/components/ScrollExperience";
+import { MarketplaceGateway } from "@/components/MarketplaceArt";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
 import { Tilt } from "@/components/Motion";
@@ -87,7 +88,7 @@ export default function Home() {
         <div className="discovery-copy">
           <p className="discovery-eyebrow"><span /> DAHA İYİ BİR KEŞİF</p>
           <h1>Aradığın şey.<br /><span>İçine sinen fiyat.</span></h1>
-          <p className="discovery-lead">Yeni bir ev, yeni bir yol, yeni bir başlangıç. Aradığını söyle; seçenekleri ve fiyatlarının piyasadaki yerini birlikte gör.</p>
+          <p className="discovery-lead">Yeni bir ev, düşünceli bir hediye, doğru bir uzman. İlanlardan alışverişe, günlük ihtiyaçlardan büyük fikirlere; keşfin burada başlasın.</p>
           <div className="discovery-search"><Omnibox big dark /></div>
           <div className="discovery-prompts"><span>Bir yerden başla</span><Link href={`/arama/?nl=${encodeURIComponent(chosen.query)}`}>{chosen.query}<Arrow /></Link></div>
           <div className="discovery-proof"><span><b>01</b> Cümleyle ara</span><span><b>02</b> Fiyatı karşılaştır</span><span><b>03</b> İnceleyerek seç</span></div>
@@ -101,14 +102,16 @@ export default function Home() {
               <div className="world-halo" aria-hidden="true" />
               <div className="world-heading"><span>KEŞİF KOLEKSİYONU</span><span>{chosen.number} / 03</span></div>
               <div key={chosen.slug} className="world-content"><h2>{chosen.title}</h2><Scene type={world} /></div>
-              <div className="world-caption"><div><small>{chosen.detail}</small><p>{chosen.caption}</p></div><Link href={chosen.slug === "vasita" ? "/vasita/" : `/arama/?k=${chosen.slug}`} aria-label={`${chosen.name} ilanlarını keşfet`}><Arrow /></Link></div>
+              <div className="world-caption"><div><small>{chosen.detail}</small><p>{chosen.caption}</p></div><Link href={chosen.slug === "vasita" ? "/vasita/" : chosen.slug === "ikinci-el" ? "/akis/" : `/arama/?k=${chosen.slug}`} aria-label={`${chosen.name} ilanlarını keşfet`}><Arrow /></Link></div>
             </div>
           </Tilt>
-          <div className="world-note"><span className="world-note-line" /> OzIlan seçkisi <span>•</span> Kategori illüstrasyonu</div>
+          <div className="world-note"><span className="world-note-line" /> OzBirArada seçkisi <span>•</span> Kategori illüstrasyonu</div>
         </div>
       </div>
       <div className="discovery-bottom"><span><b>{num(active.length)}</b> keşfedilecek örnek ilan</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
     </section>
+
+    <MarketplaceGateway />
 
     <div className="discovery-ribbon" aria-hidden="true"><span>Bir ev. <i>Bir yol.</i> Yeni bir hikâye. <i>Yeni bir sen.</i></span></div>
     <section id="kesfet" className="discovery-section journey-heading-section">
@@ -116,7 +119,7 @@ export default function Home() {
     </section>
     <ScrollJourney labels={WORLDS.map(w=>w.name)}>{WORLDS.map((w,i)=><article key={w.slug} className={`journey-panel journey-${w.tone}`} aria-label={w.name}>
       <div className="journey-environment" aria-hidden="true"><div className="journey-grid"/><div className="journey-ring"/><span className="journey-monogram">{w.number}</span></div>
-      <div className="journey-copy"><p>{w.number} / {w.detail}</p><h3>{w.title}</h3><p className="journey-description">{w.caption}</p><Link className="journey-cta" href={w.slug==="vasita"?"/vasita/":`/arama/?k=${w.slug}`}>{w.name} keşfet <Arrow/></Link><div className="journey-tags">{CATEGORIES[i].subs.slice(0,3).map(s=><Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></div>
+      <div className="journey-copy"><p>{w.number} / {w.detail}</p><h3>{w.title}</h3><p className="journey-description">{w.caption}</p><Link className="journey-cta" href={w.slug==="vasita"?"/vasita/":w.slug==="ikinci-el"?"/akis/":`/arama/?k=${w.slug}`}>{w.name} keşfet <Arrow/></Link><div className="journey-tags">{CATEGORIES[i].subs.slice(0,3).map(s=><Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></div>
       <div className="journey-object"><div className="journey-plinth"/><Scene type={i}/><span className="journey-object-note">{num(counts[i])} ilan · Kategori illüstrasyonu</span></div>
     </article>)}</ScrollJourney>
 
@@ -126,6 +129,6 @@ export default function Home() {
     {deals.length>0 && <section className="discovery-section deal-section"><div className="editorial-heading"><div><p className="editorial-kicker">YAKINDAN BAKMAYA DEĞER</p><h2>Piyasanın altında.</h2><p>Benzer ilanlara göre daha düşük fiyatlı seçenekler.</p></div><Link href="/arama/?s=value">Fiyatına göre sırala <Arrow /></Link></div><div className="editorial-listings">{deals.map(({l})=><ListingCard key={l.id} l={l} pool={pool} />)}</div></section>}
     {recent.length>0 && <section className="discovery-section"><div className="editorial-heading"><div><p className="editorial-kicker">KALDIĞIN YERDEN</p><h2>Son baktıkların.</h2></div></div><div className="editorial-listings">{recent.map(l=><ListingCard key={l.id} l={l} pool={pool} />)}</div></section>}
     <section className="discovery-section city-section"><div className="editorial-heading"><div><p className="editorial-kicker">YAKININDA NELER VAR?</p><h2>Şehrini keşfet.</h2></div></div><div className="editorial-cities">{CITIES.map((city,i)=><Link key={city} href={`/arama/?il=${encodeURIComponent(city)}`}><span className="city-index">{String(i+1).padStart(2,"0")}</span><span>{city}</span><span className="city-count">{active.filter(l=>l.city===city).length}<Arrow /></span></Link>)}</div></section>
-    <section className="listing-invitation"><div className="invitation-orb" aria-hidden="true" /><div><p className="discovery-eyebrow">YENİ BİR HİKÂYEYE YER AÇ</p><h2>Birinin aradığı,<br /><span>sende olabilir.</span></h2><p>İlanını oluştur. Fiyatını piyasayla karşılaştır.<br />Bir sonraki sahibine ulaş.</p><Link href="/ilan-ver/" className="invitation-button">İlanını oluştur <Arrow /></Link></div><span className="invitation-signature" aria-hidden="true">OzIlan</span></section>
+    <section className="listing-invitation"><div className="invitation-orb" aria-hidden="true" /><div><p className="discovery-eyebrow">YENİ BİR HİKÂYEYE YER AÇ</p><h2>Birinin aradığı,<br /><span>sende olabilir.</span></h2><p>İlanını oluştur. Fiyatını piyasayla karşılaştır.<br />Bir sonraki sahibine ulaş.</p><Link href="/ilan-ver/" className="invitation-button">İlanını oluştur <Arrow /></Link></div><span className="invitation-signature" aria-hidden="true">OzBirArada</span></section>
   </div>;
 }

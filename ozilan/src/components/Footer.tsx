@@ -9,13 +9,13 @@ export function Footer() {
       <div className="mx-auto grid max-w-shell gap-10 px-4 py-14 md:grid-cols-4 lg:px-6">
         <div className="md:col-span-1">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-serif text-2xl">OzIlan</span>
+            <span className="font-serif text-2xl">OzBirArada</span>
             <span className="h-1.5 w-1.5 bg-signal" />
           </div>
           <p className="mt-3 max-w-xs text-[0.82rem] leading-relaxed text-paper/60">
-            Her ilanda fiyatın piyasa karşısındaki yerini ve satıcının güven skorunu
-            açıkça gösteren ilan platformu.
+            İlanlar, alışveriş, hediyeler ve uzmanlıklar. Hayatının farklı alanlarını bir araya getiren keşif platformu.
           </p>
+          <div className="mt-4 flex flex-col gap-2 text-sm text-paper/75"><Link href="/akis/">İkinci el akışı</Link><Link href="/kesfet/?alan=alisveris">Alışveriş</Link><Link href="/kesfet/?alan=cicek-hediye">Çiçek & hediye</Link><Link href="/kesfet/?alan=hizmet">Yerel hizmetler</Link><Link href="/kesfet/?alan=freelance">Freelance işler</Link></div>
         </div>
 
         {CATEGORIES.map((c) => (
@@ -36,7 +36,7 @@ export function Footer() {
 
       <div className="border-t border-ink-line">
         <div className="mx-auto flex max-w-shell flex-col gap-3 px-4 py-5 text-[0.72rem] text-paper/45 md:flex-row md:items-center md:justify-between lg:px-6">
-          <p>© 2026 OzIlan — demo amaçlı örnek platform. Veriler kurgusaldır, tarayıcınızda saklanır.</p>
+          <p>© 2026 OzBirArada — demo amaçlı örnek platform. Veriler kurgusaldır, tarayıcınızda saklanır.</p>
           <div className="flex items-center gap-4">
             <MotionToggle className="!border-white/15 !bg-white/5 !text-paper/70" />
             <span>Statik dağıtım · GitHub Pages</span>
