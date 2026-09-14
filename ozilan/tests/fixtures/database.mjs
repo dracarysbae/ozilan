@@ -1,5 +1,5 @@
 import {PGlite} from '@electric-sql/pglite';
-import {readFile} from 'node:fs/promises';
+import {readFile,readdir} from 'node:fs/promises';
 export async function testDatabase(){
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create schema auth;create schema storage;
@@ -12,6 +12,9 @@ export async function testDatabase(){
     create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;
     grant usage on schema public,auth,storage to anon,authenticated;
     grant select,insert,delete on storage.objects to authenticated;`);
-  await db.exec(await readFile(new URL('../../../supabase/migrations/202609140001_marketplace.sql',import.meta.url),'utf8'));
+  const migrations=new URL('../../../supabase/migrations/',import.meta.url);
+  for(const name of (await readdir(migrations)).filter(n=>n.endsWith('.sql')).sort()) {
+    await db.exec(await readFile(new URL(name,migrations),'utf8'));
+  }
   return db;
 }

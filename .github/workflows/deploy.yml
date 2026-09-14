@@ -36,6 +36,7 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_AUTH_METHOD: ${{ vars.NEXT_PUBLIC_AUTH_METHOD || 'google' }}
         run: npm run build
       - name: Disable Jekyll processing
         run: touch out/.nojekyll

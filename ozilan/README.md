@@ -4,7 +4,7 @@ Next.js 16 / React 19 / TypeScript / Tailwind. GitHub Pages için `/ozilan/` alt
 
 ## Çalışan kod akışları
 
-- E-posta ile üyelik, giriş, çıkış, doğrulama yönlendirmesi ve şifre kurtarma arayüzü.
+- Varsayılan Google ile giriş arayüzü; Supabase üzerinde Google OAuth yapılandırılmalı. SMTP tamamlanırsa e-posta ile üyelik ve şifre kurtarma `NEXT_PUBLIC_AUTH_METHOD=email` veya `both` ile ayrıca açılabilir.
 - Yedi alanda fotoğraflı ilan oluşturma, düzenleme, yayından kaldırma ve yeniden yayınlama.
 - JPG/PNG/WebP fotoğrafları sırayla en fazla 1600 piksele dönüştürme, üst verileri atma; en fazla 6 fotoğraf, her çıktıda en fazla 2 MB.
 - Arama, alt kategori, şehir ve fiyat filtreleri; favoriler ve hesaba bağlı kayıtlı aramalar.
@@ -37,7 +37,7 @@ Public backend değişkenleri eksikse örnek katalog okunabilir, üyelik formu k
 
 ## Testin kapsamı
 
-`npm test`: 20 test. Arama bağlantıları/filtreleri, güvenli giriş dönüşü, kayıt eşleme, kart hareketleri, mobil varlık kurtarma ve gerçek PostgreSQL politikaları.
+`npm test`: 21 test. Arama bağlantıları/filtreleri, güvenli giriş dönüşü, kayıt eşleme, kart hareketleri, mobil varlık kurtarma ve gerçek PostgreSQL politikaları.
 
 Veritabanı testi PGlite içinde üretim SQL dosyasını çalıştırır. Başka kullanıcının ilanını değiştirme, mesajını okuma/gönderici taklidi, yabancı fotoğraf yükleme, admin tarafından kapatılan ilanı yeniden açma girişimleri engellenir. Sahiplik ve özel favoriler, görüşme katılımcıları ve anonim erişim denetlenir.
 
@@ -51,6 +51,7 @@ Veritabanı testi PGlite içinde üretim SQL dosyasını çalıştırır. Başka
 NEXT_PUBLIC_BASE_PATH=/ozilan
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=integration-public-key
+NEXT_PUBLIC_AUTH_METHOD=email
 ```
 
 Hesaplar: `qa.seller@ozilan.test` ve `qa.buyer@ozilan.test`; test parolası `LocalQaOnly!24`. Yalnızca bellekteki yerel fixture içindir. Yeniden başlatma tüm test kayıtlarını sıfırlar. Test anahtarını veya fixture çıktısını GitHub Pages'e koyma.
@@ -64,4 +65,4 @@ Hesaplar: `qa.seller@ozilan.test` ve `qa.buyer@ozilan.test`; test parolası `Loc
 - Taslaklar otomatik kaydedilmez. Yayınlanmadan bırakılan fotoğraflar için zamanlanmış orphan temizliği henüz yok; ücretsiz Storage kullanımı panelden izlenmelidir.
 - Satıcı kimliği ve değerlendirme puanı doğrulaması uygulanmadı. Skorlar kural temelli ilan incelemesidir, güvenlik garantisi değildir.
 - Arşivleme geri alınabilir; hesap silme/anonymizasyon süreci ve işletmeci iletişim/aydınlatma detayları ticari açılıştan önce tamamlanmalıdır.
-- E-posta kaydı/kurtarmanın canlı teslim testi, gerçek Supabase projesi ve SMTP bağlantısı bekliyor.
+- Google ile girişin canlı testi gerçek Supabase projesi ve Google OAuth istemcisi bekliyor. İlk açılış Google ile giriş üzerinden yapılabilir; bu akış SMTP istemez. E-posta kaydı/kurtarma ayrıca açılırsa SMTP ve teslim testi gerekir.

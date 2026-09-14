@@ -307,6 +307,13 @@ html[data-motion=full] .resale-intro-art>svg { animation:marketLevitate 7s ease-
 .member-form { padding:25px 0; align-self:center; min-width:0; }.member-form h2 { font-size:35px; letter-spacing:-.035em; margin:28px 0; line-height:1.25; }.member-back { color:#58738b; font-size:12px; }.member-tabs { display:flex; border-bottom:1px solid #cedbe5; margin-top:35px; gap:30px; }.member-tabs button { padding:16px 0; color:#637a8e; border-bottom:2px solid transparent; }.member-tabs button[aria-pressed=true] { color:#122d43; border-color:#2867c8; }
 .member-fields { display:grid; gap:20px; }.member-fields label { display:grid; gap:8px; font-size:12px; font-weight:500; color:#425e75; }.member-fields :is(input,select) { border:1px solid #b7c8d7; border-radius:12px; background:#fff; padding:14px 16px; font-size:16px; color:#122d43; width:100%; }.member-fields :is(input,select):focus { outline:2px solid #95b8ef; outline-offset:2px; }
 .listing-compose .field { min-width:0; max-width:100%; }
+.google-access { margin:28px 0; }
+.google-access>button { display:flex; align-items:center; justify-content:space-between; gap:20px; width:100%; min-height:54px; padding:14px 20px; border:1px solid #b7c8d7; border-radius:14px; background:#fff; color:#163a56; font-size:16px; font-weight:500; box-shadow:0 6px 24px #19354e0c; transition:transform .2s,box-shadow .2s; }
+.google-access>button:hover { transform:translateY(-2px); box-shadow:0 9px 28px #19354e18; }
+.google-access>button:focus-visible { outline:2px solid #739ed5; outline-offset:3px; }
+.google-access>button:disabled { opacity:.6; cursor:wait; transform:none; }
+.google-access>p { margin-top:14px; color:#60798d; font-size:12px; line-height:1.8; }
+@media(prefers-reduced-motion:reduce) { .google-access>button { transition:none; }.google-access>button:hover { transform:none; } }
 @media(max-width:480px) {
   .listing-compose .field { font-size:16px; }
   .listing-compose>ol button { flex-direction:column; align-items:flex-start; padding:10px 8px; gap:6px; }
