@@ -314,3 +314,101 @@ html[data-motion=full] .resale-intro-art>svg { animation:marketLevitate 7s ease-
 }
 html[data-motion=reduced] .opening-categories a,html[data-motion=reduced] .restored-category-deck .market-illustration,html[data-motion=reduced] .resale-intro-art::after,html[data-motion=reduced] .resale-intro-art .resale-tag,html[data-motion=reduced] .market-hero-art .market-illustration,html[data-motion=reduced] .editorial-media-photo { animation:none!important; }
 html[data-motion=reduced] .resale-intro-art,html[data-motion=reduced] .market-hero-art,html[data-motion=reduced] .gateway-feature.cinema-ready,html[data-motion=reduced] .gateway-workbench.cinema-ready { transform:none; }
+
+/* One seven-area collection, from the opening stage to the scroll exhibition. */
+.world-switch { width:100%; max-width:550px; flex-wrap:wrap; border-radius:19px; padding:5px; gap:3px; }
+.world-switch button { flex:1 0 auto; padding:9px 13px; min-height:40px; font-size:10px; }
+.discovery-search-scope { display:flex; justify-content:space-between; gap:10px; color:#d5e6f6; font-size:10px; margin-bottom:10px; }
+.discovery-search-scope span { font-size:9px; color:#a3b7ca; }
+.world-caption>div { min-width:0; }.world-caption p { max-width:340px; line-height:1.6; }
+.collection-market-scene { aspect-ratio:640/440; display:grid; place-items:center; }
+.collection-market-scene>.scene-object { width:84%; }.collection-market-scene .market-illustration { width:100%; height:auto; }
+.world-content .collection-market-scene { padding-top:65px; }
+.world-alisveris,.journey-alisveris { background:radial-gradient(ellipse at 76% 46%,#315774,#101d32 72%); }
+.world-cicek-hediye,.journey-cicek-hediye { background:radial-gradient(ellipse at 76% 46%,#59334e,#151c32 72%); }
+.world-hizmet,.journey-hizmet { background:radial-gradient(ellipse at 76% 46%,#27504e,#101e32 72%); }
+.world-freelance,.journey-freelance { background:radial-gradient(ellipse at 76% 46%,#403b6b,#101b31 72%); }
+.scroll-journey.journey-enabled { height:var(--journey-height,260svh); }
+.journey-nav { gap:12px; justify-content:space-between; }.journey-nav button { font-size:11px; gap:6px; border-bottom:1px solid transparent; }.journey-nav button[aria-pressed=true] { border-bottom-color:#93d9ed; }
+.journey-description { max-width:440px; }
+.market-share-search { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:18px; padding-top:15px; border-top:1px solid #d4dfeb; font-size:11px; }
+.market-share-search>button { color:#245985; min-height:40px; text-decoration:underline; text-underline-offset:5px; }.market-share-search>span { color:#61788e; }.market-share-search>label { width:100%; }.market-share-search input { width:100%; padding:10px; border:1px solid #829bb6; border-radius:9px; }
+
+/* Vasıta: a continuous night-blue showroom and a clear, tactile configurator. */
+.vehicle-discovery { color:#e7eef5; background:radial-gradient(ellipse at 0 38%,#142d42 0,transparent 45%),linear-gradient(145deg,#0d1a2a,#101d30 55%,#0a1728); overflow-x:clip; }
+.vehicle-intro { position:relative; isolation:isolate; min-height:420px; padding-block:45px 36px; background:radial-gradient(ellipse at 77% 45%,#274d69 0,#142a40 34%,#0d1c30 76%); }
+.vehicle-intro::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.17; background:repeating-linear-gradient(115deg,transparent 0 80px,#8accec 81px,transparent 82px 155px); mask-image:linear-gradient(90deg,transparent,#000); }
+.vehicle-intro::after { content:""; position:absolute; width:65%; height:160%; right:-10%; top:-30%; pointer-events:none; background:linear-gradient(110deg,transparent 35%,#a7e5f310 49%,transparent 60%); animation:showroomLight 9s ease-in-out infinite; }
+.vehicle-intro-copy { position:relative; z-index:2; }.vehicle-intro h1 { font-weight:500; }.vehicle-intro h1 span { color:#a7d1e7; }.vehicle-intro-copy>p:not(.editorial-kicker) { color:#a8bdcf; font-size:13px; line-height:1.8; margin-top:18px; }
+.vehicle-start { display:inline-flex; align-items:center; gap:35px; padding:12px 0; margin-top:16px; font-size:12px; border-bottom:1px solid #8fbfdc66; transition:gap .35s; }.vehicle-start:hover { gap:47px; }
+.vehicle-intro-art { display:block; position:relative; width:44%; max-width:470px; align-self:stretch; min-height:280px; animation:none; transform:none; isolation:isolate; }
+.vehicle-hero-model { position:relative; z-index:2; width:100%; padding-top:23px; animation:worldAppear .65s cubic-bezier(.16,1,.3,1) both; }.vehicle-hero-model>svg { width:100%; filter:drop-shadow(0 17px 22px #02091377); animation:showroomVehicle 7s ease-in-out infinite; }
+.vehicle-intro-art>span { position:relative; z-index:2; margin-top:-15px; font-size:11px; letter-spacing:.05em; color:#d4e8ef; }.vehicle-intro-art small { display:block; font-size:8px; color:#a1b7c8; margin-top:7px; }
+.vehicle-showroom-ring { position:absolute; inset:6% 12% 13%; border:1px solid #b5e3fb2b; border-radius:50%; transform:rotate(-20deg); }
+.vehicle-showroom-ring::after { content:""; position:absolute; inset:-1px; border:1px solid transparent; border-top-color:#b7edff; border-radius:50%; animation:showroomOrbit 14s linear infinite; }
+.vehicle-showroom-floor { position:absolute; inset:69% -10% -9%; border-radius:50%; background:radial-gradient(ellipse,#83bbd329,#407c9615 43%,transparent 69%); transform:rotate(-4deg); }
+.vehicle-process { max-width:1180px; margin:auto; display:flex; align-items:center; gap:34px; padding:22px 0; border-bottom:1px solid #94b5d323; font-size:11px; color:#c0d4e2; }.vehicle-process b { font-size:9px; font-weight:400; color:#6db7d3; padding-right:9px; }.vehicle-process small { color:#8aa8be; margin-left:auto; font-size:10px; }
+.vehicle-workspace { padding-top:38px; }.vehicle-step>span { color:#b2d9e9; border-color:#6b9bbb66; background:#163247; }.vehicle-step h2 { color:#ebf2f7; }.vehicle-step p { color:#a6bacb; }.vehicle-step h2:focus-visible { outline:2px solid #9cdbec; outline-offset:5px; border-radius:4px; }
+#vehicle-types { scroll-margin-top:100px; }
+.vehicle-type-grid>button { isolation:isolate; overflow:hidden; min-height:224px; border-color:#93b6d329; background:radial-gradient(ellipse at 70% 10%,#29476088,transparent 70%),linear-gradient(140deg,#1b3047,#122237); box-shadow:inset 0 1px #ecf8ff0a,0 9px 24px #00000012; }
+.vehicle-type-grid>button::before { content:""; position:absolute; inset:45% 10% 22%; z-index:-1; background:radial-gradient(ellipse,#7cc6e927,transparent 67%); transform:rotate(-10deg); }
+.vehicle-type-grid>button::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(110deg,transparent 25%,#aee9f410 50%,transparent 70%); transform:translateX(-130%); transition:transform .8s cubic-bezier(.2,.7,.2,1); }
+.vehicle-type-grid>button:hover::after,.vehicle-type-grid>button:focus-visible::after { transform:translateX(130%); }
+.vehicle-type-grid>button:hover { border-color:#83bfd480; box-shadow:0 15px 35px #02081045; }.vehicle-type-grid>button[aria-pressed=true] { background:radial-gradient(ellipse at 65% 18%,#38748a88,transparent 65%),linear-gradient(140deg,#234757,#122b40); border-color:#9ad9e5; box-shadow:inset 0 0 0 1px #acdbe122,0 8px 34px #83cae415; }
+.vehicle-type-grid>button svg { width:145px; max-width:100%; height:100px; margin:8px auto 12px; color:#b7d2e1; filter:drop-shadow(0 9px 9px #010b1890); animation:showroomVehicle 7s ease-in-out infinite; }.vehicle-type-grid>button:nth-child(2n)>svg { animation-delay:-2s; }.vehicle-type-grid>button:nth-child(3n)>svg { animation-delay:-4s; }
+.vehicle-type-grid>button:nth-child(3n) { background-color:#173f47; }.vehicle-type-grid strong { color:#ecf2f5; font-size:16px; }.vehicle-type-grid small,.vehicle-type-count,.vehicle-type-top { color:#a1bace; }.vehicle-type-count { border-top:1px solid #c2ddf215; padding-top:12px; margin-top:14px; }.vehicle-selected { color:#b0dbea; }
+.vehicle-reset { color:#a2d6e9; }.vehicle-empty { border-style:solid; border-color:#91b9cf2d; color:#b1c4d4; background:radial-gradient(ellipse at 50% 0,#24405966,transparent 70%),#112137; }.vehicle-empty h3 { color:#dbeaf1; }.vehicle-empty>svg { color:#acc8df; width:135px; }
+.vehicle-config-header { background:linear-gradient(110deg,#204459,#183349); border-color:#73adc13d; border-radius:22px 22px 0 0; gap:20px; padding:14px 24px; }.vehicle-config-header>span:last-child { color:#bbd9e2; }.vehicle-config-model { display:flex; align-items:center; gap:18px; }.vehicle-config-model>svg { width:96px; height:70px; color:#bdd9e5; }.vehicle-config-model small { color:#99becd; font-size:8px; letter-spacing:.12em; }.vehicle-config-model strong { display:block; color:#f0f6fa; font-size:21px; font-weight:500; margin-top:5px; }
+.vehicle-tree,.vehicle-primary-grid,.vehicle-deal,.vehicle-more { background:#15263b; border-color:#99b8d22b; }.vehicle-tree { background:linear-gradient(180deg,#182e43,#15263b); }
+.vehicle-options label,.vehicle-facet legend { color:#c4d6e4; }.vehicle-options select,.vehicle-options input[type=number] { color-scheme:dark; background:#0d1d30; border-color:#83a8c43d; color:#e2edf6; box-shadow:inset 0 2px 4px #020a151a; transition:border-color .2s,box-shadow .2s; }.vehicle-options select:focus,.vehicle-options input:focus { outline:2px solid #86c7de; outline-offset:3px; box-shadow:0 0 0 5px #87cddd0d; }.vehicle-options input::placeholder { color:#8aa5bd; }
+.vehicle-pills button { color:#a9c1d6; background:#102035; border-color:#6385a43d; transition:background .25s,color .25s,transform .25s,border-color .25s,box-shadow .25s; }.vehicle-pills button:hover { border-color:#8cc6da; transform:translateY(-2px); }.vehicle-pills button[aria-pressed=true] { color:#f0fcff; background:linear-gradient(120deg,#346179,#244961); border-color:#92cbde; box-shadow:0 3px 13px #98d9e815; animation:selectionPop .35s ease-out; }.vehicle-more summary { color:#dbe8f2; border-color:#99b8d223; }.vehicle-more summary>span:last-child { color:#9fb8cc; }
+.vehicle-submit { background:#0b192cee; border-color:#8bc0d45e; box-shadow:0 14px 38px #0000004d; }.vehicle-submit button { background:linear-gradient(120deg,#dceef5,#a8d4e7); color:#122e40; transition:box-shadow .3s,transform .3s; }.vehicle-submit button:hover { box-shadow:0 4px 22px #aadcee3a; transform:translateY(-2px); }
+.vehicle-intro[data-playing=false]::after,.vehicle-intro[data-playing=false] .vehicle-hero-model>svg,.vehicle-intro[data-playing=false] .vehicle-showroom-ring::after,.vehicle-type-grid[data-playing=false]>button>svg { animation-play-state:paused; }
+@keyframes showroomLight { 0%,100% { transform:translateX(-12%) rotate(-7deg); } 50% { transform:translateX(30%) rotate(7deg); } }
+@keyframes showroomVehicle { 0%,100% { transform:perspective(900px) translateY(1px) rotateY(-7deg); } 50% { transform:perspective(900px) translateY(-7px) rotateY(7deg); } }
+@keyframes showroomOrbit { to { rotate:360deg; } }
+@media(max-width:1250px) { .vehicle-process { margin-inline:28px; gap:24px; }.vehicle-process small { display:none; } }
+@media(max-width:767px) {
+  .world-switch { border-radius:16px; gap:2px; }.world-switch button { font-size:9px; padding:8px 11px; }
+  .discovery-search-scope { font-size:9px; }.discovery-search-scope span { max-width:140px; text-align:right; font-size:8px; }
+  .world-content .collection-market-scene { padding-top:60px; }.world-caption p { font-size:11px; }.world-caption small { font-size:8px; }
+  .journey-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1px 9px; }.journey-nav button { font-size:9px; gap:4px; justify-content:center; min-height:36px; }.journey-nav button>span { display:none; }.journey-nav button:last-child { grid-column:span 2; }.journey-bottom { padding:8px 18px 15px; }
+  .journey-description { font-size:12px; }.journey-tags { flex-wrap:wrap; }.journey-object .collection-market-scene { width:100%; }
+  .vehicle-intro { flex-direction:column; align-items:stretch; gap:2px; padding:27px 22px 20px; }.vehicle-intro h1 { font-size:35px; }.vehicle-intro nav { margin-bottom:21px; }
+  .vehicle-intro-art { display:block; width:100%; max-width:330px; min-height:210px; margin:-8px auto 0; }.vehicle-hero-model { padding-top:0; }.vehicle-intro-art>span { margin-top:-25px; font-size:10px; }.vehicle-intro-art small { font-size:8px; }
+  .vehicle-start { margin-top:8px; }.vehicle-process { margin-inline:18px; gap:13px; padding:19px 0; justify-content:space-between; font-size:9px; }.vehicle-process b { padding-right:5px; font-size:8px; }
+  .vehicle-type-grid>button { min-height:212px; padding:14px; }.vehicle-type-grid>button svg { width:135px; height:94px; }.vehicle-type-grid strong { font-size:14px; }.vehicle-workspace { padding-top:27px; }
+  .vehicle-config-header { padding:13px 16px; gap:10px; }.vehicle-config-model { gap:10px; }.vehicle-config-model>svg { width:65px; }.vehicle-config-model strong { font-size:17px; }.vehicle-config-model small { font-size:7px; }.vehicle-config-header>span:last-child { max-width:80px; text-align:right; font-size:10px; }
+  .market-share-search { align-items:flex-start; gap:3px; }.market-share-search>span { font-size:10px; }
+}
+@media(max-width:767px) and (max-height:700px) { .journey-copy h3 { font-size:28px; }.journey-description { font-size:10px; margin-block:8px; }.journey-tags { margin-top:10px; }.journey-object { max-height:160px; }.journey-object-note { font-size:7px; } }
+html[data-motion=reduced] .vehicle-intro::after,html[data-motion=reduced] .vehicle-hero-model,html[data-motion=reduced] .vehicle-hero-model>svg,html[data-motion=reduced] .vehicle-showroom-ring::after,html[data-motion=reduced] .vehicle-type-grid>button>svg,html[data-motion=reduced] .vehicle-pills button { animation:none!important; }
+.vehicle-type-grid>.cinema-ready { transform:perspective(1000px) translate3d(-35px,30px,-35px) rotateY(-18deg) scale(.94); }
+.vehicle-type-grid>.cinema-ready:nth-child(even) { transform:perspective(1000px) translate3d(35px,30px,-35px) rotateY(18deg) scale(.94); }
+.vehicle-type-grid>.cinema-visible,.vehicle-type-grid>.cinema-visible:nth-child(even) { transform:none; }
+.search-experience { background:radial-gradient(ellipse at 100% 0,#becfdf,transparent 65%),#e7edf3; overflow-x:clip; min-height:80vh; }
+.search-heading { position:relative; isolation:isolate; overflow:hidden; padding:28px 30px 35px; border:1px solid #557994; border-radius:22px; min-height:200px; background:radial-gradient(ellipse at 95% 0,#335870,#11243b 70%); color:#f1f5f9; box-shadow:0 18px 35px -28px #09213c99; }
+.search-heading>div:not(.search-light-orbit) { position:relative; z-index:1; }.search-heading .eyebrow { color:#a8d3e7; font-size:10px; letter-spacing:.12em; }.search-heading h1 { font-weight:500; line-height:1.2; }.search-heading .text-mute { color:#b5cbdc; }.search-heading .btn-ghost { color:#d6e9f3; border-color:#9dc7df55; background:#ffffff0a; }
+.search-context { display:flex; flex-wrap:wrap; gap:9px; width:100%; margin-bottom:20px; position:relative; z-index:2; color:#acc5da; font-size:11px; }.search-context a { padding:7px 12px; border-radius:99px; border:1px solid #9bc3df2b; background:#163149; transition:color .3s,background .3s,transform .3s; }.search-context a:hover { transform:translateY(-2px); background:#355771; color:#fff; }.search-context a[aria-current=page] { color:#163043; background:#d9eaf0; border-color:#d9eaf0; }
+.search-light-orbit { position:absolute; width:500px; height:500px; right:-80px; top:-200px; border-radius:50%; border:1px solid #b4e8fa2b; pointer-events:none; }
+.search-light-orbit::after { content:""; position:absolute; inset:30px; border:1px solid transparent; border-top-color:#bcf0ff77; border-radius:50%; animation:showroomOrbit 16s linear infinite; }
+.search-heading[data-playing=false] .search-light-orbit::after { animation-play-state:paused; }
+.search-filter-panel { background:linear-gradient(150deg,#f8fbff,#dce7f0); border:1px solid #acbfd27d; padding:9px 16px 20px; border-radius:19px; }
+.search-toolbar { padding:15px; border:1px solid #adbfce7d; border-radius:16px; background:#f4f8fbe8; box-shadow:0 5px 15px #1d3f5b06; }.search-toolbar select { border-radius:8px; min-height:38px; max-width:100%; }.search-listings>div>a { position:relative; }.search-listings .plaque-link { border-color:#bdcddb; box-shadow:0 7px 18px #19374e08; }
+@media(max-width:767px) { .search-shell { padding-top:20px; }.search-heading { padding:20px; min-height:208px; }.search-context { gap:6px; font-size:10px; margin-bottom:13px; }.search-context a { padding:7px 10px; }.search-heading h1 { font-size:28px; }.search-toolbar { padding:11px; } }
+html[data-motion=reduced] .search-light-orbit::after { animation:none; }
+html[data-motion=reduced] .vehicle-type-grid>.cinema-ready,html[data-motion=reduced] .vehicle-type-grid>.cinema-ready:nth-child(even) { transform:none; }
+.world-content .collection-market-scene { padding-top:112px; min-height:370px; }
+.market-results .market-filter-shell { color:#dce9f3; border:1px solid #7098b653; border-radius:20px; background:radial-gradient(ellipse at 100% 0,#26475e88,transparent 65%),#14263c; box-shadow:0 16px 34px -24px #152e5270; }
+.market-results .market-filter-shell label>span { color:#acc3d6; }
+.market-results .market-filter-shell input:not([type=checkbox]),.market-results .market-filter-shell select { color-scheme:dark; border-radius:10px; border-color:#7fa3be3d; background:#0f2034; color:#edf3f8; }
+.market-results .market-filter-shell input::placeholder { color:#8da8be; }
+.market-results .market-category-pills button { border-color:#7499b445; color:#bfd4e3; background:#102035; transition:transform .3s,background .3s,border-color .3s,color .3s; }
+.market-results .market-category-pills button:hover { transform:translateY(-2px); border-color:#9fd2e3; }
+.market-results .market-category-pills button[aria-pressed=true] { background:#d8e8ed; color:#163849; border-color:#b3dce6; animation:selectionPop .35s ease-out; }
+.market-results .market-secondary-filters,.market-results .market-share-search { border-color:#92b4ce2a; }
+.market-results .market-reset,.market-results .market-share-search>button { color:#afdbea; }.market-results .market-share-search>span { color:#9bb5c9; }
+.resale-filters { padding:22px; border:1px solid #9fbbc85c; border-radius:18px; background:linear-gradient(125deg,#e1ecec,#eff3f4); box-shadow:0 12px 30px -25px #20455266; }
+.resale-filters .market-search-row input,.resale-filters .market-search-row select,.resale-filter-tools>button { border-radius:10px; }.resale-filter-tools>button { background:#17344c; color:#dcebf1; border-color:#17344c; transition:transform .3s,background .3s; }.resale-filter-tools>button:hover { background:#29536c; transform:translateY(-2px); }
+@media(max-width:767px) { .world-content .collection-market-scene { min-height:320px; padding-top:105px; }.resale-filters { padding:17px 14px; } }
+html[data-motion=reduced] .market-results .market-category-pills button { animation:none; }
