@@ -1,8 +1,9 @@
 "use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filters } from "@/components/Filters";
-import { Reveal } from "@/components/Motion";
+import { ScrollExperience } from "@/components/ScrollExperience";
 import { ListingCard } from "@/components/ListingCard";
 import { useStore } from "@/lib/store";
 import { emptyQuery, paramsToQuery, parseNatural, queryToParams, runQuery, type Query, type Sort } from "@/lib/search";
@@ -104,7 +105,7 @@ function Results() {
   const saved = state.searches.some((s) => s.href === href);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
+    <div className="search-experience"><ScrollExperience/><div className="search-shell mx-auto max-w-[1400px] px-4 py-8 lg:px-6">
       {chips.length > 0 && (
         <div className="mb-6 animate-rise border border-ink bg-ink px-4 py-3 text-paper">
           <p className="eyebrow !text-paper/45">Cümlen şöyle okundu</p>
@@ -119,7 +120,9 @@ function Results() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+      <div className="search-heading flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+        <div className="search-light-orbit" aria-hidden="true"/>
+        <nav className="search-context" aria-label="İlan alanları"><Link href="/">← Ana sayfa</Link>{CATEGORIES.map(c=><Link key={c.slug} href={c.slug==="vasita"?"/vasita/":`/arama/?k=${c.slug}`} aria-current={q.cat===c.slug?"page":undefined}>{c.label}</Link>)}</nav>
         <div className="min-w-0">
           <p className="eyebrow">Arama sonuçları</p>
           <h1 className="mt-1 font-serif text-[clamp(1.7rem,3vw,2.6rem)] leading-none">{heading}</h1>
@@ -132,15 +135,15 @@ function Results() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[250px_1fr]">
-        <aside className="hidden lg:block">
+      <div className="search-workspace mt-6 grid gap-8 lg:grid-cols-[250px_1fr]">
+        <aside className="search-filter-panel hidden lg:block">
           <div className="sticky top-[168px] max-h-[calc(100vh-190px)] overflow-auto pr-2">
             <Filters q={q} set={push} pool={pool} base={base} />
           </div>
         </aside>
 
         <div className="min-w-0">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="search-toolbar mb-4 flex flex-wrap items-center gap-2">
             <button onClick={() => setDrawer(true)} className="btn-ghost lg:hidden">Filtreler</button>
             {active.map((a, i) => (
               <button key={i} onClick={a.clear} className="chip hover:border-signal hover:text-signal">
@@ -154,7 +157,7 @@ function Results() {
             )}
 
             <div className="ml-auto flex items-center gap-2">
-              <select value={q.sort} onChange={(e) => push({ sort: e.target.value as Sort })}
+              <select aria-label="İlan sıralaması" value={q.sort} onChange={(e) => push({ sort: e.target.value as Sort })}
                 className="h-8 border border-line bg-paper px-2 text-[0.78rem] focus:border-ink focus:outline-none">
                 {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
@@ -228,11 +231,11 @@ function Results() {
             </div>
           ) : (
             <>
-              <div className={view === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
-                {shown.map((l, i) => (
-                  <Reveal key={l.id} kind={view === "grid" ? "tilt" : "up"} delay={(i % 6) * 70} once exit={false}>
+              <div className={`search-listings ${view === "grid" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}`}>
+                {shown.map(l => (
+                  <div key={l.id}>
                     <ListingCard l={l} pool={pool} variant={view} />
-                  </Reveal>
+                  </div>
                 ))}
               </div>
               {shown.length < results.length && (
@@ -260,7 +263,7 @@ function Results() {
           </div>
         </div>
       )}
-    </div>
+    </div></div>
   );
 }
 
