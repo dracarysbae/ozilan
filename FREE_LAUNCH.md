@@ -20,7 +20,7 @@ Firebase Spark ücretsiz olsa da Cloud Storage artık Blaze/faturalandırma hesa
 2. Supabase Free üzerinde PostgreSQL ve Auth. Yeni fotoğraf yüklemeleri Cloudinary bağlantısına geçirildi. Supabase Storage eski fotoğrafları okumak ve temizlemek için korunur.
 3. Üyeler için Google ile giriş; yalnızca temel profil ve e-posta kapsamları. SMS, ücretli e-posta sağlayıcısı ve kart kaydı yok. Varsayılan `NEXT_PUBLIC_AUTH_METHOD=google`; e-posta üyeliği SMTP hazır olana kadar açılmaz.
 
-Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Gerçek OAuth istemcisi, Supabase projesi ve canlı giriş testi henüz tamamlanmadı. Cloudinary ve Supabase ücretsiz hizmet şartları kullanıcı tarafından onaylandı. GitHub temel profil/e-posta erişimi için ayrı onay bekleniyor; otomatik onay denetimi bu erişim adımını durdurdu. Hiçbir ücretli kaynak veya ödeme açılmadı.
+Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Cloudinary ve Supabase ücretsiz hizmet şartları ile GitHub temel profil/e-posta erişimi kullanıcı tarafından onaylandı; iki hizmetin girişi tamamlandı. Cloudinary Free hesabı ve Supabase Free kuruluşu oluştu. Supabase proje parolasının kullanıcı tarafından girilmesi, gerçek Google OAuth istemcisi ve canlı testler bekliyor. Güncel durum: [LIVE_SETUP.md](LIVE_SETUP.md). Hiçbir ücretli kaynak veya ödeme açılmadı.
 
 ## Daha fazla ücretsiz fotoğraf
 

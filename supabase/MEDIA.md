@@ -6,6 +6,8 @@ Bu değişiklik hazır kodu ve yerel testleri içerir. Cloudinary/Supabase hesap
 
 1. Yeni OzBirArada Supabase projesine tüm `migrations/*.sql` dosyalarını sırayla uygula. Üçüncü migration yeni yüklemeleri Cloudinary'ye geçirir; eski Supabase fotoğraflarını okumaya ve mevcut ilanlarda kullanmaya devam eder.
 2. Cloudinary Image & Video API **Free** hesabında cloud name, API key ve API secret alınır. Cloud name herkese açık yapılandırmadır. API secret yalnızca Supabase Edge Function secrets alanına yazılır; kaynak koduna, istemciye veya `NEXT_PUBLIC_` değişkenlerine konmaz. Ücretli eklenti veya unsigned upload preset açılmaz.
+
+   Ücretsiz kotayı korumak için Security ekranında Strict transformations ve Strict video transformations açık olmalı; Fetched URL / video Fetch kısıtlanmalı. İmzasız Auto chaptering, Auto transcription ve Auto video details izinleri kapalı tutulur. Uygulama hazırladığı orijinal WebP dosyasını gösterdiği için bu ayarlar görselleri veya arayüz efektlerini kaldırmaz. `ml_default` önayarının Signed olduğu doğrulanır; istemciden imzasız yeni önayar açılmaz.
 3. Supabase Edge Function secrets:
 
    | Anahtar | Değer |
