@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, type ReactNode } from "react";
-import { useFrame, useMotionOK } from "./Motion";
+import { refreshMotion, useFrame, useMotionOK } from "./Motion";
 
 /** One observer for staggered entrances. The content stays visible without JavaScript. */
 export function ScrollExperience() {
@@ -15,16 +15,22 @@ export function ScrollExperience() {
   useEffect(() => {
     const root = marker.current?.parentElement;
     if (!root) return;
-    hero.current = root.querySelector<HTMLElement>(".discovery-hero,.vehicle-intro");
+    const heroSelector = ".discovery-hero,.vehicle-intro,.resale-intro,.market-hero";
+    hero.current = root.querySelector<HTMLElement>(heroSelector);
     ribbon.current = root.querySelector<HTMLElement>(".discovery-ribbon");
     if (!motion) return;
     const measure = () => {
       layout.current=cards.current.map(card=>{let top=0,node:HTMLElement|null=card;while(node){top+=node.offsetTop;node=node.offsetParent as HTMLElement|null;}return {card,top,height:card.offsetHeight,last:""};});
       heroBottom.current=hero.current ? hero.current.offsetTop+hero.current.offsetHeight : 0;
       previousScroll.current=-1;
+      refreshMotion();
     };
     const seen = new WeakSet<Element>();
-    const selector = ".editorial-heading,.decision-copy,.decision-panel,.editorial-cities>a,.listing-invitation>div:not(.invitation-orb),.vehicle-type-grid>button,.vehicle-step,.vehicle-tree,.vehicle-primary-grid>.vehicle-facet,.vehicle-more";
+    const stages = new WeakSet<Element>();
+    const stageObserver = new IntersectionObserver(entries=>{
+      entries.forEach(entry=>(entry.target as HTMLElement).dataset.playing=String(entry.isIntersecting));
+    },{rootMargin:"100px"});
+    const selector = ".editorial-heading,.decision-copy,.decision-panel,.editorial-cities>a,.listing-invitation>div:not(.invitation-orb),.vehicle-type-grid>button,.vehicle-step,.vehicle-tree,.vehicle-primary-grid>.vehicle-facet,.vehicle-more,.resale-cover-categories>button,.market-result-heading,.resale-result-line,.closet-stories>button,.gateway-feature,.gateway-workbench";
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) if (entry.isIntersecting) {
         entry.target.classList.add("cinema-visible");
@@ -32,7 +38,11 @@ export function ScrollExperience() {
       }
     }, { threshold: .09 });
     const register = () => {
-      cards.current = [...root.querySelectorAll<HTMLElement>(".editorial-listings>a")];
+      hero.current = root.querySelector<HTMLElement>(heroSelector);
+      root.querySelectorAll(".resale-intro-art,.market-hero-art,.restored-category-deck").forEach(stage=>{
+        if(!stages.has(stage)){stages.add(stage);stageObserver.observe(stage);}
+      });
+      cards.current = [...root.querySelectorAll<HTMLElement>(".editorial-listings>a,.resale-grid>.resale-card,.market-catalog>.market-item,.restored-category-deck>.gateway-card")];
       cards.current.forEach((el,i) => { el.classList.add("sculpted-card"); el.style.setProperty("--card-side",i%2 ? "1" : "-1"); });
       root.querySelectorAll<HTMLElement>(selector).forEach(el => {
       if (seen.has(el)) return;
@@ -50,7 +60,7 @@ export function ScrollExperience() {
     const resize = new ResizeObserver(measure);
     resize.observe(root);
     return () => {
-      observer.disconnect(); changes.disconnect(); resize.disconnect();
+      observer.disconnect(); stageObserver.disconnect(); changes.disconnect(); resize.disconnect();
       root.querySelectorAll<HTMLElement>(".cinema-ready").forEach(el=>{el.classList.remove("cinema-ready","cinema-visible");el.style.removeProperty("--entrance-delay");});
       cards.current.forEach(el=>{el.classList.remove("sculpted-card");["--card-open","--card-side","transform","will-change"].forEach(p=>el.style.removeProperty(p));});
       cards.current=[];
@@ -60,11 +70,11 @@ export function ScrollExperience() {
   },[motion]);
   useFrame(({sy,y,h})=>{
     const el=hero.current;
-    if(!el||!motion) return;
+    if(!motion) return;
     if(Math.abs(previousScroll.current-sy)<.03) return;
     previousScroll.current=sy;
     const distance=Math.min(sy,1000);
-    if(y<heroBottom.current+100) {
+    if(el&&y<heroBottom.current+100) {
     el.style.setProperty("--scroll-drift",`${(distance*.16).toFixed(1)}px`);
     el.style.setProperty("--scroll-rotation",`${(distance*.025).toFixed(2)}deg`);
     el.style.setProperty("--hero-roll",`${Math.min(1,sy/700)*-13}deg`);
@@ -74,7 +84,7 @@ export function ScrollExperience() {
     // Geometry is refreshed by ResizeObserver, never read after animation writes.
     layout.current.forEach((item,i)=>{
       const {card,height}=item;
-      const top=item.top-y;
+      const top=item.top-sy;
       const near=top<h+150&&top+height>-100;
       if(!near) {if(item.last!=="outside"){card.style.willChange="auto";item.last="outside";}return;}
       const p=Math.max(0,Math.min(1,(h-top)/(Math.min(h*.64,height*.9)+80)));

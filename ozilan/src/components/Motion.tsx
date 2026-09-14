@@ -96,6 +96,9 @@ function wake(frames = 3) {
   if (!raf && subs.size && typeof window !== "undefined") raf = requestAnimationFrame(tick);
 }
 
+/** Recalculate newly inserted or resized motion surfaces even while scrolling is idle. */
+export const refreshMotion = () => wake(8);
+
 const onViewportActivity = () => wake(8);
 
 function attachActivityListeners() {
