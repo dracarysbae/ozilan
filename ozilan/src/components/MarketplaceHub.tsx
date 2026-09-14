@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "
 import { useRouter, useSearchParams } from "next/navigation";
 import { MarketplaceArt } from "./MarketplaceArt";
 import { ScrollExperience } from "./ScrollExperience";
-import { MARKET_AREAS, MARKET_ITEMS, areaFor, filterMarket, isGoods, marketMoney, type MarketArea, type MarketItem } from "@/data/marketplace";
+import { MARKET_AREAS, MARKET_ITEMS, areaFor, filterMarket, isGoods, marketMoney, readMarketFilters, marketSearchHref, type MarketArea, type MarketItem } from "@/data/marketplace";
 
 type CartLine={id:string;quantity:number;note:string;date:string};
 type Draft={id:string;kind:"order"|"request";title:string;description:string;budget:number;at:string;city?:string;date?:string;provider?:string;lines?:CartLine[]};
@@ -39,6 +39,7 @@ function MarketplaceContent(){
   const [sort,setSort]=useState("curated");
   const [fast,setFast]=useState(false);
   const [onlySaved,setOnlySaved]=useState(false);
+  const [shareLink,setShareLink]=useState("");
   const [local,setLocal]=useState<LocalMarket>(EMPTY);
   const [ready,setReady]=useState(false);
   const [today,setToday]=useState("");
@@ -51,7 +52,7 @@ function MarketplaceContent(){
   const [quantity,setQuantity]=useState(1);
   const [requestArea,setRequestArea]=useState<MarketArea>("hizmet");
   useEffect(()=>{setLocal(readLocal());setReady(true);const d=new Date();setToday(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`);},[]);
-  useEffect(()=>{setCategory("");setQuery("");setCity("");setMax("");setFast(false);setSort("curated");setOnlySaved(false);setSheet(null);},[area.id]);
+  useEffect(()=>{const filters=readMarketFilters(params);setCategory(filters.category);setQuery(filters.query);setCity(filters.city);setMax(filters.max);setFast(filters.fast);setSort(filters.sort);setOnlySaved(false);setShareLink("");setSheet(null);},[params]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(""),6000);return()=>clearTimeout(timer);},[notice]);
   const goods=isGoods(area.id);
   const cities=useMemo(()=>[...new Set(MARKET_ITEMS.filter(i=>i.area===area.id).map(i=>i.city))],[area.id]);
@@ -90,6 +91,12 @@ function MarketplaceContent(){
     if(persist({...local,drafts:[draft,...local.drafts].slice(0,50)})){setSheet("drafts");setNotice("Sipariş taslağı saklandı. Ödeme alınmadı ve sipariş verilmedi.");}
   }
   function reset(){setCategory("");setQuery("");setCity("");setMax("");setFast(false);setOnlySaved(false);setSort("curated");}
+  async function shareSearch(){
+    const href=marketSearchHref({area:area.id,category,query,city,max,sort,fast});
+    const link=new URL(`${window.location.pathname.split("/kesfet")[0]}${href}`,window.location.origin).href;
+    try{await navigator.clipboard.writeText(link);setNotice("Arama bağlantısı kopyalandı. Açıldığında aynı filtreler uygulanır.");setShareLink("");}
+    catch{setShareLink(link);}
+  }
 
   return <div className={`market-hub market-${area.id}`}><ScrollExperience/>
     <div className="market-utility"><Link href="/">← OzBirArada ana sayfa</Link><div><button onClick={()=>setSheet("drafts")}>Taslaklar {ready&&local.drafts.length>0&&<span>{local.drafts.length}</span>}</button><button onClick={()=>setSheet("cart")}>Sepetim <span>{ready?count:0}</span></button></div></div>
@@ -100,6 +107,7 @@ function MarketplaceContent(){
       <div className="market-filter-shell"><div className="market-search-row"><label><span>{goods?"Ürün ara":"Uzmanlık veya hizmet ara"}</span><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={goods?"Kulaklık, buket, lamba…":"Logo, React, temizlik…"}/></label><label><span>Sıralama</span><select value={sort} onChange={e=>setSort(e.target.value)}><option value="curated">OzBirArada seçkisi</option><option value="price-up">Fiyat: düşükten yükseğe</option><option value="price-down">Fiyat: yüksekten düşüğe</option><option value="fast">Süre: kısa olanlar önce</option></select></label></div>
         <div className="market-category-pills" role="group" aria-label="Alt kategori"><button aria-pressed={!category} onClick={()=>setCategory("")}>Tümü</button>{area.categories.map(c=><button key={c} aria-pressed={category===c} onClick={()=>setCategory(c)}>{c}</button>)}</div>
         <div className="market-secondary-filters"><label><span>{area.id==="hizmet"?"Hizmet şehri":"Konum"}</span><select value={city} onChange={e=>setCity(e.target.value)}><option value="">{area.id==="freelance"?"Tüm uzaktan işler":"Tüm şehirler"}</option>{cities.map(c=><option key={c}>{c}</option>)}</select></label><label><span>En yüksek bütçe (TL)</span><input type="number" min="0" value={max} onChange={e=>setMax(e.target.value)} placeholder="Sınır yok"/></label><label className="market-check"><input type="checkbox" checked={fast} onChange={e=>setFast(e.target.checked)}/>{goods?"2 güne kadar hazırlık":"2 güne kadar süre"}</label><label className="market-check"><input type="checkbox" checked={onlySaved} onChange={e=>setOnlySaved(e.target.checked)}/>Kaydettiklerim</label><button className="market-reset" onClick={reset}>Sıfırla</button></div>
+        <div className="market-share-search"><button type="button" onClick={shareSearch}>Arama bağlantısını kopyala ↗</button><span>{onlySaved?"Kişisel kaydettiklerin paylaşılan bağlantıya eklenmez.":"Seçimlerini aynı filtrelerle yeniden aç veya paylaş."}</span>{shareLink&&<label>Arama bağlantısı<input readOnly value={shareLink} onFocus={e=>e.target.select()}/></label>}</div>
       </div>
       {results.length===0?<div className="market-empty"><span>⌕</span><h3>Bu seçimde henüz bir eşleşme yok.</h3><p>Başka bir kategori seçebilir veya filtreleri genişletebilirsin.</p><button className="market-primary" onClick={reset}>Tüm seçenekleri göster</button></div>:<div className={`market-catalog ${goods?"catalog-goods":"catalog-expertise"}`}>{results.map((item,i)=><article key={item.id} className="market-item" style={{animationDelay:`${Math.min(i,5)*45}ms`}}><div className="market-item-art"><button onClick={()=>openDetail(item)} aria-label={`${item.title} detaylarını incele`}><MarketplaceArt art={item.art}/></button><button className="market-save" disabled={!ready} onClick={()=>favorite(item.id)} aria-label={`${item.title} ${local.favorites.includes(item.id)?"kaydedilenlerden çıkar":"kaydet"}`} aria-pressed={local.favorites.includes(item.id)}>{local.favorites.includes(item.id)?"♥":"♡"}</button><span>{item.category}</span></div><div className="market-item-body"><p className="market-provider">{item.provider} · {item.city}</p><button className="market-item-title" onClick={()=>openDetail(item)}><h3>{item.title}</h3></button><div className="market-item-tags">{item.tags.slice(0,2).map(tag=><span key={tag}>{tag}</span>)}</div><div className="market-item-footer"><div>{!goods&&<small>Başlangıç kapsamı</small>}<strong>{marketMoney(item.price)}</strong><p>{item.days} gün {goods?"hazırlık örneği":"tahmini süre"}</p></div><button onClick={()=>openDetail(item)} aria-label={`${item.title} incele`}>↗</button></div></div></article>)}</div>}
       <div className="market-how"><p className="market-eyebrow">NASIL İLERLERSİN?</p><div>{(goods?["Seçenekleri karşılaştır","Ürününü kişiselleştir","Sepet taslağını sakla"]:["Uzmanlıkları incele","İşin kapsamını anlat","Talep taslağını sakla"]).map((label,i)=><p key={label}><span>0{i+1}</span>{label}</p>)}</div><p>Bu keşif sürümünde ürünler, mağazalar, profiller ve süreler örnektir. {goods?"Ödeme, stok ve teslimat hizmeti henüz bağlı değil.":"Talepler henüz uzmanlara gönderilmiyor."} Taslaklar yalnızca bu tarayıcıda saklanır.</p></div>

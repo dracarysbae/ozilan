@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
 import { refreshMotion, useFrame, useMotionOK } from "./Motion";
 
 /** One observer for staggered entrances. The content stays visible without JavaScript. */
@@ -39,10 +39,10 @@ export function ScrollExperience() {
     }, { threshold: .09 });
     const register = () => {
       hero.current = root.querySelector<HTMLElement>(heroSelector);
-      root.querySelectorAll(".resale-intro-art,.market-hero-art,.restored-category-deck").forEach(stage=>{
+      root.querySelectorAll(".resale-intro-art,.market-hero-art,.restored-category-deck,.vehicle-intro,.vehicle-type-grid,.search-heading").forEach(stage=>{
         if(!stages.has(stage)){stages.add(stage);stageObserver.observe(stage);}
       });
-      cards.current = [...root.querySelectorAll<HTMLElement>(".editorial-listings>a,.resale-grid>.resale-card,.market-catalog>.market-item,.restored-category-deck>.gateway-card")];
+      cards.current = [...root.querySelectorAll<HTMLElement>(".editorial-listings>a,.resale-grid>.resale-card,.market-catalog>.market-item,.restored-category-deck>.gateway-card,.search-listings>div>a")];
       cards.current.forEach((el,i) => { el.classList.add("sculpted-card"); el.style.setProperty("--card-side",i%2 ? "1" : "-1"); });
       root.querySelectorAll<HTMLElement>(selector).forEach(el => {
       if (seen.has(el)) return;
@@ -101,7 +101,7 @@ export function ScrollExperience() {
   return <span ref={marker} hidden aria-hidden="true" />;
 }
 
-/** Native vertical scrolling drives a horizontal, three-scene exhibition. */
+/** Native vertical scrolling drives one continuous collection; navigation can skip any scene. */
 export function ScrollJourney({ children, labels }: { children: ReactNode; labels: string[] }) {
   const root=useRef<HTMLElement>(null);
   const rail=useRef<HTMLDivElement>(null);
@@ -147,7 +147,7 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
     last.current=progress;
     const position=progress*(labels.length-1);
     rail.current.style.transform=`translate3d(${-position*100}%,0,0)`;
-    if(indicator.current)indicator.current.style.transform=`translateX(${progress*200}%)`;
+    if(indicator.current)indicator.current.style.transform=`translateX(${progress*Math.max(0,labels.length-1)*100}%)`;
     sceneRefs.current.forEach(({panel,object,copy,ring,number},i)=>{
       const delta=Math.max(-1,Math.min(1,i-position));
       const focus=1-Math.abs(delta);
@@ -167,13 +167,13 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
     const el=root.current;
     if(!el) return;
     if(!motion) {panels.current[index]?.scrollIntoView({block:"center"});return;}
-    window.scrollTo({top:geometry.current.start+geometry.current.travel*index/(labels.length-1),behavior:"smooth"});
+    window.scrollTo({top:geometry.current.start+geometry.current.travel*index/Math.max(1,labels.length-1),behavior:"smooth"});
   }
-  return <section ref={root} className="scroll-journey" aria-label="Üç dünyayı keşfet">
+  return <section ref={root} className="scroll-journey" aria-label="Keşif koleksiyonu" style={{"--journey-height":`${100+80*Math.max(0,labels.length-1)}svh` } as CSSProperties}>
     <div className="journey-sticky">
       <div className="journey-topline"><span>OZBİRARADA KEŞİF KOLEKSİYONU</span><span className="journey-scroll-cue">Kaydır ve keşfet <span aria-hidden="true">↓</span></span></div>
       <div className="journey-window"><div ref={rail} className="journey-rail">{children}</div></div>
-      <div className="journey-bottom"><div className="journey-nav" role="group" aria-label="Vitrin sahnesi">{labels.map((label,i)=><button key={label} onClick={()=>go(i)} aria-pressed={i===0}><span>0{i+1}</span>{label}</button>)}</div><div className="journey-progress" aria-hidden="true"><span ref={indicator} /></div></div>
+      <div className="journey-bottom"><div className="journey-nav" role="group" aria-label="Vitrin sahnesi">{labels.map((label,i)=><button key={label} onClick={()=>go(i)} aria-pressed={i===0}><span>0{i+1}</span>{label}</button>)}</div><div className="journey-progress" aria-hidden="true"><span ref={indicator} style={{width:`${100/Math.max(1,labels.length)}%`}}/></div></div>
     </div>
   </section>;
 }
