@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { ScrollExperience, ScrollJourney } from "@/components/ScrollExperience";
-import { MarketplaceGateway } from "@/components/MarketplaceArt";
+import { MarketplaceGateway, OpeningCategories } from "@/components/MarketplaceArt";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
 import { Tilt } from "@/components/Motion";
@@ -73,7 +72,6 @@ function Arrow() { return <svg viewBox="0 0 24 24" width="20" height="20" fill="
 export default function Home() {
   const { pool, ready, state } = useStore();
   const [world, setWorld] = useState(0);
-  const router = useRouter();
   const chosen = WORLDS[world];
   const active = useMemo(() => pool.filter(l => l.status === "active"), [pool]);
   const counts = useMemo(() => CATEGORIES.map(c => active.filter(l => l.cat === c.slug).length), [active]);
@@ -81,6 +79,7 @@ export default function Home() {
   const recent = useMemo(() => ready ? state.recent.map(id => pool.find(l => l.id === id)).filter(l => l !== undefined).slice(0,4) : [], [ready,state.recent,pool]);
   return <div className="editorial-home"><ScrollExperience />
     <section className="discovery-hero">
+      <OpeningCategories/>
       <div className="discovery-aurora" aria-hidden="true" />
       <div className="discovery-orbit" aria-hidden="true" />
       <div className="hero-caustics" aria-hidden="true"><i /><i /><i /><span /></div>
@@ -95,7 +94,7 @@ export default function Home() {
         </div>
         <div className="discovery-showcase">
           <div className="world-switch" role="group" aria-label="Vitrin kategorisi">
-            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => i === 1 ? router.push("/vasita/") : setWorld(i)}>{w.name}</button>)}
+            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => setWorld(i)}>{w.name}</button>)}
           </div>
           <Tilt max={3} className="world-tilt">
             <div className={`world-stage world-${chosen.tone}`}>
@@ -111,8 +110,6 @@ export default function Home() {
       <div className="discovery-bottom"><span><b>{num(active.length)}</b> keşfedilecek örnek ilan</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
     </section>
 
-    <MarketplaceGateway />
-
     <div className="discovery-ribbon" aria-hidden="true"><span>Bir ev. <i>Bir yol.</i> Yeni bir hikâye. <i>Yeni bir sen.</i></span></div>
     <section id="kesfet" className="discovery-section journey-heading-section">
       <div className="editorial-heading"><div><p className="editorial-kicker">SENİN DÜNYAN</p><h2>Ne arıyorsan,<br className="sm:hidden" /> buradan başla.</h2></div><Link href="/arama/">Tüm ilanlar <Arrow /></Link></div>
@@ -122,6 +119,8 @@ export default function Home() {
       <div className="journey-copy"><p>{w.number} / {w.detail}</p><h3>{w.title}</h3><p className="journey-description">{w.caption}</p><Link className="journey-cta" href={w.slug==="vasita"?"/vasita/":w.slug==="ikinci-el"?"/akis/":`/arama/?k=${w.slug}`}>{w.name} keşfet <Arrow/></Link><div className="journey-tags">{CATEGORIES[i].subs.slice(0,3).map(s=><Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></div>
       <div className="journey-object"><div className="journey-plinth"/><Scene type={i}/><span className="journey-object-note">{num(counts[i])} ilan · Kategori illüstrasyonu</span></div>
     </article>)}</ScrollJourney>
+
+    <MarketplaceGateway />
 
     <section className="decision-section"><div className="decision-inner"><div className="decision-copy"><p className="editorial-kicker">FİYATTAN FAZLASINI GÖR</p><h2>İyi bir karar,<br /><span>iyi bir karşılaştırmayla başlar.</span></h2><p>Bir rakam tek başına her şeyi anlatmaz. Benzer ilanlarla karşılaştır, satıcı bilgilerini incele ve kararını daha bilinçli ver.</p><Link href="/arama/?s=value" className="btn-primary">Piyasayı keşfet <Arrow /></Link></div><div className="decision-panel"><div className="decision-panel-top"><span>Fiyatın piyasadaki yeri</span><span>Örnek analiz</span></div><div className="decision-price"><span>İlan fiyatı</span><strong>3.150.000 <small>TL</small></strong><p><span>↘ %14</span> benzer ilanların ortancasından düşük</p></div><div className="market-visual" aria-label="Örnek fiyat dağılımı"><div className="market-bars" aria-hidden="true">{[12,18,27,39,54,71,85,97,100,94,84,69,52,37,26,16,10,6].map((h,i)=><span key={i} style={{height:`${h}%`}} />)}</div><div className="market-marker"><span>Bu ilan</span></div><div className="market-baseline" /></div><div className="market-axis"><span>Düşük fiyat</span><span>Ortanca <b>3.680.000 TL</b></span><span>Yüksek fiyat</span></div><div className="decision-footnote"><span>34 benzer ilanla karşılaştırıldı</span><p>Örnek hesaplama. Piyasa konumu, ilan kalitesinin veya güvenliğinin garantisi değildir.</p></div></div></div></section>
 
