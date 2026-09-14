@@ -1,666 +1,122 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useId, useMemo, useState } from "react";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
-import { Artwork } from "@/components/Artwork";
-import {
-  Reveal, SplitText, Tilt, CountUp, useProgress, useMedia, useMotionOK, useFrame, useScrub, Magnetic, Marquee,
-} from "@/components/Motion";
+import { Reveal, Tilt } from "@/components/Motion";
 import { useStore } from "@/lib/store";
 import { readMarket } from "@/lib/market";
-import { CATEGORIES, TREE_STATS } from "@/data/taxonomy";
+import { CATEGORIES } from "@/data/taxonomy";
 import { CITIES } from "@/data/geo";
-import { num, tlShort, tl } from "@/lib/format";
+import { num } from "@/lib/format";
 
-const PROMPTS = ["Kadıköy kiralık 2+1", "2018 üzeri otomatik dizel", "İzmir 3+1 daire 5 milyon altı", "sıfır garantili iPhone"];
-
-const STEPS = [
-  { k: "Cümleyle arama", d: "Yazdığın cümleden şehri, bütçeyi, oda sayısını, model yılını ve kilometreyi ayrıştırır; ne anladığını sana geri gösterir." },
-  { k: "Piyasa konumu", d: "Her ilan için kendi karşılaştırma kümesini kurar — aynı marka, aynı yıl aralığı, aynı oda tipi — ve fiyatı o kümenin ortancasına göre konumlandırır." },
-  { k: "Güven taraması", d: "Satıcı geçmişi, ilan bütünlüğü, baskı dili, platform dışı iletişim kalıpları ve kopya ilan taraması tek bir skora iner." },
+const WORLDS = [
+  { slug: "emlak", name: "Emlak", title: "Yeni bir hayatın\nbaşladığı yer.", detail: "Konut, iş yeri ve arsa", caption: "Yaşam alanlarına farklı bak.", query: "Kadıköy kiralık 2+1", number: "01", tone: "home" },
+  { slug: "vasita", name: "Vasıta", title: "Bir sonraki\nyolculuğun.", detail: "Otomobil, motosiklet ve daha fazlası", caption: "Yola çıkmak için bir neden.", query: "2018 üzeri otomatik Volkswagen", number: "02", tone: "drive" },
+  { slug: "ikinci-el", name: "İkinci el", title: "İyi şeylere\nyeni bir hikâye.", detail: "Teknoloji, yaşam ve tasarım", caption: "Keşfet. Yeniden değer ver.", query: "sıfır garantili iPhone", number: "03", tone: "objects" },
 ];
 
-function Section({
-  title, lead, href, hrefLabel = "Tümü", dark = false, children,
-}: {
-  title: string; lead?: string; href?: string; hrefLabel?: string; dark?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <section className="mx-auto max-w-shell px-5 py-20 lg:px-8 lg:py-28">
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
-        <div className="max-w-2xl">
-          <h2 className={`display text-[clamp(1.8rem,3.6vw,2.8rem)] ${dark ? "text-white" : ""}`}>
-            <SplitText text={title} />
-          </h2>
-          {lead && (
-            <Reveal delay={160}>
-              <p className={`mt-3 text-[1.0625rem] leading-relaxed ${dark ? "text-white/60" : "text-mute"}`}>{lead}</p>
-            </Reveal>
-          )}
-        </div>
-        {href && (
-          <Reveal delay={220}>
-            <Link href={href} className={`link-u shrink-0 text-[0.9375rem] ${dark ? "text-signal-glow" : "text-signal"}`}>
-              {hrefLabel} <span aria-hidden>→</span>
-            </Link>
-          </Reveal>
-        )}
-      </div>
-      {children}
-    </section>
-  );
+/* Özgün vitrin çizimleri: örnek ilan fotoğrafı olarak sunulmaz. */
+function Scene({ type }: { type: number }) {
+  const id = useId().replace(/:/g, "");
+  const fill = (name: string) => `url(#${id}-${name})`;
+  return <svg viewBox="0 0 640 440" className="editorial-scene" aria-hidden="true">
+    <defs>
+      <linearGradient id={`${id}-metal`} x1="0" y1="0" x2="0.6" y2="1"><stop stopColor="#edf4ff" /><stop offset=".38" stopColor="#879caf" /><stop offset=".62" stopColor="#e2edf3" /><stop offset="1" stopColor="#263a51" /></linearGradient>
+      <linearGradient id={`${id}-stone`} x2="1" y2="1"><stop stopColor="#f3e9d9" /><stop offset="1" stopColor="#889ba6" /></linearGradient>
+      <linearGradient id={`${id}-glass`} x2="1" y2="1"><stop stopColor="#afdbed" /><stop offset=".42" stopColor="#294557" /><stop offset="1" stopColor="#0b1c2b" /></linearGradient>
+      <linearGradient id={`${id}-warm`} x2="1" y2="1"><stop stopColor="#ffe4b9" /><stop offset="1" stopColor="#bb9470" /></linearGradient>
+      <radialGradient id={`${id}-floor`}><stop stopColor="#a9c4e2" stopOpacity=".25" /><stop offset="1" stopColor="#a9c4e2" stopOpacity="0" /></radialGradient>
+    </defs>
+    <ellipse cx="320" cy="363" rx="305" ry="66" fill={fill("floor")} />
+    {type === 0 ? <g className="scene-object">
+      <path d="M82 317L313 224 564 326 329 420Z" fill="#102536" stroke="#6594ad" strokeOpacity=".3" />
+      <path d="M138 177L328 109 525 177 331 255Z" fill={fill("stone")} />
+      <path d="M138 177V298L331 373V255Z" fill="#b7bcb4" />
+      <path d="M331 255L525 177V292L331 373Z" fill="#456273" />
+      <path d="M153 200L311 260V346L153 286Z" fill={fill("warm")} />
+      <path d="M352 263L508 201V285L352 347Z" fill={fill("glass")} />
+      <path d="M211 222V307M266 243V328M406 242V326M457 222V306" stroke="#263947" strokeWidth="7" />
+      <path d="M137 176L329 244 527 168V185L330 262 137 193Z" fill="#d4d4c7" />
+      <path d="M247 146V89L350 53 460 93V151L350 194Z" fill={fill("stone")} />
+      <path d="M350 194V132L460 93V151Z" fill="#536e7b" />
+      <path d="M271 103L331 123V163L271 142Z" fill={fill("glass")} /><path d="M367 137L439 110V145L367 175Z" fill={fill("glass")} />
+      <path d="M246 89L350 50 463 90 350 132Z" fill="#edf0e6" />
+      <path d="M186 320L327 375 448 326M207 337L329 385 429 343" fill="none" stroke="#8a9e9c" strokeWidth="4" />
+      <path d="M102 318V254M548 318V245" stroke="#877c65" strokeWidth="5" /><ellipse cx="102" cy="245" rx="29" ry="39" fill="#476d63" /><ellipse cx="548" cy="237" rx="25" ry="42" fill="#466a62" />
+      <path d="M354 270L506 209" stroke="#d4f2ff" strokeOpacity=".8" /><path d="M165 282L309 337" stroke="#ffd5a4" strokeWidth="3" />
+    </g> : type === 1 ? <g className="scene-object">
+      <ellipse cx="322" cy="340" rx="242" ry="28" fill="#020713" fillOpacity=".5" />
+      <path d="M92 266L117 222 214 202 277 138Q296 123 338 128L424 143 494 209 547 229Q566 241 556 293L515 310H126Q88 303 92 266Z" fill={fill("metal")} stroke="#a3b9cf" strokeWidth="2" />
+      <path d="M223 203L286 145Q303 138 333 142L403 153 456 206Z" fill={fill("glass")} stroke="#e0edf3" strokeOpacity=".5" strokeWidth="3" />
+      <path d="M337 143L345 206" stroke="#98aabd" strokeWidth="9" /><path d="M237 217L463 220 477 279H225Z" fill="#627e98" fillOpacity=".25" stroke="#3f5367" />
+      {[183, 478].map(x => <g key={x}><circle cx={x} cy="298" r="46" fill="#071320" /><circle cx={x} cy="298" r="32" fill={fill("metal")} /><circle cx={x} cy="298" r="21" fill="#22394f" /><path d={`M${x} 270V326M${x-28} 298H${x+28}M${x-20} 278L${x+20} 318M${x+20} 278L${x-20} 318`} stroke="#b1c5d5" strokeWidth="4" /><circle cx={x} cy="298" r="8" fill="#d9e4eb" /></g>)}
+      <path d="M102 253L141 244M514 244L550 255" stroke="#dcf7ff" strokeWidth="7" strokeLinecap="round" /><path d="M252 278H418M265 229H287M374 230H396" stroke="#c7d7e4" strokeWidth="3" strokeLinecap="round" />
+      <path d="M124 221Q309 212 489 220" fill="none" stroke="#f1f7ff" strokeWidth="2" />
+    </g> : <g className="scene-object">
+      <ellipse cx="320" cy="367" rx="172" ry="26" fill="#020713" fillOpacity=".4" />
+      <path d="M205 257V204C205 59 430 59 430 204V257" fill="none" stroke="#344a63" strokeWidth="40" />
+      <path d="M207 241V201C207 72 426 72 426 201V241" fill="none" stroke={fill("metal")} strokeWidth="25" />
+      <path d="M223 208V198C223 88 412 88 412 198V208" fill="none" stroke="#07111d" strokeWidth="13" />
+      <g transform="rotate(10 210 280)"><rect x="166" y="215" width="76" height="130" rx="34" fill="#142336" /><rect x="158" y="220" width="57" height="117" rx="26" fill={fill("metal")} /><path d="M172 241V306" stroke="#e0edf3" strokeWidth="3" strokeLinecap="round" /></g>
+      <g transform="rotate(-10 426 280)"><rect x="386" y="215" width="76" height="130" rx="34" fill="#142336" /><rect x="412" y="220" width="57" height="117" rx="26" fill={fill("metal")} /><circle cx="442" cy="314" r="3" fill="#8cf3d4" /></g>
+      <path d="M277 116Q318 101 360 116" fill="none" stroke="#eaf4ff" strokeOpacity=".75" strokeWidth="3" />
+    </g>}
+  </svg>;
 }
+
+function Arrow() { return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>; }
 
 export default function Home() {
   const { pool, ready, state } = useStore();
-  const isDesk = useMedia("(min-width: 1024px)");
-  const motionOK = useMotionOK();
-
-  const showcase = useRef<HTMLDivElement>(null);
-  const deck = useRef<HTMLDivElement>(null);
-  const rail = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
-  const railBar = useRef<HTMLDivElement>(null);
-  const heroBody = useRef<HTMLDivElement>(null);
-  const heroBg1 = useRef<HTMLDivElement>(null);
-  const heroBg2 = useRef<HTMLDivElement>(null);
-  const heroCards = useRef<HTMLDivElement>(null);
-  const deckCardEls = useRef<(HTMLDivElement | null)[]>([]);
-  const deckDots = useRef<(HTMLSpanElement | null)[]>([]);
-  const mouse = useRef({ x: 0, y: 0 });
-
-  const pShow = useProgress(showcase, 12);
-  const railShift = useRef(0);
-
-  const active = useMemo(() => pool.filter((l) => l.status === "active"), [pool]);
-
-  const byCat = useMemo(
-    () => CATEGORIES.map((c) => {
-      const set = active.filter((l) => l.cat === c.slug && l.price > 0);
-      const sorted = [...set].sort((a, b) => a.price - b.price);
-      return { c, n: set.length, med: sorted.length ? sorted[Math.floor(sorted.length / 2)].price : 0 };
-    }),
-    [active],
-  );
-
-  const deals = useMemo(() => {
-    if (!ready) return [];
-    return pool
-      .filter((l) => l.status === "active" && l.price > 0)
-      .map((l) => ({ l, m: readMarket(l, pool) }))
-      .filter((x) => x.m && x.m.confidence !== "low" && x.m.delta < -0.15 && x.m.delta > -0.45)
-      .sort((a, b) => a.m!.delta - b.m!.delta)
-      .slice(0, 8)
-      .map((x) => ({ l: x.l, m: x.m! }));
-  }, [pool, ready]);
-
-  const fresh = useMemo(() => active.slice(0, 10), [active]);
-  const recent = useMemo(
-    () => (ready ? (state.recent.map((id) => pool.find((l) => l.id === id)).filter(Boolean).slice(0, 4) as typeof pool) : []),
-    [state.recent, pool, ready],
-  );
-
-  const medAll = useMemo(() => {
-    const s = active.filter((l) => l.price > 0).map((l) => l.price).sort((a, b) => a - b);
-    return s.length ? s[Math.floor(s.length / 2)] : 0;
-  }, [active]);
-
-  /* yatay ray için kaydırılacak mesafe */
-  useEffect(() => {
-    const calc = () => {
-      const t = track.current;
-      if (!t) return;
-      railShift.current = Math.max(0, t.scrollWidth - window.innerWidth + 80);
-    };
-    calc();
-    window.addEventListener("resize", calc);
-    const id = setTimeout(calc, 400);
-    return () => { window.removeEventListener("resize", calc); clearTimeout(id); };
-  }, [fresh.length]);
-
-  /* ---- kahraman: kaydırdıkça geriye yatıp uzaklaşır, fareyle paralaks ---- */
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => { mouse.current = { x: e.clientX / window.innerWidth - 0.5, y: e.clientY / window.innerHeight - 0.5 }; };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-  useFrame(({ sy }) => {
-    const b = heroBody.current; if (!b) return;
-    if (!motionOK) {
-      b.style.cssText = "";
-      if (heroBg1.current) heroBg1.current.style.transform = "";
-      if (heroBg2.current) heroBg2.current.style.transform = "";
-      if (heroCards.current) heroCards.current.style.transform = "";
-      return;
-    }
-    const hs = Math.min(sy, 900), k = hs / 900;
-    const { x: mx, y: my } = mouse.current;
-    b.style.transformOrigin = "50% 0%";
-    b.style.transform = isDesk
-      ? `perspective(1400px) translate3d(0, ${(hs * -0.16).toFixed(1)}px, ${(-k * 220).toFixed(1)}px) rotateX(${(k * 11).toFixed(2)}deg) scale(${(1 - k * 0.06).toFixed(4)})`
-      : `translate3d(0, ${(hs * -0.08).toFixed(1)}px, 0) scale(${(1 - k * 0.025).toFixed(4)})`;
-    b.style.opacity = String(Math.max(0, 1 - k * 1.5));
-    b.style.filter = isDesk && k > 0.02 ? `blur(${(k * 5).toFixed(2)}px)` : "";
-    if (heroBg1.current) heroBg1.current.style.transform = `translate3d(${(hs * 0.04 + (isDesk ? mx * -34 : 0)).toFixed(1)}px, ${(hs * 0.2 + (isDesk ? my * -24 : 0)).toFixed(1)}px, 0)`;
-    if (heroBg2.current) heroBg2.current.style.transform = `translate3d(${(hs * -0.035 + (isDesk ? mx * 42 : 0)).toFixed(1)}px, ${(hs * 0.13 + (isDesk ? my * 28 : 0)).toFixed(1)}px, 0)`;
-    if (heroCards.current) heroCards.current.style.transform = `translate3d(${(mx * 22).toFixed(1)}px, ${(my * 15 + hs * 0.18).toFixed(1)}px, 0)`;
-  }, [motionOK, isDesk]);
-
-  const step = Math.min(2, Math.floor(pShow * 3.0001));
-
-  /* ---- 3B kart destesi: her kare DOM'a yazılır ---- */
-  const deckCards = deals.slice(0, 4);
-  useScrub(deck, (p) => {
-    const pos = p * Math.max(0, deckCards.length - 1);
-    deckCardEls.current.forEach((el, i) => {
-      if (!el) return;
-      const d = i - pos, ad = Math.abs(d);
-      el.style.transform = `translate3d(calc(-50% + ${(d * 168).toFixed(1)}px), calc(-50% + ${(ad * 18).toFixed(1)}px), ${(-ad * 300).toFixed(1)}px) rotateY(${(d * -27).toFixed(2)}deg) rotateX(${(ad * 6).toFixed(2)}deg) scale(${Math.max(0.55, 1 - ad * 0.06).toFixed(4)})`;
-      const far = Math.max(0, ad - 0.45);               // ön kart her zaman net
-      el.style.opacity = String(d < -1.1 ? 0 : Math.max(0, 1 - far * 0.7));
-      el.style.filter = far > 0.02 ? `blur(${Math.min(6, far * 3.2).toFixed(2)}px) saturate(${Math.max(0.4, 1 - far * 0.4).toFixed(2)})` : "";
-      el.style.zIndex = String(100 - Math.round(ad * 10));
-      el.style.pointerEvents = ad < 0.5 ? "auto" : "none";
-    });
-    deckDots.current.forEach((el, i) => {
-      if (!el) return;
-      const on = Math.round(pos) === i;
-      el.style.width = on ? "32px" : "12px";
-      el.style.background = on ? "#5A8DFF" : "rgba(255,255,255,.22)";
-    });
-  }, [deckCards.length]);
-
-  /* ---- yatay ray ---- */
-  useScrub(rail, (p) => {
-    const t = track.current; if (!t) return;
-    if (!(isDesk && motionOK)) { t.style.transform = ""; return; }
-    t.style.transform = `translate3d(${(-p * railShift.current).toFixed(1)}px,0,0)`;
-    if (railBar.current) railBar.current.style.width = `${Math.max(6, p * 100)}%`;
-  }, [isDesk, motionOK]);
-
-  const HERO_CARDS = [
-    { cls: "float-a", top: "14%", left: "6%", k: "Piyasa konumu", v: "%14 daha ucuz", tone: "text-moss" },
-    { cls: "float-b", top: "22%", right: "5%", k: "Güven skoru", v: "86 / 100", tone: "text-signal-glow" },
-    { cls: "float-c", bottom: "24%", left: "10%", k: "Anlaşıldı", v: "Karşıyaka · 3+1 · ≤ 5 mn", tone: "text-white" },
-  ];
-
-  return (
-    <>
-      {/* ═════════════════════════════════════════════════════ kahraman */}
-      <section className="night-hero band-dark grain relative -mt-16 overflow-hidden pt-16">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-          <div className="mesh" />
-          <div className="hero-grid" />
-          <div className="hero-vignette" />
-          <div ref={heroBg1} className="absolute -left-40 -top-32 h-[46rem] w-[46rem] rounded-full opacity-70 blur-3xl"
-            style={{ background: "radial-gradient(circle, rgba(44,107,245,.45), transparent 62%)" }} />
-          <div ref={heroBg2} className="absolute -right-40 top-24 h-[38rem] w-[38rem] rounded-full opacity-60 blur-3xl"
-            style={{ background: "radial-gradient(circle, rgba(90,141,255,.34), transparent 64%)" }} />
-          {/* süzülen cam kartlar — sadece geniş ekranda */}
-          <div ref={heroCards} className="absolute inset-0 hidden lg:block">
-            {HERO_CARDS.map((c) => (
-              <div key={c.k} className={`hero-float glass absolute w-56 rounded-xl p-4 shadow-lift ${c.cls}`}
-                style={{ top: c.top, left: c.left, right: c.right, bottom: c.bottom }}>
-                <p className="text-[0.75rem] text-white/50">{c.k}</p>
-                <p className={`mt-1 text-[1.0625rem] font-semibold ${c.tone}`}>{c.v}</p>
-                <div className="mt-3 h-1 rounded-full bg-white/15"><div className="h-full w-2/3 rounded-full bg-signal-glow/80" /></div>
-              </div>
-            ))}
-          </div>
+  const [world, setWorld] = useState(0);
+  const chosen = WORLDS[world];
+  const active = useMemo(() => pool.filter(l => l.status === "active"), [pool]);
+  const counts = useMemo(() => CATEGORIES.map(c => active.filter(l => l.cat === c.slug).length), [active]);
+  const deals = useMemo(() => ready ? active.filter(l => l.price > 0).map(l => ({ l, m: readMarket(l, pool) })).filter(x => x.m && x.m.confidence !== "low" && x.m.delta < -.15 && x.m.delta > -.45).sort((a,b) => a.m!.delta-b.m!.delta).slice(0,4) : [], [active,pool,ready]);
+  const recent = useMemo(() => ready ? state.recent.map(id => pool.find(l => l.id === id)).filter(l => l !== undefined).slice(0,4) : [], [ready,state.recent,pool]);
+  return <div className="editorial-home">
+    <section className="discovery-hero">
+      <div className="discovery-aurora" aria-hidden="true" />
+      <div className="discovery-orbit" aria-hidden="true" />
+      <div className="discovery-inner">
+        <div className="discovery-copy">
+          <p className="discovery-eyebrow"><span /> DAHA İYİ BİR KEŞİF</p>
+          <h1>Aradığın şey.<br /><span>İçine sinen fiyat.</span></h1>
+          <p className="discovery-lead">Yeni bir ev, yeni bir yol, yeni bir başlangıç. Aradığını söyle; seçenekleri ve fiyatlarının piyasadaki yerini birlikte gör.</p>
+          <div className="discovery-search"><Omnibox big dark /></div>
+          <div className="discovery-prompts"><span>Bir yerden başla</span><Link href={`/arama/?nl=${encodeURIComponent(chosen.query)}`}>{chosen.query}<Arrow /></Link></div>
+          <div className="discovery-proof"><span><b>01</b> Cümleyle ara</span><span><b>02</b> Fiyatı karşılaştır</span><span><b>03</b> İnceleyerek seç</span></div>
         </div>
-
-        <div ref={heroBody} className="relative mx-auto max-w-shell px-5 pb-28 pt-14 text-center sm:pb-36 sm:pt-20 lg:px-8 lg:pb-48 lg:pt-28">
-          <div className="hero-kicker animate-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-1.5 text-[0.75rem] text-white/80 backdrop-blur sm:text-[0.8125rem]">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal-glow opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal-glow" />
-            </span>
-            {num(active.length)} aktif ilan · piyasa endeksi canlı
+        <div className="discovery-showcase">
+          <div className="world-switch" role="group" aria-label="Vitrin kategorisi">
+            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => setWorld(i)}>{w.name}</button>)}
           </div>
-
-          <h1 className="display grad-text mx-auto mt-7 max-w-[18ch] text-balance text-[clamp(2.55rem,7vw,5.25rem)]">
-            <SplitText text="Ne aradığını cümleyle yaz." step={70} />
-          </h1>
-
-          <Reveal delay={340}>
-            <p className="mx-auto mt-5 max-w-[52ch] text-[clamp(1rem,2vw,1.375rem)] leading-relaxed text-white/60 sm:mt-6">
-              Fiyatın piyasada nerede durduğunu ve satıcının güven skorunu, ilanın yanında görürsün.
-            </p>
-          </Reveal>
-
-          <Reveal delay={440} kind="zoom">
-            <div className="mx-auto mt-9 max-w-2xl text-left sm:mt-11">
-              <div className="hero-search-shell ring-anim rounded-full p-[1px]">
-                <Omnibox big dark />
-              </div>
+          <Tilt max={3} className="world-tilt">
+            <div className={`world-stage world-${chosen.tone}`}>
+              <div className="world-halo" aria-hidden="true" />
+              <div className="world-heading"><span>KEŞİF KOLEKSİYONU</span><span>{chosen.number} / 03</span></div>
+              <div key={chosen.slug} className="world-content"><h2>{chosen.title}</h2><Scene type={world} /></div>
+              <div className="world-caption"><div><small>{chosen.detail}</small><p>{chosen.caption}</p></div><Link href={`/arama/?k=${chosen.slug}`} aria-label={`${chosen.name} ilanlarını keşfet`}><Arrow /></Link></div>
             </div>
-          </Reveal>
-
-          <Reveal delay={510}>
-            <div className="hero-capabilities mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2 sm:mt-6 sm:gap-3">
-              {["Cümleyi anlar", "Piyasayı karşılaştırır", "Güveni tarar"].map((label, i) => (
-                <span key={label} className="hero-capability">
-                  <span className={`capability-mark capability-mark-${i + 1}`} aria-hidden />
-                  {label}
-                </span>
-              ))}
-            </div>
-          </Reveal>
-
-          <Reveal delay={600}>
-            <div className="mt-7 hidden flex-wrap items-center justify-center gap-x-7 gap-y-2.5 text-[0.9375rem] sm:flex">
-              {PROMPTS.map((q) => (
-                <Link key={q} href={`/arama/?nl=${encodeURIComponent(q)}`} className="link-u text-white/55 transition hover:text-white">
-                  {q}
-                </Link>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-
-        <div className="hero-stats relative border-t border-white/10">
-          <div className="mx-auto grid max-w-shell grid-cols-2 gap-px px-5 lg:grid-cols-4 lg:px-8">
-            {[
-              { v: active.length, l: "aktif ilan", f: (n: number) => num(n) },
-              { v: medAll, l: "ortanca fiyat", f: (n: number) => tlShort(n) },
-              { v: TREE_STATS.leaves, l: "model & paket", f: (n: number) => num(n) },
-              { v: CITIES.length, l: "şehir", f: (n: number) => String(n) },
-            ].map((s, i) => (
-              <Reveal key={s.l} delay={i * 90} kind="rise">
-                <div className="px-2 py-8 text-center lg:py-10">
-                  <p className="num text-[clamp(1.6rem,3vw,2.25rem)] font-semibold text-white">
-                    <CountUp to={s.v} format={s.f} />
-                  </p>
-                  <p className="mt-1 text-[0.8125rem] text-white/45">{s.l}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative border-t border-white/10 py-5">
-          <Marquee speed={46} className="text-[0.9375rem] font-medium text-white/40">
-            {["Volkswagen", "BMW", "Mercedes-Benz", "Toyota", "Renault", "Fiat", "Audi", "Hyundai", "Tesla", "Ford", "Honda", "Peugeot", "Kia", "Skoda", "Volvo", "Porsche", "Dacia", "Nissan"].map((b) => (
-              <span key={b} className="flex items-center gap-10 whitespace-nowrap">{b}<span className="h-1 w-1 rounded-full bg-signal-glow/60" /></span>
-            ))}
-          </Marquee>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════ kategoriler */}
-      <Section
-        title="Nereye bakmak istersin?"
-        lead="Üç ana başlık, on altı alt kategori, binlerce model ve paket. Yanlarındaki rakam o an açık olan ilan sayısı."
-        href="/arama/"
-        hrefLabel="Tüm ilanlar"
-      >
-        <div className="grid gap-5 lg:grid-cols-3">
-          {byCat.map(({ c, n, med }, i) => (
-            <Reveal key={c.slug} delay={i * 140} kind={i === 0 ? "flipL" : i === 2 ? "flipR" : "tilt"} className="h-full" once>
-              <Tilt max={7} className="h-full">
-                <div className="plaque-link group flex h-full flex-col overflow-hidden">
-                  <div className="relative h-36 overflow-hidden">
-                    <Artwork
-                      seed={i * 137 + 4}
-                      sub={c.subs[0].slug}
-                      className="h-full w-full transition-transform duration-700 ease-apple group-hover:scale-[1.08]"
-                    />
-                    <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, rgba(15,27,46,.74), rgba(15,27,46,.2))" }} />
-                    <div className="absolute inset-x-5 bottom-4 flex items-end justify-between">
-                      <h3 className="text-[1.5rem] font-semibold tracking-[-0.028em] text-white">{c.label}</h3>
-                      <span className="num rounded-full bg-white/15 px-2.5 py-1 text-[0.75rem] text-white backdrop-blur">{num(n)}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <p className="text-[0.875rem] text-mute">{c.tagline}</p>
-                    <div className="rows mt-4 flex-1">
-                      {c.subs.map((s2) => {
-                        const sn = active.filter((l) => l.cat === c.slug && l.sub === s2.slug).length;
-                        return (
-                          <Link
-                            key={s2.slug}
-                            href={`/arama/?k=${c.slug}&a=${s2.slug}`}
-                            className="flex items-center justify-between py-2.5 text-[0.9375rem] transition hover:text-signal"
-                          >
-                            <span>{s2.label}</span>
-                            <span className="num text-[0.8125rem] text-mute-2">{sn}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-                      <span className="text-[0.8125rem] text-mute">Ortanca fiyat</span>
-                      <span className="num text-[1.0625rem] font-semibold">{tlShort(med)}</span>
-                    </div>
-                  </div>
-                </div>
-              </Tilt>
-            </Reveal>
-          ))}
-        </div>
-      </Section>
-
-      {/* ═══════════════════════════════════ 3B kart destesi (sabitlenmiş) */}
-      {deckCards.length >= 3 && (
-        <div ref={deck} className="band-dark relative lg:h-[340vh]">
-          <div className="flex flex-col justify-center overflow-hidden py-24 lg:sticky lg:top-0 lg:h-screen lg:py-0">
-            <div className="mx-auto w-full max-w-shell px-5 lg:px-8">
-              <div className="text-center">
-                <p className="text-[0.8125rem] font-medium text-signal-glow">Fırsat radarı</p>
-                <h2 className="display mt-3 text-[clamp(1.9rem,4vw,3rem)] text-white">
-                  <SplitText text="Piyasanın altında kalanlar" />
-                </h2>
-                <Reveal delay={200}>
-                  <p className="mx-auto mt-4 max-w-[48ch] text-[1rem] text-white/55">
-                    <span className="hidden lg:inline">Kaydırdıkça deste dönüyor. </span>
-                    Her kart, kendi karşılaştırma kümesine göre ne kadar ucuz kaldığını gösteriyor.
-                  </p>
-                </Reveal>
-              </div>
-
-              {/* masaüstü: 3B deste */}
-              <div className="relative mt-12 hidden h-[19rem] lg:block" style={{ perspective: "1700px" }}>
-                {deckCards.map(({ l, m }, i) => {
-                  return (
-                    <div
-                      key={l.id}
-                      ref={(n) => { deckCardEls.current[i] = n; }}
-                      className="absolute left-1/2 top-1/2 w-[30rem]"
-                      style={{ transformStyle: "preserve-3d", willChange: "transform, opacity, filter" }}
-                    >
-                      <div className="glass overflow-hidden rounded-xl p-6">
-                        <div className="flex items-start gap-5">
-                          <Artwork seed={l.art} sub={l.sub} kind={String(l.pathLabels?.join(" ") ?? l.attrs.tip ?? "")} className="h-24 w-32 shrink-0 rounded-md" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[0.8125rem] text-white/45">{l.district}, {l.city}</p>
-                            <h3 className="mt-1 truncate text-[1.125rem] font-medium text-white">{l.title}</h3>
-                            <p className="num mt-3 text-[1.75rem] font-semibold text-white">{tl(l.price)}</p>
-                          </div>
-                        </div>
-                        <div className="mt-6">
-                          <div className="relative h-1.5 rounded-full bg-white/15">
-                            <div className="absolute inset-y-0 left-[20%] right-[24%] rounded-full bg-white/25" />
-                            <div
-                              className="absolute -top-1 h-3.5 w-3.5 rounded-full bg-signal-glow shadow-plaque-blue"
-                              style={{ left: `${Math.max(2, Math.min(94, 50 + m.delta * 90))}%` }}
-                            />
-                          </div>
-                          <p className="mt-3 text-[0.9375rem] text-white/70">
-                            Benzerlerine göre{" "}
-                            <span className="font-semibold text-moss">%{Math.round(Math.abs(m.delta) * 100)} daha ucuz</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* mobil: alt alta */}
-              <div className="mt-10 grid gap-4 lg:hidden">
-                {deckCards.slice(0, 3).map(({ l }, i) => (
-                  <Reveal key={l.id} delay={i * 110} kind="tilt">
-                    <ListingCard l={l} pool={pool} />
-                  </Reveal>
-                ))}
-              </div>
-
-              <div className="mt-10 hidden justify-center gap-2 lg:flex">
-                {deckCards.map((_, i) => (
-                  <span
-                    key={i}
-                    ref={(n) => { deckDots.current[i] = n; }}
-                    className="h-1 rounded-full"
-                    style={{ width: 12, background: "rgba(255,255,255,.22)", transition: "width .4s var(--ease-apple), background-color .4s var(--ease-apple)" }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════ sabitlenmiş anlatım bölümü */}
-      <div ref={showcase} className="band-soft relative border-y border-line lg:h-[280vh]">
-        <div className="flex items-center overflow-visible py-24 lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden lg:py-0">
-          <div className="relative mx-auto grid w-full max-w-shell items-center gap-14 px-5 lg:grid-cols-2 lg:px-8">
-            <div>
-              <p className="text-[0.8125rem] font-medium text-signal">Farkı nerede</p>
-              <h2 className="display mt-3 text-[clamp(1.9rem,4vw,3.1rem)]">
-                Bir ilan sitesi fiyatı gösterir.
-                <br />
-                Biz <span className="text-signal">fiyatın anlamını</span> gösteriyoruz.
-              </h2>
-
-              <div className="mt-10 space-y-1">
-                {STEPS.map((s, i) => {
-                  const on = !isDesk || step === i;
-                  return (
-                    <div
-                      key={s.k}
-                      className="relative border-l-2 py-4 pl-6"
-                      style={{ borderColor: on ? "#2C6BF5" : "#DCE4F0", transition: "border-color .5s var(--ease-apple)" }}
-                    >
-                      <p
-                        className="text-[1.125rem] font-medium"
-                        style={{ color: on ? "#0E1729" : "#8B99AF", transition: "color .5s var(--ease-apple)" }}
-                      >
-                        {s.k}
-                      </p>
-                      <div
-                        className="overflow-hidden"
-                        style={{
-                          maxHeight: on ? 200 : 0,
-                          opacity: on ? 1 : 0,
-                          transition: "max-height .6s var(--ease-apple), opacity .5s var(--ease-apple)",
-                        }}
-                      >
-                        <p className="pt-2 text-[0.9375rem] leading-relaxed text-mute">{s.d}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="relative grid gap-4 lg:block lg:h-[26rem]" style={{ perspective: "1400px" }}>
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="panel overflow-hidden rounded-xl p-7 lg:absolute lg:inset-0"
-                  style={
-                    isDesk
-                      ? {
-                          opacity: step === i ? 1 : 0,
-                          transform: `translate3d(0, ${step === i ? 0 : step > i ? -40 : 40}px, ${step === i ? 0 : -160}px) rotateY(${step === i ? 0 : step > i ? 22 : -22}deg) scale(${step === i ? 1 : 0.94})`,
-                          transition: "opacity .6s var(--ease-out), transform .75s var(--ease-out)",
-                          pointerEvents: "none",
-                        }
-                      : undefined
-                  }
-                >
-                  {i === 0 && (
-                    <div>
-                      <p className="text-[0.8125rem] text-mute">Sen yazdın</p>
-                      <p className="mt-2 text-[1.25rem]">“İzmir Karşıyaka 3+1 daire 5 milyon altı”</p>
-                      <p className="mt-7 text-[0.8125rem] text-mute">Biz şunu anladık</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {[["şehir", "İzmir"], ["ilçe", "Karşıyaka"], ["oda", "3+1"], ["tip", "Daire"], ["bütçe", "≤ 5.000.000 ₺"]].map(([kk, v]) => (
-                          <span key={kk} className="rounded-full bg-signal-soft px-3 py-1.5 text-[0.8125rem] text-signal-ink">
-                            <span className="opacity-55">{kk} </span>{v}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {i === 1 && (
-                    <div>
-                      <p className="text-[0.8125rem] text-mute">Bu ilanın fiyatı</p>
-                      <p className="num mt-2 text-[2.25rem] font-semibold">3.150.000 ₺</p>
-                      <div className="mt-8">
-                        <div className="relative h-1.5 rounded-full bg-line">
-                          <div className="absolute inset-y-0 left-[18%] right-[26%] rounded-full bg-line-strong" />
-                          <div className="absolute -top-1 h-3.5 w-3.5 rounded-full bg-signal shadow-plaque-blue" style={{ left: "27%" }} />
-                        </div>
-                        <div className="mt-3 flex justify-between text-[0.75rem] text-mute-2">
-                          <span>alt %25</span><span>ortanca 3.680.000 ₺</span><span>üst %25</span>
-                        </div>
-                      </div>
-                      <p className="mt-7 text-[0.9375rem] text-mute">
-                        Benzer 34 ilana göre <span className="font-semibold text-moss">%14 daha ucuz</span>.
-                      </p>
-                    </div>
-                  )}
-                  {i === 2 && (
-                    <div>
-                      <div className="flex items-baseline justify-between">
-                        <p className="text-[0.8125rem] text-mute">Güven skoru</p>
-                        <p className="num text-[2rem] font-semibold">86<span className="text-[1rem] text-mute-2">/100</span></p>
-                      </div>
-                      <div className="mt-4 h-1.5 rounded-full bg-line">
-                        <div className="h-full rounded-full bg-moss" style={{ width: "86%" }} />
-                      </div>
-                      <ul className="mt-6 space-y-3 text-[0.9375rem]">
-                        {[["ok", "Satıcı 3 yıldır üye, 24 tamamlanmış ilan"], ["ok", "İlan bütünlüğü tam — tüm alanlar dolu"], ["warn", "Açıklamada “acil” ifadesi geçiyor"]].map(([lv, t]) => (
-                          <li key={t} className="flex gap-3">
-                            <span className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${lv === "ok" ? "bg-moss" : "bg-gold"}`} />
-                            <span className="text-mute">{t}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="absolute bottom-10 left-1/2 hidden -translate-x-1/2 gap-2 lg:flex">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="h-1 rounded-full"
-                style={{
-                  width: step === i ? 34 : 14,
-                  background: step === i ? "#2C6BF5" : "#C0CCDF",
-                  transition: "width .5s var(--ease-apple), background-color .5s var(--ease-apple)",
-                }}
-              />
-            ))}
-          </div>
+          </Tilt>
+          <div className="world-note"><span className="world-note-line" /> OzIlan seçkisi <span>•</span> Kategori illüstrasyonu</div>
         </div>
       </div>
+      <div className="discovery-bottom"><span><b>{num(active.length)}</b> keşfedilecek örnek ilan</span><span><b>{CITIES.length}</b> şehir</span><span>Fiyat bilgisi, bağlamıyla birlikte.</span><a href="#kesfet">Keşfetmeye başla <span aria-hidden="true">↓</span></a></div>
+    </section>
 
-      {/* ══════════════════════════ yatay ray: dikey kaydırma ile ilerler */}
-      <div ref={rail} className="relative lg:h-[300vh]">
-        <div className="overflow-hidden py-20 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center lg:py-0">
-          <div className="mx-auto mb-10 w-full max-w-shell px-5 lg:px-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <h2 className="display text-[clamp(1.8rem,3.6vw,2.8rem)]">
-                <SplitText text="Son eklenenler" />
-              </h2>
-              <Link href="/arama/" className="link-u text-[0.9375rem] text-signal">Tüm ilanlar <span aria-hidden>→</span></Link>
-            </div>
-          </div>
+    <section id="kesfet" className="discovery-section">
+      <div className="editorial-heading"><div><p className="editorial-kicker">SENİN DÜNYAN</p><h2>Ne arıyorsan,<br className="sm:hidden" /> buradan başla.</h2></div><Link href="/arama/">Tüm ilanlar <Arrow /></Link></div>
+      <div className="world-categories">{WORLDS.map((w,i) => <Reveal key={w.slug} once exit={false} kind="up" delay={i*70}><Link href={`/arama/?k=${w.slug}`} className={`category-editorial category-${w.tone}`}><div className="category-top"><span>{w.number}</span><span>{num(counts[i])} ilan</span></div><div className="category-art"><Scene type={i} /></div><div className="category-bottom"><div><h3>{w.name}</h3><p>{w.detail}</p></div><span className="category-arrow"><Arrow /></span></div></Link><div className="category-sublinks">{CATEGORIES[i].subs.slice(0,3).map(s => <Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></Reveal>)}</div>
+    </section>
 
-          <div
-            ref={track}
-            className="flex gap-5 px-5 lg:px-8"
-            style={isDesk && motionOK ? { width: "max-content", willChange: "transform" } : { overflowX: "auto", scrollbarWidth: "thin" }}
-          >
-            {fresh.map((l, i) => (
-              <div key={l.id} className="w-[19rem] shrink-0">
-                <Tilt max={8}>
-                  <ListingCard l={l} pool={pool} />
-                </Tilt>
-              </div>
-            ))}
-          </div>
+    <section className="decision-section"><div className="decision-inner"><div className="decision-copy"><p className="editorial-kicker">FİYATTAN FAZLASINI GÖR</p><h2>İyi bir karar,<br /><span>iyi bir karşılaştırmayla başlar.</span></h2><p>Bir rakam tek başına her şeyi anlatmaz. Benzer ilanlarla karşılaştır, satıcı bilgilerini incele ve kararını daha bilinçli ver.</p><Link href="/arama/?s=value" className="btn-primary">Piyasayı keşfet <Arrow /></Link></div><div className="decision-panel"><div className="decision-panel-top"><span>Fiyatın piyasadaki yeri</span><span>Örnek analiz</span></div><div className="decision-price"><span>İlan fiyatı</span><strong>3.150.000 <small>TL</small></strong><p><span>↘ %14</span> benzer ilanların ortancasından düşük</p></div><div className="market-visual" aria-label="Örnek fiyat dağılımı"><div className="market-bars" aria-hidden="true">{[12,18,27,39,54,71,85,97,100,94,84,69,52,37,26,16,10,6].map((h,i)=><span key={i} style={{height:`${h}%`}} />)}</div><div className="market-marker"><span>Bu ilan</span></div><div className="market-baseline" /></div><div className="market-axis"><span>Düşük fiyat</span><span>Ortanca <b>3.680.000 TL</b></span><span>Yüksek fiyat</span></div><div className="decision-footnote"><span>34 benzer ilanla karşılaştırıldı</span><p>Örnek hesaplama. Piyasa konumu, ilan kalitesinin veya güvenliğinin garantisi değildir.</p></div></div></div></section>
 
-          <div className="mx-auto mt-10 hidden w-full max-w-shell px-5 lg:block lg:px-8">
-            <div className="h-1 w-full rounded-full bg-line">
-              <div ref={railBar} className="h-full rounded-full bg-signal" style={{ width: "6%" }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════ fırsatlar */}
-      {deals.length > 0 && (
-        <div className="band-soft border-y border-line">
-          <Section
-            title="Piyasa ortancasının altında"
-            lead="Kendi karşılaştırma kümesine göre belirgin şekilde ucuz kalan ilanlar."
-            href="/arama/?s=value"
-            hrefLabel="Hepsini sırala"
-          >
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {deals.slice(0, 4).map(({ l }, i) => (
-                <Reveal key={l.id} delay={i * 110} kind="spin" className="h-full">
-                  <Tilt max={9} className="h-full">
-                    <ListingCard l={l} pool={pool} />
-                  </Tilt>
-                </Reveal>
-              ))}
-            </div>
-          </Section>
-        </div>
-      )}
-
-      {recent.length > 0 && (
-        <Section title="Kaldığın yerden">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {recent.map((l, i) => (
-              <Reveal key={l.id} delay={i * 90} kind="up">
-                <ListingCard l={l} pool={pool} variant="mini" />
-              </Reveal>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* ═════════════════════════════════════════════════════ şehirler */}
-      <div className="band-dark">
-        <Section title="Şehre göre" lead="Türkiye genelinde açık ilanlar." dark>
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-5">
-            {CITIES.map((c, i) => {
-              const n = active.filter((l) => l.city === c).length;
-              return (
-                <Reveal key={c} delay={(i % 5) * 70 + Math.floor(i / 5) * 40} kind="zoom" className="h-full">
-                  <Link
-                    href={`/arama/?il=${encodeURIComponent(c)}`}
-                    className="flex h-full items-baseline justify-between bg-white/[0.03] px-4 py-4 transition hover:bg-white/[0.1]"
-                  >
-                    <span className="text-[0.9375rem] text-white/85">{c}</span>
-                    <span className="num text-[0.8125rem] text-white/35">{n}</span>
-                  </Link>
-                </Reveal>
-              );
-            })}
-          </div>
-        </Section>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════ CTA */}
-      <div className="band-soft">
-        <section className="mx-auto max-w-shell px-5 py-24 text-center lg:px-8 lg:py-32">
-          <h2 className="display mx-auto max-w-[20ch] text-[clamp(1.9rem,4vw,3rem)]">
-            <SplitText text="Sıradaki ilan seninki olsun." step={65} />
-          </h2>
-          <Reveal delay={240}>
-            <p className="mx-auto mt-4 max-w-[46ch] text-[1.0625rem] text-mute">
-              Dört adımda yayına alırsın; fiyatını girerken piyasa bandını anında görürsün.
-            </p>
-          </Reveal>
-          <Reveal delay={360} kind="zoom">
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <Magnetic><Link href="/ilan-ver/" className="btn-signal px-7">İlan ver</Link></Magnetic>
-              <Magnetic strength={0.25}><Link href="/arama/" className="btn-ghost px-7">İlanlara göz at</Link></Magnetic>
-            </div>
-          </Reveal>
-        </section>
-      </div>
-    </>
-  );
+    <section className="discovery-section"><div className="editorial-heading"><div><p className="editorial-kicker">YENİ GELENLER</p><h2>İlk sen keşfet.</h2></div><Link href="/arama/">Hepsine göz at <Arrow /></Link></div><div className="editorial-listings">{active.slice(0,4).map(l=><ListingCard key={l.id} l={l} pool={pool} />)}</div></section>
+    {deals.length>0 && <section className="discovery-section deal-section"><div className="editorial-heading"><div><p className="editorial-kicker">YAKINDAN BAKMAYA DEĞER</p><h2>Piyasanın altında.</h2><p>Benzer ilanlara göre daha düşük fiyatlı seçenekler.</p></div><Link href="/arama/?s=value">Fiyatına göre sırala <Arrow /></Link></div><div className="editorial-listings">{deals.map(({l})=><ListingCard key={l.id} l={l} pool={pool} />)}</div></section>}
+    {recent.length>0 && <section className="discovery-section"><div className="editorial-heading"><div><p className="editorial-kicker">KALDIĞIN YERDEN</p><h2>Son baktıkların.</h2></div></div><div className="editorial-listings">{recent.map(l=><ListingCard key={l.id} l={l} pool={pool} />)}</div></section>}
+    <section className="discovery-section city-section"><div className="editorial-heading"><div><p className="editorial-kicker">YAKININDA NELER VAR?</p><h2>Şehrini keşfet.</h2></div></div><div className="editorial-cities">{CITIES.map((city,i)=><Link key={city} href={`/arama/?il=${encodeURIComponent(city)}`}><span className="city-index">{String(i+1).padStart(2,"0")}</span><span>{city}</span><span className="city-count">{active.filter(l=>l.city===city).length}<Arrow /></span></Link>)}</div></section>
+    <section className="listing-invitation"><div className="invitation-orb" aria-hidden="true" /><div><p className="discovery-eyebrow">YENİ BİR HİKÂYEYE YER AÇ</p><h2>Birinin aradığı,<br /><span>sende olabilir.</span></h2><p>İlanını oluştur. Fiyatını piyasayla karşılaştır.<br />Bir sonraki sahibine ulaş.</p><Link href="/ilan-ver/" className="invitation-button">İlanını oluştur <Arrow /></Link></div><span className="invitation-signature" aria-hidden="true">OzIlan</span></section>
+  </div>;
 }
