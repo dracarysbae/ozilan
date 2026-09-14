@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useId } from "react";
-import { type MarketArt } from "@/data/marketplace";
+import { MARKET_AREAS, type MarketArt } from "@/data/marketplace";
 import { EditorialMedia, EditorialArrow } from "./EditorialMedia";
 
 /** Original category illustrations; never presented as product photographs. */
@@ -28,9 +28,20 @@ export function MarketplaceArt({art}:{art:MarketArt}) {
   </svg>;
 }
 
+export function OpeningCategories(){
+  const areas=[
+    {label:"Emlak",detail:"Ev & arsa",href:"/arama/?k=emlak"},
+    {label:"Vasıta",detail:"Araç dünyası",href:"/vasita/"},
+    {label:"İkinci el",detail:"Al, sat, keşfet",href:"/akis/"},
+    ...MARKET_AREAS.map(a=>({label:a.label,detail:a.id==="alisveris"?"Ürün & mağaza":a.id==="cicek-hediye"?"Birini mutlu et":a.id==="hizmet"?"İşin ehlini bul":"Fikrini gerçekleştir",href:`/kesfet/?alan=${a.id}`})),
+  ];
+  return <nav className="opening-categories" aria-label="OzBirArada'da neler var?"><p>YEDİ ALAN. <span>TEK BİR YER.</span></p><div>{areas.map((a,i)=><Link key={a.href} href={a.href} style={{animationDelay:`${i*65}ms`}}><span className="opening-category-index">0{i+1}</span><span><b>{a.label}</b><small>{a.detail}</small></span><EditorialArrow/></Link>)}</div></nav>;
+}
+
 export function MarketplaceGateway(){return <section className="market-gateway gateway-editorial" aria-labelledby="gateway-title">
   <div className="gateway-masthead"><span>OZBİRARADA / KEŞİF ATLASI</span><span>Günlük ihtiyaçlar. Yeni olasılıklar.</span></div>
   <div className="editorial-heading"><div><p className="editorial-kicker">BAZEN ARARSIN. BAZEN DENK GELİRSİN.</p><h2 id="gateway-title">Hayatının <em>her alanında.</em></h2></div><Link href="/kesfet/">Tümünü keşfet <EditorialArrow/></Link></div>
+  <div className="restored-category-deck" aria-label="Alışveriş ve uzmanlık kategorileri">{MARKET_AREAS.map((area,i)=><Link key={area.id} href={`/kesfet/?alan=${area.id}`} className={`gateway-card market-${area.id}`}><span className="gateway-number">0{i+4}<span>↗</span></span><MarketplaceArt art={area.art}/><h3>{area.label}</h3><p>{area.categories.slice(0,3).join(" · ")}</p></Link>)}</div>
   <div className="gateway-spread">
     <Link href="/kesfet/?alan=alisveris" className="gateway-feature gateway-feature-shopping">
       <EditorialMedia scene="objects"><span className="gateway-image-tab">01 / KENDİNE BİR ŞEY</span></EditorialMedia>

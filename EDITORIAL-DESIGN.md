@@ -39,3 +39,16 @@ Create an original photorealistic architectural editorial photograph for the exp
 
 Browser-local demo storage and existing catalog illustrations remain. This work does not enable payments, live stock, messaging or provider delivery. OzBirArada remains a working name pending trademark/domain checks, as documented in MARKETPLACE-RELEASE.md.
 
+## Motion restoration after user review
+
+The first editorial pass removed the floating secondhand and marketplace covers, replaced the animated category cards, and placed a tall photo section ahead of the horizontal category journey. Keeping the old animation source was insufficient: the effects were absent from those new surfaces or too far down the page. The user explicitly rejected that result.
+
+- All seven discovery areas now appear in an animated navigation at the top of the home page.
+- The original three-scene horizontal journey directly follows the hero; photography comes later.
+- The hero's Vasıta tab transitions to the car scene in place. The category navigation and Vasıta scene link still open vehicle discovery.
+- Restored floating cover illustrations and the four original category cards; retained the newer editorial photographs further down the home page.
+- Connected the original alternating sideways rotation, clipping and light sweep to secondhand and marketplace cards as well as home listings.
+- Newly filtered cards and replaced category heroes are registered with the motion loop while scrolling is idle. Visibility pauses offscreen ambient loops.
+- The explicit motion toggle remains available; full motion is active on mobile as requested.
+
+Validation: production export passed. Browser checks at 320, 390 and 1280 pixels found no horizontal page overflow. On mobile the horizontal journey reached -92.8852% during the Vasıta transition, with a corresponding 3D object transform. Paired category cards were observed at approximately -17.68/+17.68 degrees and -39.78/+39.78 pixels during their entrance. Secondhand filtering retained 24 animated cards while narrowing Moda to 51 results. Both shopping and gift covers ran marketLevitate, with six animated catalog cards and no browser console errors.

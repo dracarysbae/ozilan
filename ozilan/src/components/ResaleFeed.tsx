@@ -8,8 +8,9 @@ import { Ago } from "./Ago";
 import { CITIES } from "@/data/geo";
 import { CATEGORIES } from "@/data/taxonomy";
 import { tl } from "@/lib/format";
-import { EditorialMedia, EditorialArrow } from "./EditorialMedia";
+import { EditorialArrow } from "./EditorialMedia";
 import { useMotionOK } from "./Motion";
+import { ScrollExperience } from "./ScrollExperience";
 
 type Offer={listingId:string;amount:number;note:string};
 type ClosetState={following:string[];offers:Offer[]};
@@ -45,10 +46,11 @@ export default function ResaleFeed(){
   function prepareOffer(l:Listing){setOffer(l);setShowOffers(false);setAmount(Math.max(1,Math.round(l.price*.9)));setMessage("");}
   function saveOffer(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!offer)return;const f=new FormData(e.currentTarget);const next={listingId:offer.id,amount:Number(f.get("amount")),note:String(f.get("note")??"").trim()};if(!Number.isFinite(next.amount)||next.amount<=0||next.amount>offer.price){setMessage("Teklif, ilan fiyatından yüksek veya sıfır olamaz.");return;}if(persist({...local,offers:[next,...local.offers.filter(o=>o.listingId!==offer.id)].slice(0,100)})){setOffer(null);setShowOffers(true);setMessage("Teklif taslağın saklandı. Satıcıya gönderilmedi.");}}
   const selectedSeller=closet?sellers[closet]:null;
-  return <div className="resale-feed">
+  return <div className="resale-feed"><ScrollExperience/>
     <div className="resale-intro resale-editorial-intro">
       <div className="resale-intro-copy"><p className="market-eyebrow">OZBİRARADA / İKİNCİ EL</p><h1>İyi eşyalar.<br/><em>Yeni sahipler.</em></h1><p>Bir dolapta bekleyen, başka bir hayatın en sevdiği parçası olabilir.</p><div className="resale-intro-actions"><Link href="/ilan-ver/" className="market-primary">Dolabına ürün ekle <EditorialArrow/></Link><button onClick={()=>{setOffer(null);setShowOffers(true);setMessage("");}}>Teklif taslaklarım {loaded&&local.offers.length>0?`(${local.offers.length})`:""} ↗</button></div><small>Örnek ilan akışı · Takiplerin ve taslakların bu cihazda saklanır.</small><div className="resale-edition"><span>AZ KULLANILDI.<br/>DAHA ÇOK SEVİLECEK.</span><span aria-hidden="true">↘</span></div></div>
-      <EditorialMedia scene="objects" eager className="resale-editorial-photo"><span className="editorial-photo-index">01 — YENİDEN KEŞFET</span><button className="editorial-hotspot hotspot-fashion" aria-label="Görselden Moda kategorisini keşfet" aria-pressed={category==="moda"} onClick={()=>discoverCategory("moda")}><span className="hotspot-dot">＋</span><span>Moda <EditorialArrow/></span></button><button className="editorial-hotspot hotspot-tech" aria-label="Görselden Elektronik kategorisini keşfet" aria-pressed={category==="elektronik"} onClick={()=>discoverCategory("elektronik")}><span className="hotspot-dot">＋</span><span>Elektronik <EditorialArrow/></span></button><span className="editorial-photo-instruction">Nesneye dokun, kategoriyi keşfet.</span></EditorialMedia>
+      <div className="resale-intro-art" aria-hidden="true"><span>YENİDEN.</span><svg viewBox="0 0 340 270"><path d="m104 93 39-35 31 12 30-12 44 35-35 39v108H135V132Z" fill="#e9ddd5"/><path d="M145 62q27 52 58 0" fill="none" stroke="#b8a296" strokeWidth="8"/><path d="M154 147h40m-40 15h28" stroke="#b89c91" strokeWidth="4"/><path d="m212 117 42-10 33 55-13 83-63-11Z" fill="#7d9fba"/><path d="m230 130 25-5 10 27-16 46" fill="none" stroke="#d1e3eb" strokeWidth="3"/></svg><span className="resale-tag">SEVİLEREK KULLANILDI ↗</span></div>
+      <div className="resale-cover-categories" role="group" aria-label="İkinci el kategorileri">{categories.map(c=><button key={c.slug} aria-pressed={category===c.slug} onClick={()=>discoverCategory(c.slug)}>{c.label}<EditorialArrow/></button>)}</div>
     </div>
     {message&&!offer&&!showOffers&&<p className="market-storage-error" role="status">{message}</p>}<section ref={resultsRef} className="resale-content" aria-label="İkinci el keşif akışı">
       <div className="resale-tabs" role="group" aria-label="Akış türü">{[["discover","Senin için"],["near","Yakınımda"],["following","Takip ettiklerim"],["saved","Beğendiklerim"]].map(([key,label])=><button key={key} aria-pressed={tab===key} onClick={()=>{setTab(key);setCloset(null);}}>{label}</button>)}<Link href="/arama/?k=ikinci-el">Detaylı ara ↗</Link></div>
