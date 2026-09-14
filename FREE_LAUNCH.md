@@ -4,10 +4,10 @@
 
 | Seçenek | Ücretsiz kapsam | Bu projedeki rolü |
 |---|---|---|
-| Supabase Free | 500 MB veritabanı, 1 GB dosya alanı, 5 GB egress; sosyal giriş dahil | İlan, fotoğraf, hesap ve mesaj kodu bu altyapıya göre hazır |
+| Supabase Free | 500 MB veritabanı, 1 GB dosya alanı, 5 GB egress; sosyal giriş dahil | İlan, hesap ve mesaj katmanı; eski fotoğraflara okuma desteği |
 | Appwrite Free | 2 GB depolama, 5 GB bant genişliği, 1 veritabanı ve 1 bucket | Alternatif ortak sunucu; mevcut Supabase veri katmanını ve izin testlerini uyarlamak gerekir |
 | Cloudflare Pages | Ücretsiz statik barındırma, kart gerektirmeyen başlangıç | Gerçek pazaryeri ön yüzü için önerilen barındırma |
-| Cloudinary Image & Video API Free | Kart gerektirmeyen, süreli deneme olmayan 25 kredi; depolama, trafik ve dönüşümler ortak havuzu tüketir | Çok sayıda ilan fotoğrafı için önerilen ayrı medya hizmeti; entegrasyonu henüz yapılmadı |
+| Cloudinary Image & Video API Free | Kart gerektirmeyen, süreli deneme olmayan 25 kredi; depolama, trafik ve dönüşümler ortak havuzu tüketir | Yeni fotoğraf sağlayıcısı; kod ve yerel testler hazır, canlı hesap/dağıtım bekliyor |
 | ImageKit Forever Free | 3 GB dosya alanı, aylık 20 GB trafik | Daha küçük, ayrı kotalı alternatif medya hizmeti |
 
 Supabase ve Appwrite ücretsiz projeleri bir haftalık hareketsizlikten sonra duraklatabilir. Depolama ve trafik sınırsız değildir. Appwrite Free kota aşımında ilgili işlemler kısıtlanır; yeni ücretli kaynak satın alınmaz. Limitlere yaklaşınca ücretli plana geçmek yerine sınırlarla çalışılır ve kullanıcı bilgilendirilir.
@@ -17,10 +17,10 @@ Firebase Spark ücretsiz olsa da Cloud Storage artık Blaze/faturalandırma hesa
 ## Önerilen kurulum
 
 1. Cloudflare Pages Free üzerinde statik ön yüz; ilk yayında sağlayıcının ücretsiz `pages.dev` adresi. Alan adı satın alınmaz.
-2. Supabase Free üzerinde PostgreSQL ve Auth. Mevcut fotoğraf kodu Supabase Storage kullanır; daha geniş ücretsiz fotoğraf kapasitesi için Cloudinary ayrı bir medya sağlayıcısı olarak eklenebilir.
+2. Supabase Free üzerinde PostgreSQL ve Auth. Yeni fotoğraf yüklemeleri Cloudinary bağlantısına geçirildi. Supabase Storage eski fotoğrafları okumak ve temizlemek için korunur.
 3. Üyeler için Google ile giriş; yalnızca temel profil ve e-posta kapsamları. SMS, ücretli e-posta sağlayıcısı ve kart kaydı yok. Varsayılan `NEXT_PUBLIC_AUTH_METHOD=google`; e-posta üyeliği SMTP hazır olana kadar açılmaz.
 
-Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Gerçek OAuth istemcisi, Supabase projesi ve canlı giriş testi henüz tamamlanmadı. Supabase hizmet şartlarının kabulü için kullanıcı onayı bekleniyor; bu bir ödeme onayı değildir.
+Google ile giriş kodu ve OAuth profil kayıt testi eklendi. Gerçek OAuth istemcisi, Supabase projesi ve canlı giriş testi henüz tamamlanmadı. Cloudinary ve Supabase ücretsiz hizmet şartları kullanıcı tarafından onaylandı. GitHub temel profil/e-posta erişimi için ayrı onay bekleniyor; otomatik onay denetimi bu erişim adımını durdurdu. Hiçbir ücretli kaynak veya ödeme açılmadı.
 
 ## Daha fazla ücretsiz fotoğraf
 
@@ -28,7 +28,7 @@ Cloudinary Image & Video API Free planında 1 kredi; 1 GB depolama, 1 GB görsel
 
 Örnek kapasite hesabı: 10 GB saklanan fotoğraf + son 30 günde 10 GB görsel trafiği + 5.000 dönüşüm = 25 kredi. Ortalama dosya gerçekten 200 KB olursa 10 GB yaklaşık 50.000 fotoğraf, ilan başına 6 fotoğrafla yaklaşık 8.300 ilan saklar. Bunlar ondalık birimlerle hesaplanan örneklerdir, trafik veya kalite garantisi değildir. 10 GB trafik de aynı boyutta yaklaşık 50.000 fotoğraf aktarımı eder; çok ziyaret edilen bir sitede trafik kotası depolamadan önce dolabilir. Türetilmiş görseller ve yedek sürümler de depolamaya dahildir.
 
-Entegrasyon yapılırsa fotoğraflar tarayıcıda uygun çözünürlük ve WebP boyutuna hazırlanır, hesap başına yükleme sınırı korunur. Sunucu oturumu doğruladıktan sonra süreli imzalı yükleme izni verir; Cloudinary API secret tarayıcıya veya NEXT_PUBLIC değişkenlerine konmaz. Dosya sahipliği, silme ve başarısız ilanlardan kalan dosyalar ayrıca doğrulanmalıdır. Mevcut Supabase Storage sahiplik kontrolleri yeni sağlayıcıya otomatik olarak taşınmış sayılmaz. Görsel efektlerin kaldırılması gerekmez.
+Hazır entegrasyonda fotoğraflar tarayıcıda en fazla 1600 piksel ve 512 KiB WebP olarak hazırlanır. Sunucu doğrulanmış hesap ve kota denetiminden sonra dosyayı Cloudinary'ye kendisi imzalı olarak yükler; API secret tarayıcıya verilmez. Bu proxy yolu Supabase çıkış trafiği de tükettiği için proje genelinde son 30 günde 3 GB yükleme sınırı uygulanır. 10 GB saklama kapasitesi, bir ayda 10 GB ücretsiz yükleme anlamına gelmez. Dosya sahipliği, yayın/silme bağlantısı ve başarısız yükleme temizliği gerçek SQL testlerinde doğrulandı. Zamanlanmış temizlik canlıda ayrıca açılmalı. Ayrıntılar: [medya kurulum rehberi](supabase/MEDIA.md). Tasarım ve hareket kodları değiştirilmedi.
 
 Backblaze B2'nin ücretsiz depolaması incelendi; ilk herkese açık bucket için ödeme geçmişi veya karta küçük bir ödeme şartı nedeniyle bu kullanıcıya kartsız fotoğraf yayını olarak önerilmedi. Cloudflare R2 de kullanım üzerinden faturalandırılan abonelik açılışı istediğinden ücretsiz Pages barındırmayla karıştırılmamalıdır. Publitio destek sayfaları ile güncel fiyat sayfasındaki ücretsiz plan bilgileri çeliştiği için doğrulanmış seçenek olarak listelenmedi.
 
@@ -43,7 +43,7 @@ Cloudflare Pages projesi seçildiğinde:
 - Output directory: `out`
 - Node: 22, `NODE_ENV=production`
 - `NEXT_PUBLIC_BASE_PATH` boş (site yeni alan adının kökünde yayınlanır).
-- Supabase public URL/publishable anahtar ve `NEXT_PUBLIC_AUTH_METHOD=google` yapılandırılır.
+- Supabase public URL/publishable anahtar, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` ve `NEXT_PUBLIC_AUTH_METHOD=google` yapılandırılır.
 - Auth Site URL ve izin verilen yönlendirme, gerçek atanan site adresiyle `/giris/` olacak şekilde ayarlanır. Google tarafında Supabase panelinin gösterdiği tam callback kullanılır.
 
 Mevcut GitHub Pages adresi tasarım önizlemesidir. GitHub Pages çevrimiçi işletme ve ticari işlem odaklı siteler için kullanılamadığından gerçek üyelik/pazaryeri sürümü oraya yayımlanmayacak. Kaynak kodu GitHub'da kalabilir. Görsel efektleri kaldırmak veya siteyi baştan tasarlamak gerekmez.

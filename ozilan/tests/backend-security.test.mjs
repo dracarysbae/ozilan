@@ -1,23 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
-import {PGlite} from '@electric-sql/pglite';
+import {testDatabase} from './fixtures/database.mjs';
 
 test('marketplace permissions are enforced by PostgreSQL, including direct hostile requests',async()=>{
-  const db=new PGlite();
+  const db=await testDatabase();
   try{
-    await db.exec(`create role anon;create role authenticated;
-      create schema auth;create schema storage;
-      create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}');
-      create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-      create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
-      create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
-      create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
-      alter table storage.objects enable row level security;
-      create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;
-      grant usage on schema public,auth,storage to anon,authenticated;
-      grant select,insert,delete on storage.objects to authenticated;`);
-    await db.exec(await readFile(new URL('../../supabase/migrations/202609140001_marketplace.sql',import.meta.url),'utf8'));
     const seller='10000000-0000-4000-8000-000000000001',buyer='20000000-0000-4000-8000-000000000002',other='30000000-0000-4000-8000-000000000003';
     for(const [id,name] of [[seller,'Satıcı'],[buyer,'Alıcı'],[other,'Başka kullanıcı']])await db.query(`insert into auth.users(id,raw_user_meta_data) values($1,jsonb_build_object('name',$2::text))`,[id,name]);
     const photo=`${seller}/a0000000-0000-4000-8000-000000000001.webp`;

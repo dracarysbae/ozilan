@@ -278,7 +278,7 @@ function Compose() {
                 </p>
               </div>
 
-              <PhotoUploader userId={me.id} paths={photoPaths} onChange={setPhotoPaths} onBusy={setUploading}/>
+              <PhotoUploader paths={photoPaths} onChange={setPhotoPaths} onBusy={setUploading}/>
             </div>
           )}
 

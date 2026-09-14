@@ -1,0 +1,4 @@
+[functions.listing-media]
+# The handler verifies the bearer token with Auth /user; newer asymmetric
+# Supabase signing keys must not be treated as legacy JWTs by the gateway.
+verify_jwt = false

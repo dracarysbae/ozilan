@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {cloudinaryPhotoUrl} from './photo-path';
 
 let client: SupabaseClient | null = null;
 export const backendConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
@@ -15,6 +16,7 @@ export function authReturn(path = "/giris/") {
   return `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 }
 export function publicPhoto(path: string) {
+  if(path.startsWith('cloudinary/'))return cloudinaryPhotoUrl(path,process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME??'');
   return backendConfigured ? backend().storage.from("listing-photos").getPublicUrl(path).data.publicUrl : "";
 }
 export function friendlyError(error: unknown) {
