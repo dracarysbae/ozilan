@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CompareTray } from "@/components/CompareTray";
 import { MotionProvider, PageTransition, ScrollProgress } from "@/components/Motion";
+import { assetRecoveryScript } from "@/lib/asset-recovery";
 
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr">
       <head>
+        <script id="ozilan-asset-recovery" dangerouslySetInnerHTML={{__html:assetRecoveryScript(process.env.NEXT_PUBLIC_BASE_PATH??"")}}/>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

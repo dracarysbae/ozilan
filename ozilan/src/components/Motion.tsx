@@ -443,6 +443,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
   const curtain = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const leaving = useRef(false);
+  const navigateTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const releaseTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const intro=useRef<HTMLElement|null>(null);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -451,6 +454,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
       if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;
+      if(BASE&&url.pathname!==BASE&&!url.pathname.startsWith(`${BASE}/`))return;
       // Query-only navigation keeps this layout mounted. Let Next handle it;
       // waiting for a pathname change would leave the transition locked forever.
       if (url.pathname === location.pathname) return;
@@ -460,44 +464,48 @@ export function PageTransition({ children }: { children: ReactNode }) {
       e.stopPropagation(); // Next Link kendi yönlendirmesini yapmasın
       if (leaving.current) return;
       leaving.current = true;
-      const c = curtain.current!, p = page.current!;
+      if(releaseTimer.current)clearTimeout(releaseTimer.current);
+      const c = curtain.current!;
+      c.dataset.active="true";
       c.style.transition = "transform .55s cubic-bezier(.76,0,.24,1)";
       c.style.transform = "translate3d(0,0,0)";
-      p.style.transition = "transform .55s cubic-bezier(.76,0,.24,1), opacity .4s ease";
-      p.style.transform = "translate3d(0,-28px,0) scale(.985)";
-      p.style.opacity = "0.35";
-      setTimeout(() => router.push(path), 480);
+      // The curtain is one viewport high. Never composite the entire long document.
+      navigateTimer.current=setTimeout(() => router.push(path), 480);
+      releaseTimer.current=setTimeout(()=>{c.dataset.active="false";c.style.transform="translate3d(0,100%,0)";leaving.current=false;},4000);
     };
     document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
+    return () => {document.removeEventListener("click", onClick, true);if(navigateTimer.current)clearTimeout(navigateTimer.current);if(releaseTimer.current)clearTimeout(releaseTimer.current);};
   }, [router]);
 
   useLayoutEffect(() => {
     const c = curtain.current, p = page.current;
     if (!c || !p) return;
+    if(navigateTimer.current)clearTimeout(navigateTimer.current);
+    if(releaseTimer.current)clearTimeout(releaseTimer.current);
+    intro.current?.classList.remove("page-intro-arrive");
     window.scrollTo(0, 0);
-    if (!isFull()) { c.style.transform = "translate3d(0,100%,0)"; p.style.cssText = ""; leaving.current = false; return; }
+    if (!isFull()) { c.dataset.active="false";c.style.transform = "translate3d(0,100%,0)";leaving.current = false; return; }
     const wasLeaving = leaving.current;
     leaving.current = false;
-    p.style.transition = "none";
-    p.style.transform = "translate3d(0,36px,0) scale(.99)";
-    p.style.opacity = "0";
+    const surface=p.querySelector<HTMLElement>(".discovery-hero,.vehicle-intro,.market-hero,.resale-intro,.search-heading");
+    // Only a bounded intro moves; a suspended frame can never leave the page blank.
+    if(surface&&surface.offsetHeight<=window.innerHeight*2){intro.current=surface;surface.classList.add("page-intro-arrive");}
     c.style.transition = "none";
+    c.dataset.active=String(wasLeaving);
     c.style.transform = wasLeaving ? "translate3d(0,0,0)" : "translate3d(0,100%,0)";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    let secondFrame=0;
+    const firstFrame=requestAnimationFrame(() => {secondFrame=requestAnimationFrame(() => {
       c.style.transition = "transform .6s cubic-bezier(.76,0,.24,1)";
       c.style.transform = "translate3d(0,-100%,0)";
-      p.style.transition = "transform .85s cubic-bezier(.16,.84,.32,1) .12s, opacity .6s ease .12s";
-      p.style.transform = "";
-      p.style.opacity = "1";
-      setTimeout(() => { c.style.transition = "none"; c.style.transform = "translate3d(0,100%,0)"; p.style.willChange="auto"; }, 1000);
-    }));
+    });});
+    releaseTimer.current=setTimeout(()=>{c.dataset.active="false";c.style.transition="none";c.style.transform="translate3d(0,100%,0)";intro.current?.classList.remove("page-intro-arrive");},1000);
+    return()=>{cancelAnimationFrame(firstFrame);cancelAnimationFrame(secondFrame);if(releaseTimer.current)clearTimeout(releaseTimer.current);intro.current?.classList.remove("page-intro-arrive");};
   }, [pathname]);
 
   return (
     <>
-      <div ref={page}>{children}</div>
-      <div ref={curtain} className="curtain" aria-hidden>
+      <div ref={page} className="page-surface">{children}</div>
+      <div ref={curtain} className="curtain" data-active="false" aria-hidden>
         <span className="curtain-mark">Oz<b>BirArada</b></span>
       </div>
     </>

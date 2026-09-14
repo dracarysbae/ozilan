@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useId } from "react";
-import { MARKET_AREAS, type MarketArt } from "@/data/marketplace";
+import { MARKET_AREAS, marketSearchHref, type MarketArt } from "@/data/marketplace";
 import { EditorialMedia, EditorialArrow } from "./EditorialMedia";
 
 /** Original category illustrations; never presented as product photographs. */
@@ -41,7 +41,12 @@ export function OpeningCategories(){
 export function MarketplaceGateway(){return <section className="market-gateway gateway-editorial" aria-labelledby="gateway-title">
   <div className="gateway-masthead"><span>OZBİRARADA / KEŞİF ATLASI</span><span>Günlük ihtiyaçlar. Yeni olasılıklar.</span></div>
   <div className="editorial-heading"><div><p className="editorial-kicker">BAZEN ARARSIN. BAZEN DENK GELİRSİN.</p><h2 id="gateway-title">Hayatının <em>her alanında.</em></h2></div><Link href="/kesfet/">Tümünü keşfet <EditorialArrow/></Link></div>
-  <div className="restored-category-deck" aria-label="Alışveriş ve uzmanlık kategorileri">{MARKET_AREAS.map((area,i)=><Link key={area.id} href={`/kesfet/?alan=${area.id}`} className={`gateway-card market-${area.id}`}><span className="gateway-number">0{i+4}<span>↗</span></span><MarketplaceArt art={area.art}/><h3>{area.label}</h3><p>{area.categories.slice(0,3).join(" · ")}</p></Link>)}</div>
+  <div className="restored-category-deck" aria-label="İlham veren seçenekler">{[
+    {area:"alisveris" as const,title:"Günlük ritüelin",query:"kahve",caption:"Kahve köşene küçük bir dokunuş.",art:"coffee" as const},
+    {area:"cicek-hediye" as const,title:"Küçük bir teşekkür",query:"buket",caption:"Bir buketle gününü güzelleştir.",art:"flowers" as const},
+    {area:"hizmet" as const,title:"Evdeki eksik iş",query:"montaj",caption:"Bekleyen montaj işini planla.",art:"tools" as const},
+    {area:"freelance" as const,title:"Fikrinin ilk ekranı",query:"prototip",caption:"Uygulama fikrine bir başlangıç.",art:"code" as const},
+  ].map((item,i)=><Link key={item.area} href={marketSearchHref({area:item.area,query:item.query})+"#market-results"} className={`gateway-card market-${item.area}`}><span className="gateway-number">0{i+1}<span>↗</span></span><MarketplaceArt art={item.art}/><h3>{item.title}</h3><p>{item.caption}</p></Link>)}</div>
   <div className="gateway-spread">
     <Link href="/kesfet/?alan=alisveris" className="gateway-feature gateway-feature-shopping">
       <EditorialMedia scene="objects"><span className="gateway-image-tab">01 / KENDİNE BİR ŞEY</span></EditorialMedia>
@@ -54,6 +59,5 @@ export function MarketplaceGateway(){return <section className="market-gateway g
     </Link>
   </div>
   <div className="gateway-workbench"><EditorialMedia scene="studio"/><div className="gateway-work-copy"><p className="editorial-kicker">BİRLİKTE DAHA İYİ OLUR.</p><h3>İşi bilen biriyle<br/><em>bir adım ileri.</em></h3><Link href="/kesfet/?alan=hizmet"><span><b>Yerel hizmetler</b><small>Ev, bakım, onarım ve günlük işler.</small></span><EditorialArrow/></Link><Link href="/kesfet/?alan=freelance"><span><b>Freelance</b><small>Tasarım, yazılım ve yaratıcı projeler.</small></span><EditorialArrow/></Link></div></div>
-  <nav className="gateway-existing" aria-label="İlan kategorileri"><span>Bir de ilanlara bak.</span><Link href="/arama/?k=emlak">Emlak ↗</Link><Link href="/vasita/">Vasıta ↗</Link><Link href="/akis/">İkinci el akışı ↗</Link></nav>
   <Link href="/akis/" className="gateway-resale"><span aria-hidden="true">∞</span><div><strong>İyi eşyalar. Yeni sahipler.</strong><p>Dolapları gez, sevdiklerini sakla, teklifini hazırla.</p></div><EditorialArrow/></Link>
 </section>;}

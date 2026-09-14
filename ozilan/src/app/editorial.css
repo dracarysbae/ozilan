@@ -412,3 +412,23 @@ html[data-motion=reduced] .vehicle-type-grid>.cinema-ready,html[data-motion=redu
 .resale-filters .market-search-row input,.resale-filters .market-search-row select,.resale-filter-tools>button { border-radius:10px; }.resale-filter-tools>button { background:#17344c; color:#dcebf1; border-color:#17344c; transition:transform .3s,background .3s; }.resale-filter-tools>button:hover { background:#29536c; transform:translateY(-2px); }
 @media(max-width:767px) { .world-content .collection-market-scene { min-height:320px; padding-top:105px; }.resale-filters { padding:17px 14px; } }
 html[data-motion=reduced] .market-results .market-category-pills button { animation:none; }
+
+/* Preserve the choreography, but allocate layers only for what can be seen. */
+.curtain { will-change:auto; visibility:hidden; }
+.curtain[data-active=true] { visibility:visible; will-change:transform; }
+.page-intro-arrive { animation:pageIntroArrival .85s cubic-bezier(.16,.84,.32,1) both; }
+@keyframes pageIntroArrival { from { opacity:.72; transform:translateY(24px); } to { opacity:1; transform:none; } }
+#collection-picker { scroll-margin-top:100px; }
+.world-switch button { animation:openingCategoryEnter .65s cubic-bezier(.16,1,.3,1) backwards; }
+.journey-wayfinding { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; font-size:10px; color:#acc9de; min-height:36px; }
+.journey-wayfinding>span { color:#d7eff6; margin-right:auto; }.journey-wayfinding a { padding:8px 0; }.journey-wayfinding a:hover { color:white; }
+.journey-enabled .journey-object,.journey-enabled .journey-copy,.journey-enabled .journey-ring,.journey-enabled .journey-rail { will-change:auto; }
+.journey-enabled[data-playing=true] .journey-rail,.journey-enabled[data-playing=true] .journey-panel[data-resident=true] .journey-object,.journey-enabled[data-playing=true] .journey-panel[data-resident=true] .journey-copy,.journey-enabled[data-playing=true] .journey-panel[data-resident=true] .journey-ring { will-change:transform; }
+.journey-enabled:not([data-playing=true]) .journey-panel,.journey-enabled .journey-panel[data-resident=false] { visibility:hidden; }
+.journey-enabled .journey-panel[data-resident=false] .journey-object,.journey-enabled .journey-panel[data-resident=false] .journey-copy,.journey-enabled .journey-panel[data-resident=false] .journey-ring,.journey-enabled .journey-panel[data-resident=false] .journey-monogram { transform:none; }
+.journey-enabled .journey-panel[data-resident=false] *,.journey-enabled .journey-panel[data-resident=false] *::before,.journey-enabled .journey-panel[data-resident=false] *::after { animation-play-state:paused!important; }
+.discovery-hero[data-playing=false] *,.discovery-hero[data-playing=false] *::before,.discovery-hero[data-playing=false] *::after,.listing-invitation[data-playing=false] *,.listing-invitation[data-playing=false] *::before,.listing-invitation[data-playing=false] *::after { animation-play-state:paused!important; }
+/* Same light pass, transform-driven instead of relaying out the scene each frame. */
+@keyframes discoveryShine { 0%,20% { transform:translateX(0) skewX(-18deg); opacity:0; } 35% { opacity:1; } 70%,100% { transform:translateX(366.667%) skewX(-18deg); opacity:0; } }
+@media(max-width:767px) { .journey-wayfinding { font-size:9px; gap:6px 14px; }.journey-wayfinding>span { flex-basis:100%; } }
+html[data-motion=reduced] .page-intro-arrive,html[data-motion=reduced] .world-switch button { animation:none; }

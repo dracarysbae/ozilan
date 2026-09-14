@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
 import { refreshMotion, useFrame, useMotionOK } from "./Motion";
+import { isSceneResident } from "@/lib/scene-residency";
 
 /** One observer for staggered entrances. The content stays visible without JavaScript. */
 export function ScrollExperience() {
@@ -39,7 +40,7 @@ export function ScrollExperience() {
     }, { threshold: .09 });
     const register = () => {
       hero.current = root.querySelector<HTMLElement>(heroSelector);
-      root.querySelectorAll(".resale-intro-art,.market-hero-art,.restored-category-deck,.vehicle-intro,.vehicle-type-grid,.search-heading").forEach(stage=>{
+      root.querySelectorAll(".discovery-hero,.listing-invitation,.resale-intro-art,.market-hero-art,.restored-category-deck,.vehicle-intro,.vehicle-type-grid,.search-heading").forEach(stage=>{
         if(!stages.has(stage)){stages.add(stage);stageObserver.observe(stage);}
       });
       cards.current = [...root.querySelectorAll<HTMLElement>(".editorial-listings>a,.resale-grid>.resale-card,.market-catalog>.market-item,.restored-category-deck>.gateway-card,.search-listings>div>a")];
@@ -108,7 +109,8 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
   const panels=useRef<HTMLElement[]>([]);
   const geometry=useRef({start:0,travel:1});
   const sceneRefs=useRef<{panel:HTMLElement;object:HTMLElement|null;copy:HTMLElement|null;ring:HTMLElement|null;number:HTMLElement|null}[]>([]);
-  const nav=useRef<HTMLButtonElement[]>([]);
+  const sceneLabel=useRef<HTMLSpanElement>(null);
+  const inViewport=useRef(false);
   const indicator=useRef<HTMLSpanElement>(null);
   const last=useRef(-1);
   const active=useRef(-1);
@@ -118,24 +120,25 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
     if(!el) return;
     panels.current=[...el.querySelectorAll<HTMLElement>(".journey-panel")];
     sceneRefs.current=panels.current.map(panel=>({panel,object:panel.querySelector(".journey-object"),copy:panel.querySelector(".journey-copy"),ring:panel.querySelector(".journey-ring"),number:panel.querySelector(".journey-monogram")}));
-    nav.current=[...el.querySelectorAll<HTMLButtonElement>(".journey-nav button")];
+    el.dataset.playing="false";
+    panels.current.forEach(panel=>{panel.dataset.resident="false";});
     if(motion) el.classList.add("journey-enabled");
     const stage=el.querySelector<HTMLElement>(".journey-sticky")!;
     const measure=()=>{
       geometry.current={start:el.getBoundingClientRect().top+window.scrollY-(parseFloat(getComputedStyle(stage).top)||0),travel:Math.max(1,el.offsetHeight-stage.offsetHeight)};
-      last.current=-1;active.current=-1;
+      last.current=-1;active.current=-1;refreshMotion();
     };
     measure();
     const resize=new ResizeObserver(measure);
     resize.observe(el);resize.observe(stage);resize.observe(document.body);
-    const visibility=new IntersectionObserver(entries=>{el.dataset.playing=String(entries[0].isIntersecting);},{rootMargin:"150px"});
-    visibility.observe(el);
+    const visibility=new IntersectionObserver(entries=>{inViewport.current=entries[0].isIntersecting;el.dataset.playing=String(inViewport.current);last.current=-1;refreshMotion();},{rootMargin:"150px"});
+    visibility.observe(stage);
     return ()=>{
       resize.disconnect();visibility.disconnect();
       el.classList.remove("journey-enabled");
       el.style.removeProperty("--journey-progress");
       if(rail.current) rail.current.style.transform="";
-      panels.current.forEach(panel=>{panel.inert=false;panel.style.removeProperty("--scene-distance");panel.style.removeProperty("--scene-focus");});
+      panels.current.forEach(panel=>{panel.inert=false;delete panel.dataset.resident;panel.style.removeProperty("--scene-distance");panel.style.removeProperty("--scene-focus");});
       sceneRefs.current.forEach(s=>[s.object,s.copy,s.ring,s.number].forEach(node=>{if(node){node.style.transform="";node.style.opacity="";}}));
     };
   },[motion]);
@@ -149,31 +152,31 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
     rail.current.style.transform=`translate3d(${-position*100}%,0,0)`;
     if(indicator.current)indicator.current.style.transform=`translateX(${progress*Math.max(0,labels.length-1)*100}%)`;
     sceneRefs.current.forEach(({panel,object,copy,ring,number},i)=>{
+      const resident=isSceneResident(i,position,inViewport.current);
+      const nextResident=String(resident);
+      if(panel.dataset.resident!==nextResident) {
+        panel.dataset.resident=nextResident;
+        if(!resident)[object,copy,ring,number].forEach(node=>{if(node){node.style.transform="";node.style.opacity="";}});
+      }
+      panel.inert=!resident||Math.abs(i-position)>.65;
+      if(!resident){panel.dataset.playing="false";return;}
       const delta=Math.max(-1,Math.min(1,i-position));
       const focus=1-Math.abs(delta);
       if(object)object.style.transform=`perspective(1000px) translate3d(${delta*(w<768?60:100)}px,0,0) rotateY(${-delta*24}deg) rotateZ(${-delta*9}deg) scale(${.72+focus*.28})`;
       if(copy){copy.style.transform=`translate3d(${-delta*(w<768?32:65)}px,0,0)`;copy.style.opacity=String(.18+focus*.82);}
       if(ring)ring.style.transform=`scale(${.7+focus*.3}) rotate(${delta*60}deg)`;
       if(number)number.style.transform=`translate3d(${-delta*140}px,0,0)`;
-      const inert=Math.abs(i-position)>.65;
-      if(panel.inert!==inert)panel.inert=inert;
       const playing=String(focus>.02);
       if(panel.dataset.playing!==playing)panel.dataset.playing=playing;
     });
     const next=Math.round(position);
-    if(active.current!==next){active.current=next;nav.current.forEach((button,i)=>button.setAttribute("aria-pressed",String(i===next)));}
+    if(active.current!==next){active.current=next;if(sceneLabel.current)sceneLabel.current.textContent=`${String(next+1).padStart(2,"0")} / ${String(labels.length).padStart(2,"0")} · ${labels[next]}`;}
   },[motion]);
-  function go(index:number) {
-    const el=root.current;
-    if(!el) return;
-    if(!motion) {panels.current[index]?.scrollIntoView({block:"center"});return;}
-    window.scrollTo({top:geometry.current.start+geometry.current.travel*index/Math.max(1,labels.length-1),behavior:"smooth"});
-  }
   return <section ref={root} className="scroll-journey" aria-label="Keşif koleksiyonu" style={{"--journey-height":`${100+80*Math.max(0,labels.length-1)}svh` } as CSSProperties}>
     <div className="journey-sticky">
       <div className="journey-topline"><span>OZBİRARADA KEŞİF KOLEKSİYONU</span><span className="journey-scroll-cue">Kaydır ve keşfet <span aria-hidden="true">↓</span></span></div>
       <div className="journey-window"><div ref={rail} className="journey-rail">{children}</div></div>
-      <div className="journey-bottom"><div className="journey-nav" role="group" aria-label="Vitrin sahnesi">{labels.map((label,i)=><button key={label} onClick={()=>go(i)} aria-pressed={i===0}><span>0{i+1}</span>{label}</button>)}</div><div className="journey-progress" aria-hidden="true"><span ref={indicator} style={{width:`${100/Math.max(1,labels.length)}%`}}/></div></div>
+      <div className="journey-bottom"><div className="journey-wayfinding"><span ref={sceneLabel}>01 / {String(labels.length).padStart(2,"0")} · {labels[0]}</span><a href="#collection-picker">Kategori seçimine dön ↑</a><a href="#gateway-title">Keşfi geç ↓</a></div><div className="journey-progress" aria-hidden="true"><span ref={indicator} style={{width:`${100/Math.max(1,labels.length)}%`}}/></div></div>
     </div>
   </section>;
 }

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { ScrollExperience, ScrollJourney } from "@/components/ScrollExperience";
-import { MarketplaceArt, MarketplaceGateway, OpeningCategories } from "@/components/MarketplaceArt";
+import { MarketplaceArt, MarketplaceGateway } from "@/components/MarketplaceArt";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
 import { Tilt } from "@/components/Motion";
@@ -90,7 +90,6 @@ export default function Home() {
   const recent = useMemo(() => ready ? state.recent.map(id => pool.find(l => l.id === id)).filter(l => l !== undefined).slice(0,4) : [], [ready,state.recent,pool]);
   return <div className="editorial-home"><ScrollExperience />
     <section className="discovery-hero">
-      <OpeningCategories/>
       <div className="discovery-aurora" aria-hidden="true" />
       <div className="discovery-orbit" aria-hidden="true" />
       <div className="hero-caustics" aria-hidden="true"><i /><i /><i /><span /></div>
@@ -104,8 +103,8 @@ export default function Home() {
           <div className="discovery-proof"><span><b>01</b> Cümleyle ara</span><span><b>02</b> Fiyatı karşılaştır</span><span><b>03</b> İnceleyerek seç</span></div>
         </div>
         <div className="discovery-showcase">
-          <div className="world-switch" role="group" aria-label="Vitrin kategorisi">
-            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => setWorld(i)}>{w.name}</button>)}
+          <div id="collection-picker" className="world-switch" role="group" aria-label="Vitrin kategorisi">
+            {WORLDS.map((w,i) => <button key={w.slug} type="button" style={{animationDelay:`${i*55}ms`}} aria-pressed={world===i} onClick={() => setWorld(i)}>{w.name}</button>)}
           </div>
           <Tilt max={3} className="world-tilt">
             <div className={`world-stage world-${chosen.tone}`}>
