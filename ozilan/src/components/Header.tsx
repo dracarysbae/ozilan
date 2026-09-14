@@ -54,9 +54,9 @@ export function Header() {
 
           <nav className="ml-6 hidden items-center lg:flex" onMouseLeave={() => setMenu(null)}>
             {CATEGORIES.map((c) => (
-              <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug)}>
+              <div key={c.slug} className="relative" onMouseEnter={() => setMenu(c.slug === "vasita" ? null : c.slug)}>
                 <Link
-                  href={`/arama/?k=${c.slug}`}
+                  href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`}
                   className={`flex h-16 items-center px-3.5 text-[0.8125rem] transition-colors duration-300 ${
                     menu === c.slug ? (onDark ? "text-white" : "text-ink") : tone
                   }`}
@@ -106,7 +106,7 @@ export function Header() {
                   </div>
                   <div className="flex items-center justify-between border-t border-line bg-paper px-5 py-2.5">
                     <span className="text-2xs text-mute">{c.tagline}</span>
-                    <Link href={`/arama/?k=${c.slug}`} className="text-2xs text-signal transition hover:underline">
+                    <Link href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`} className="text-2xs text-signal transition hover:underline">
                       Tüm {c.label.toLocaleLowerCase("tr")} ilanları →
                     </Link>
                   </div>
@@ -183,7 +183,7 @@ export function Header() {
           <div className="py-2"><Omnibox /></div>
           <div className="rows">
             {CATEGORIES.map((c) => (
-              <Link key={c.slug} href={`/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
+              <Link key={c.slug} href={c.slug === "vasita" ? "/vasita/" : `/arama/?k=${c.slug}`} className="block py-3 text-[0.9375rem]">{c.label}</Link>
             ))}
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="block py-3 text-[0.9375rem] text-mute">{n.label}</Link>

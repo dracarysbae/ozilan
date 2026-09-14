@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
+import { ScrollExperience } from "@/components/ScrollExperience";
 import { Omnibox } from "@/components/Omnibox";
 import { ListingCard } from "@/components/ListingCard";
 import { Reveal, Tilt } from "@/components/Motion";
@@ -70,12 +72,13 @@ function Arrow() { return <svg viewBox="0 0 24 24" width="20" height="20" fill="
 export default function Home() {
   const { pool, ready, state } = useStore();
   const [world, setWorld] = useState(0);
+  const router = useRouter();
   const chosen = WORLDS[world];
   const active = useMemo(() => pool.filter(l => l.status === "active"), [pool]);
   const counts = useMemo(() => CATEGORIES.map(c => active.filter(l => l.cat === c.slug).length), [active]);
   const deals = useMemo(() => ready ? active.filter(l => l.price > 0).map(l => ({ l, m: readMarket(l, pool) })).filter(x => x.m && x.m.confidence !== "low" && x.m.delta < -.15 && x.m.delta > -.45).sort((a,b) => a.m!.delta-b.m!.delta).slice(0,4) : [], [active,pool,ready]);
   const recent = useMemo(() => ready ? state.recent.map(id => pool.find(l => l.id === id)).filter(l => l !== undefined).slice(0,4) : [], [ready,state.recent,pool]);
-  return <div className="editorial-home">
+  return <div className="editorial-home"><ScrollExperience />
     <section className="discovery-hero">
       <div className="discovery-aurora" aria-hidden="true" />
       <div className="discovery-orbit" aria-hidden="true" />
@@ -90,14 +93,14 @@ export default function Home() {
         </div>
         <div className="discovery-showcase">
           <div className="world-switch" role="group" aria-label="Vitrin kategorisi">
-            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => setWorld(i)}>{w.name}</button>)}
+            {WORLDS.map((w,i) => <button key={w.slug} type="button" aria-pressed={world===i} onClick={() => i === 1 ? router.push("/vasita/") : setWorld(i)}>{w.name}</button>)}
           </div>
           <Tilt max={3} className="world-tilt">
             <div className={`world-stage world-${chosen.tone}`}>
               <div className="world-halo" aria-hidden="true" />
               <div className="world-heading"><span>KEŞİF KOLEKSİYONU</span><span>{chosen.number} / 03</span></div>
               <div key={chosen.slug} className="world-content"><h2>{chosen.title}</h2><Scene type={world} /></div>
-              <div className="world-caption"><div><small>{chosen.detail}</small><p>{chosen.caption}</p></div><Link href={`/arama/?k=${chosen.slug}`} aria-label={`${chosen.name} ilanlarını keşfet`}><Arrow /></Link></div>
+              <div className="world-caption"><div><small>{chosen.detail}</small><p>{chosen.caption}</p></div><Link href={chosen.slug === "vasita" ? "/vasita/" : `/arama/?k=${chosen.slug}`} aria-label={`${chosen.name} ilanlarını keşfet`}><Arrow /></Link></div>
             </div>
           </Tilt>
           <div className="world-note"><span className="world-note-line" /> OzIlan seçkisi <span>•</span> Kategori illüstrasyonu</div>
@@ -108,7 +111,7 @@ export default function Home() {
 
     <section id="kesfet" className="discovery-section">
       <div className="editorial-heading"><div><p className="editorial-kicker">SENİN DÜNYAN</p><h2>Ne arıyorsan,<br className="sm:hidden" /> buradan başla.</h2></div><Link href="/arama/">Tüm ilanlar <Arrow /></Link></div>
-      <div className="world-categories">{WORLDS.map((w,i) => <Reveal key={w.slug} once exit={false} kind="up" delay={i*70}><Link href={`/arama/?k=${w.slug}`} className={`category-editorial category-${w.tone}`}><div className="category-top"><span>{w.number}</span><span>{num(counts[i])} ilan</span></div><div className="category-art"><Scene type={i} /></div><div className="category-bottom"><div><h3>{w.name}</h3><p>{w.detail}</p></div><span className="category-arrow"><Arrow /></span></div></Link><div className="category-sublinks">{CATEGORIES[i].subs.slice(0,3).map(s => <Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></Reveal>)}</div>
+      <div className="world-categories">{WORLDS.map((w,i) => <Reveal key={w.slug} once exit={false} kind="up" delay={i*70}><Link href={w.slug === "vasita" ? "/vasita/" : `/arama/?k=${w.slug}`} className={`category-editorial category-${w.tone}`}><div className="category-top"><span>{w.number}</span><span>{num(counts[i])} ilan</span></div><div className="category-art"><Scene type={i} /></div><div className="category-bottom"><div><h3>{w.name}</h3><p>{w.detail}</p></div><span className="category-arrow"><Arrow /></span></div></Link><div className="category-sublinks">{CATEGORIES[i].subs.slice(0,3).map(s => <Link key={s.slug} href={`/arama/?k=${w.slug}&a=${s.slug}`}>{s.label}</Link>)}</div></Reveal>)}</div>
     </section>
 
     <section className="decision-section"><div className="decision-inner"><div className="decision-copy"><p className="editorial-kicker">FİYATTAN FAZLASINI GÖR</p><h2>İyi bir karar,<br /><span>iyi bir karşılaştırmayla başlar.</span></h2><p>Bir rakam tek başına her şeyi anlatmaz. Benzer ilanlarla karşılaştır, satıcı bilgilerini incele ve kararını daha bilinçli ver.</p><Link href="/arama/?s=value" className="btn-primary">Piyasayı keşfet <Arrow /></Link></div><div className="decision-panel"><div className="decision-panel-top"><span>Fiyatın piyasadaki yeri</span><span>Örnek analiz</span></div><div className="decision-price"><span>İlan fiyatı</span><strong>3.150.000 <small>TL</small></strong><p><span>↘ %14</span> benzer ilanların ortancasından düşük</p></div><div className="market-visual" aria-label="Örnek fiyat dağılımı"><div className="market-bars" aria-hidden="true">{[12,18,27,39,54,71,85,97,100,94,84,69,52,37,26,16,10,6].map((h,i)=><span key={i} style={{height:`${h}%`}} />)}</div><div className="market-marker"><span>Bu ilan</span></div><div className="market-baseline" /></div><div className="market-axis"><span>Düşük fiyat</span><span>Ortanca <b>3.680.000 TL</b></span><span>Yüksek fiyat</span></div><div className="decision-footnote"><span>34 benzer ilanla karşılaştırıldı</span><p>Örnek hesaplama. Piyasa konumu, ilan kalitesinin veya güvenliğinin garantisi değildir.</p></div></div></div></section>
