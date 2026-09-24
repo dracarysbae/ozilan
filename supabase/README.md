@@ -1,6 +1,6 @@
 # Ortak veri altyapısını açma
 
-Bu klasör yeni, ayrı bir OzBirArada Supabase projesi içindir. Başka uygulamanın veritabanına uygulanmaz. Henüz canlı projeye uygulanmamıştır.
+Bu klasör yeni, ayrı bir OzBirArada Supabase projesi içindir. Başka uygulamanın veritabanına uygulanmaz. 24 Eylül 2026 itibarıyla beş migration'ın tamamı canlı `ozbirarada` projesine uygulanmıştır; güncel durum [CLAUDE_HANDOFF.md](../CLAUDE_HANDOFF.md). Aşağıdaki adımlar ilk kurulumun tarihsel rehberidir.
 
 ## Ücretsiz kurulum
 

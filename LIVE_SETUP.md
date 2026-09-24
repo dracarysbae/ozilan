@@ -1,4 +1,10 @@
-# Canlı kurulum durumu — 14 Eylül 2026
+# Canlı kurulum durumu
+
+## 24 Eylül 2026 doğrulaması
+
+Aşağıdaki 14 Eylül kaydı tarihseldir. 24 Eylül'de panellerden okunan durum ve yapılan işlemler: [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md). Özetle: Supabase projesi duraklatılmıştı ve ücretsiz olarak yeniden açıldı; Google sağlayıcısı açık ve 14 Eylül'de bir gerçek Google girişi yapılmış; migration 4–5 uygulandı; listing-media güncellendi; saatlik temizlik Cron'u kuruldu; Cloudflare Pages'e 7d0e6aee dağıtımı yapıldı. Aşağıdaki "Google OAuth istemcisi henüz oluşturulmadı", "Cron henüz kurulmadı" ve "push tamamlanmadı" cümleleri artık güncel değildir.
+
+## 14 Eylül 2026 kaydı (tarihsel)
 
 - Kullanıcı Cloudinary ve Supabase ücretsiz hizmet şartlarını kabul etti; `dracarysbae` GitHub hesabındaki temel profil/e-posta okuma iznini ayrıca onayladı.
 - Her iki GitHub OAuth girişi tamamlandı. Kod deposuna erişim izni verilmedi.

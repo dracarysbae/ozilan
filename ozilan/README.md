@@ -37,7 +37,7 @@ Public backend değişkenleri eksikse örnek katalog okunabilir, üyelik formu k
 
 ## Testin kapsamı
 
-`npm test`: 24 test. Arama bağlantıları/filtreleri, güvenli giriş dönüşü, kayıt eşleme, kart hareketleri, mobil varlık kurtarma, gerçek PostgreSQL politikaları ve Cloudinary medya handler'ı.
+`npm test`: 34 test (24 Eylül 2026). Arama bağlantıları/filtreleri, güvenli giriş dönüşü, kayıt eşleme, kart hareketleri, mobil varlık kurtarma, gerçek PostgreSQL politikaları, hesap silme ve silinmiş hesabın yazamaması, Cloudinary medya handler'ı, Vault anahtarlı zamanlanmış temizlik, cihazda ilan taslağı ve alan bazlı ilan alanları.
 
 Veritabanı testi PGlite içinde üretim SQL dosyasını çalıştırır. Başka kullanıcının ilanını değiştirme, mesajını okuma/gönderici taklidi, yabancı fotoğraf yükleme, admin tarafından kapatılan ilanı yeniden açma girişimleri engellenir. Sahiplik ve özel favoriler, görüşme katılımcıları ve anonim erişim denetlenir.
 
@@ -62,7 +62,7 @@ Cloudinary değişikliğinden önceki 14 Eylül yerel tarayıcı kontrolü (Supa
 
 - Her yenilemede en yeni 1000 erişilebilir ilan ve en fazla 1000 profil alınır; 200 görüşme ve son 1000 mesaj sınırı vardır. Çok daha büyük katalog için sunucu tarafı sayfalama, tek ilan/görüşme yükleme ve geçmiş mesaj sayfalaması eklenmelidir.
 - Görünür oturumda 30 saniyelik kontrol ve elle yenileme var; push bildirim yok.
-- Taslaklar otomatik kaydedilmez. Bağlantısız fotoğrafları 24 saat sonra temizleyen sunucu işlemi hazır; [canlı Cron kurulumu](../supabase/MEDIA.md) henüz yapılmadı. Ücretsiz depolama ve trafik panelden izlenmelidir.
+- Yeni ilan taslakları yalnızca bu tarayıcıda, üyenin kimliğine bağlı saklanır; fotoğraf bağlantıları 20 saat sonra taslaktan düşer. Bağlantısız fotoğrafları saatlik temizleyen Cron işi canlıda kurulu (24 Eylül). Ücretsiz depolama ve trafik panelden izlenmelidir.
 - Satıcı kimliği ve değerlendirme puanı doğrulaması uygulanmadı. Skorlar kural temelli ilan incelemesidir, güvenlik garantisi değildir.
-- Arşivleme geri alınabilir; hesap silme/anonymizasyon süreci ve işletmeci iletişim/aydınlatma detayları ticari açılıştan önce tamamlanmalıdır.
+- Arşivleme geri alınabilir. Hesap silme Hesap ekranında (`delete_my_account`, onay metni `HESABIMI SİL`). İşletmeci unvanı, adresi ve veri talebi iletişimi henüz yok; ticari açılıştan önce eklenmelidir.
 - Google ile girişin canlı testi gerçek Supabase projesi ve Google OAuth istemcisi bekliyor. İlk açılış Google ile giriş üzerinden yapılabilir; bu akış SMTP istemez. E-posta kaydı/kurtarma ayrıca açılırsa SMTP ve teslim testi gerekir.

@@ -1,5 +1,7 @@
 # Cloudinary fotoğraf bağlantısı
 
+> 24 Eylül 2026: Canlı projede saatlik temizlik kuruludur. Kurulum `ops/media-cleanup-cron.sql` ile yapıldı; anahtar yalnızca Vault'ta (`media_cleanup_secret`) durur ve Edge Function onu `media_cleanup_authorized` üzerinden doğrular, bu yüzden aşağıdaki `MEDIA_CLEANUP_SECRET` Edge sırrı artık isteğe bağlıdır. Aşağıdaki kurulum sırası ilk kurulumun tarihsel rehberidir.
+
 Bu değişiklik hazır kodu ve yerel testleri içerir. Cloudinary/Supabase hesaplarının açılması, gizli ortam değişkenleri, Edge Function dağıtımı ve zamanlanmış temizlik ayrıca tamamlanmadan canlı bağlantı çalışmaz. Ücretsiz Image & Video API planı kullanılır; Assets/DAM denemesi, kart veya ücretli eklenti açılmaz.
 
 ## Kurulum sırası
