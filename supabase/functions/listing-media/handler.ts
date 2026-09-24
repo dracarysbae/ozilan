@@ -71,7 +71,14 @@ export function createMediaHandler(config:Config,transport:Transport=fetch) {
       const token=req.headers.get('authorization')??'';
       const cleanup=new URL(req.url).searchParams.get('cleanup')==='1';
       if(cleanup){
-        if(!config.cleanupSecret||token!==`Bearer ${config.cleanupSecret}`)throw new MediaError('Yetkisiz işlem.',401);
+        // The scheduled job reads its token from Supabase Vault. Without a
+        // dedicated Edge secret, the same Vault value is checked in PostgreSQL,
+        // so the token never has to be copied between dashboards by hand.
+        const presented=/^Bearer (\S+)$/.exec(token)?.[1];
+        let authorized=false;
+        if(presented&&config.cleanupSecret)authorized=presented===config.cleanupSecret;
+        else if(presented)authorized=await rpc('media_cleanup_authorized',{p_token:presented}).then(v=>v===true,()=>false);
+        if(!authorized)throw new MediaError('Yetkisiz işlem.',401);
         const started=Date.now();
         const rows=await rpc('stale_media_assets',{p_owner:null});let deleted=0,failed=0,examined=0;
         // Each item is claimed in PostgreSQL before deletion. A failed provider

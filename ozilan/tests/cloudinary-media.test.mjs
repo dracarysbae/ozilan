@@ -109,3 +109,32 @@ test('real SQL controls upload ownership, atomic limits, publishing, deletion an
     assert.ok(origins.every(url=>url.includes('/image/')));
   }finally{await db.close();}
 });
+
+test('scheduled cleanup accepts only the Vault token when no Edge secret is set',async()=>{
+  const db=await testDatabase();
+  try{
+    const token='v'.repeat(48);
+    await db.exec(`create schema vault;create table vault.decrypted_secrets(name text,decrypted_secret text);insert into vault.decrypted_secrets values('media_cleanup_secret','${token}')`);
+    const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
+    const calls=[];
+    const transport=async(url,options)=>{
+      const name=url.split('/').at(-1),args=JSON.parse(options.body);calls.push(name);
+      await db.exec('set role service_role');
+      try{
+        if(name==='media_cleanup_authorized')return json((await db.query('select public.media_cleanup_authorized($1) ok',[args.p_token])).rows[0].ok);
+        if(name==='stale_media_assets')return json([]);
+        return json({message:'unexpected'},400);
+      }catch(error){return json({message:error.message},400);}finally{await db.exec('reset role');}
+    };
+    const handler=createMediaHandler({...config,cleanupSecret:undefined},transport);
+    const run=auth=>handler(new Request('https://backend.example/functions/v1/listing-media?cleanup=1',{method:'POST',headers:auth?{authorization:auth}:{}}));
+    assert.equal((await run()).status,401);
+    assert.equal((await run('Bearer short')).status,401);
+    assert.equal((await run('Bearer '+'x'.repeat(48))).status,401);
+    assert.ok(!calls.includes('stale_media_assets'),'no cleanup work before authorization');
+    const ok=await run('Bearer '+token);
+    assert.equal(ok.status,200);assert.deepEqual(await ok.json(),{examined:0,deleted:0,failed:0,remaining:0});
+    await db.exec('set role authenticated');
+    await assert.rejects(db.query('select public.media_cleanup_authorized($1)',[token]),/permission denied/,'members cannot probe the token');
+  }finally{await db.close();}
+});

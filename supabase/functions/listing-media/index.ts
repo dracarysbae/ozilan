@@ -7,5 +7,6 @@ Deno.serve(createMediaHandler({
   apiKey:Deno.env.get('CLOUDINARY_API_KEY')??'',
   apiSecret:Deno.env.get('CLOUDINARY_API_SECRET')??'',
   origins:(Deno.env.get('MEDIA_ALLOWED_ORIGINS')??'').split(',').map(s=>s.trim()).filter(Boolean),
-  cleanupSecret:Deno.env.get('MEDIA_CLEANUP_SECRET'),
+  // Optional: without it the Vault token checked by media_cleanup_authorized is used.
+  cleanupSecret:Deno.env.get('MEDIA_CLEANUP_SECRET')||undefined,
 }));
