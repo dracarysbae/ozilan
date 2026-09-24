@@ -83,9 +83,10 @@ function Detail() {
         <span className="num ml-auto normal-case tracking-normal">İlan no {l.id}</span>
       </nav>
 
-      <div className="mt-4 grid gap-8 lg:grid-cols-[1.35fr_.65fr]">
+      <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
         {/* ---------------------------------------------- left */}
-        <div>
+        {/* min-w-0: the thumbnail strip scrolls instead of widening the page on phones */}
+        <div className="min-w-0">
           <div className="relative border border-line">
             <ListingImage listing={l} index={shot} className="aspect-[16/10] w-full" eager/>
             <span className="absolute left-0 top-0 bg-ink/85 px-2 py-1 font-mono text-2xs text-paper">{l.deal}</span>
@@ -145,7 +146,7 @@ function Detail() {
         </div>
 
         {/* ---------------------------------------------- right rail */}
-        <aside className="space-y-4 lg:sticky lg:top-[168px] lg:self-start">
+        <aside className="min-w-0 space-y-4 lg:sticky lg:top-[168px] lg:self-start">
           <div className="panel p-4 shadow-plaque">
             <p className="eyebrow">Fiyat</p>
             <p className="num mt-1 text-[clamp(1.8rem,4vw,2.6rem)] leading-none">{tl(l.price)}</p>
@@ -218,7 +219,7 @@ function Detail() {
             <p className="eyebrow">Karşılaştır</p>
             <h2 className="mt-1 font-serif text-3xl leading-none">Benzer ilanlar</h2>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {similar.map((s) => <ListingCard key={s.id} l={s} pool={pool} />)}
           </div>
         </section>

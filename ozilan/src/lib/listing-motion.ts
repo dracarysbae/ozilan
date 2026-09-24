@@ -12,7 +12,26 @@ export type ListingMotion = {
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
-export function updateListingMotion(view: ListingMotion, top: number, height: number, viewport: number, side: -1 | 1) {
+/**
+ * Entrance progress for a card. It settles once the card's top edge reaches
+ * roughly the middle of the viewport, so a card is never tilted or veiled
+ * while it sits in the reading zone (earlier it only settled near the top).
+ */
+export function revealProgress(top: number, height: number, viewport: number) {
+  return Math.round(clamp((viewport - top) / (Math.min(viewport * .36, height * .7) + 32)) * 10000) / 10000;
+}
+
+/** Narrow screens get a calmer entrance so cards never swing past the gutter. */
+export function motionAmplitude(width: number) {
+  return width < 768 ? .55 : 1;
+}
+
+export function cardTransform(side: -1 | 1, progress: number, exit: number, amp = 1) {
+  const rest = 1 - progress;
+  return `perspective(1100px) translateX(${+(side * rest * 54 * amp).toFixed(2)}px) rotateY(${+(side * rest * 24 * amp).toFixed(2)}deg) rotateZ(${+(side * (rest * 3 * amp + exit * 1.5)).toFixed(3)}deg) scale(${+(.87 + .13 * progress - exit * .035).toFixed(4)})`;
+}
+
+export function updateListingMotion(view: ListingMotion, top: number, height: number, viewport: number, side: -1 | 1, amp = 1) {
   const resident = top < viewport + 150 && top + height > -100;
   if (resident !== view.resident) {
     view.card.dataset.listingResident = String(resident);
@@ -20,9 +39,9 @@ export function updateListingMotion(view: ListingMotion, top: number, height: nu
   }
   if (!resident) return;
 
-  const progress = Math.round(clamp((viewport - top) / (Math.min(viewport * .64, height * .9) + 80)) * 10000) / 10000;
+  const progress = revealProgress(top, height, viewport);
   const exit = Math.round(clamp(-top / height) * 10000) / 10000;
-  const transform = `perspective(1100px) translateX(${side * (1 - progress) * 54}px) rotateY(${side * (1 - progress) * 24}deg) rotateZ(${side * ((1 - progress) * 3 + exit * 1.5)}deg) scale(${.87 + .13 * progress - exit * .035})`;
+  const transform = cardTransform(side, progress, exit, amp);
   if (transform !== view.transform) {
     view.card.style.transform = transform;
     view.transform = transform;

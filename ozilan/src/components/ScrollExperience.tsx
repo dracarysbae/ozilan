@@ -2,7 +2,8 @@
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
 import { refreshMotion, useFrame, useMotionOK } from "./Motion";
 import { isSceneResident } from "@/lib/scene-residency";
-import { clearListingMotion, updateListingMotion, type ListingMotion } from "@/lib/listing-motion";
+import { cardTransform, clearListingMotion, motionAmplitude, revealProgress, updateListingMotion, type ListingMotion } from "@/lib/listing-motion";
+import { journeyPosition } from "@/lib/scene-residency";
 
 /** One observer for staggered entrances. The content stays visible without JavaScript. */
 export function ScrollExperience() {
@@ -79,7 +80,7 @@ export function ScrollExperience() {
       if(hero.current) { hero.current.style.removeProperty("--scroll-drift"); hero.current.style.removeProperty("--scroll-rotation"); }
     };
   },[motion]);
-  useFrame(({sy,y,h})=>{
+  useFrame(({sy,y,h,w})=>{
     const el=hero.current;
     if(!motion) return;
     if(Math.abs(previousScroll.current-sy)<.03) return;
@@ -93,21 +94,22 @@ export function ScrollExperience() {
     }
     ribbon.current?.style.setProperty("--ribbon-x",`${-Math.min(sy*.2,600)}px`);
     // Geometry is refreshed by ResizeObserver, never read after animation writes.
+    const amp=motionAmplitude(w);
     layout.current.forEach((item,i)=>{
       const {card,height}=item;
       const top=item.top-sy;
-      if(item.listing){updateListingMotion(item.listing,top,height,h,i%2?1:-1);return;}
+      if(item.listing){updateListingMotion(item.listing,top,height,h,i%2?1:-1,amp);return;}
       const near=top<h+150&&top+height>-100;
       if(!near) {if(item.last!=="outside"){card.style.willChange="auto";item.last="outside";}return;}
-      const p=Math.max(0,Math.min(1,(h-top)/(Math.min(h*.64,height*.9)+80)));
+      const p=revealProgress(top,height,h);
       const exit=Math.max(0,Math.min(1,-top/height));
-      const signature=`${p.toFixed(4)}:${exit.toFixed(4)}`;
+      const signature=`${p.toFixed(4)}:${exit.toFixed(4)}:${amp}`;
       if(signature===item.last)return;
       item.last=signature;
       card.style.willChange="transform";
       const side=i%2 ? 1 : -1;
       card.style.setProperty("--card-open",p.toFixed(4));
-      card.style.transform=`perspective(1100px) translateX(${side*(1-p)*54}px) rotateY(${side*(1-p)*24}deg) rotateZ(${side*((1-p)*3+exit*1.5)}deg) scale(${.87+.13*p-exit*.035})`;
+      card.style.transform=cardTransform(side,p,exit,amp);
     });
   },[motion]);
   return <span ref={marker} hidden aria-hidden="true" />;
@@ -159,7 +161,7 @@ export function ScrollJourney({ children, labels }: { children: ReactNode; label
     const progress=Math.max(0,Math.min(1,(sy-geometry.current.start)/geometry.current.travel));
     if(Math.abs(progress-last.current)<.00004)return;
     last.current=progress;
-    const position=progress*(labels.length-1);
+    const position=journeyPosition(progress,labels.length);
     rail.current.style.transform=`translate3d(${-position*100}%,0,0)`;
     if(indicator.current)indicator.current.style.transform=`translateX(${progress*Math.max(0,labels.length-1)*100}%)`;
     sceneRefs.current.forEach(({panel,object,copy,ring,number},i)=>{
