@@ -1,0 +1,41 @@
+name: Keep free Supabase project awake
+
+# Supabase Free pauses a project after about a week without activity; the live
+# marketplace then stops answering until someone resumes it by hand. A small
+# read of the public catalogue twice a week keeps it active. Free for public
+# repositories; no paid plan or secret is involved.
+#
+# Needs repository variables (Settings → Secrets and variables → Actions →
+# Variables): SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY — the same public
+# values the production build uses. Without them the job skips harmlessly.
+
+on:
+  schedule:
+    - cron: "23 6 * * 1,4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - name: Read one public listing
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::warning::SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repository variables are not set; skipping."
+            exit 0
+          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/listings?select=id&limit=1")
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Supabase answered $code. The project may already be paused: resume it in the dashboard (free)."
+            exit 1
+          fi
