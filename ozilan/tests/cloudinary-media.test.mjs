@@ -39,6 +39,8 @@ test('real SQL controls upload ownership, atomic limits, publishing, deletion an
         await db.exec('set role service_role');
         const result=await db.query(`select * from public.${name}(${rpcArgs[name].map((_,i)=>'$'+(i+1))})`,rpcArgs[name].map(k=>args[k]));
         const rows=result.rows;
+        // PostgREST answers void functions with 204 and no body.
+        if(name==='finish_media_delete')return new Response(null,{status:204});
         return json(name==='reserve_media_upload'||name==='stale_media_assets'?rows:rows[0]?.[name]??null);
       }catch(error){return json({message:error.message},400);}finally{await db.exec('reset role');}
     }

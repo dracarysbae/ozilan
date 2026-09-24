@@ -36,7 +36,8 @@ export function validWebp(bytes:Uint8Array) {
 export function createMediaHandler(config:Config,transport:Transport=fetch) {
   async function rpc(name:string,args:Record<string,unknown>) {
     const result=await transport(`${config.supabaseUrl}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:config.serviceKey,Authorization:`Bearer ${config.serviceKey}`,'Content-Type':'application/json'},body:JSON.stringify(args),signal:AbortSignal.timeout(15000)});
-    const data=await result.json();
+    // Functions returning void answer 204 with an empty body; that is success.
+    const text=await result.text();const data=text?JSON.parse(text):null;
     if(!result.ok){const message=String(data?.message??'');throw new MediaError(/fotoğraf|Fotoğraf|kota|sınır/.test(message)?message:'Fotoğraf kaydı tamamlanamadı.',result.status===429?429:400);}
     return data;
   }
