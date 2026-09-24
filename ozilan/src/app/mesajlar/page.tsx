@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {useSearchParams} from "next/navigation";
 import { ListingImage } from "@/components/ListingImage";
 import { useStore } from "@/lib/store";
@@ -8,7 +8,7 @@ import { tl } from "@/lib/format";
 import { Ago } from "@/components/Ago";
 
 function Inbox() {
-  const { state, pool, sellers, me, send, ready, refresh, busy } = useStore();
+  const { state, pool, sellers, me, send, ready, refresh, busy, unseen, markSeen } = useStore();
   const params=useSearchParams();
   const [sending,setSending]=useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -24,6 +24,9 @@ function Inbox() {
     [state.messages, current],
   );
   const listing = pool.find((l) => l.id === current?.listingId);
+  // Opening a conversation marks it seen on this device only.
+  const newest = msgs.at(-1)?.at ?? 0;
+  useEffect(() => { if (current) markSeen(current.id); }, [current?.id, newest, markSeen]);
   const correspondent = current ? sellers[current.sellerId === me?.id ? current.buyerId : current.sellerId] : undefined;
 
   if (!ready) return <div className="px-4 py-24 text-mute">Yükleniyor…</div>;
@@ -62,7 +65,10 @@ function Inbox() {
                     className={`flex w-full gap-3 border-b border-line p-3 text-left transition ${on ? "bg-ink text-paper" : "hover:bg-paper-2"}`}>
                     {l && <ListingImage listing={l} className="h-12 w-14 shrink-0" />}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[0.82rem] font-medium">{l?.title ?? "Kaldırılmış ilan"}</p>
+                      <p className="flex items-center gap-2 truncate text-[0.82rem] font-medium">
+                        {unseen.has(t.id) && !on && <span className="h-2 w-2 shrink-0 rounded-full bg-signal" aria-label="Yeni mesaj" />}
+                        <span className="truncate">{l?.title ?? "Kaldırılmış ilan"}</span>
+                      </p>
                       <p className={`truncate text-[0.75rem] ${on ? "text-paper/55" : "text-mute"}`}>{last?.body ?? "—"}</p>
                       <p className={`num text-2xs ${on ? "text-paper/40" : "text-mute-2"}`}><Ago ts={t.updatedAt} /></p>
                     </div>

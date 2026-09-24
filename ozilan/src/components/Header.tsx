@@ -15,13 +15,13 @@ const NAV = [
 
 export function Header() {
   const path = usePathname();
-  const { me, state, ready } = useStore();
+  const { me, ready, unseen } = useStore();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState<string | null>(null);
   const pastHero = useScrollThreshold(88);
   useEffect(() => { setOpen(false); setMenu(null); }, [path]);
 
-  const unread = ready ? state.threads.length : 0;
+  const unread = ready ? unseen.size : 0;
   const home = path === "/";
   /* ana sayfada koyu kahraman bandının üstündeyken şeffaf + beyaz metin */
   const onDark = home && !pastHero && !open;
@@ -133,7 +133,7 @@ export function Header() {
               >
                 {n.label}
                 {n.href === "/mesajlar/" && unread > 0 && (
-                  <span className="num ml-1.5 rounded-full bg-signal px-1.5 py-0.5 text-[0.6875rem] text-white">{unread}</span>
+                  <span className="num ml-1.5 rounded-full bg-signal px-1.5 py-0.5 text-[0.6875rem] text-white" title="Bu cihazda henüz açmadığın yeni mesaj olan görüşmeler" aria-label={`${unread} görüşmede yeni mesaj`}>{unread}</span>
                 )}
               </Link>
             ))}

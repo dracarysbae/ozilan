@@ -17,6 +17,7 @@ import {PUBLISH_CATEGORIES} from "@/lib/publish-categories";
 import {PhotoUploader} from "@/components/PhotoUploader";
 import {ListingImage} from "@/components/ListingImage";
 import {newRecordId} from "@/lib/store";
+import {clearDraft,readDraft,writeDraft,type ListingDraft} from "@/lib/listing-draft";
 
 const STEPS = ["Kategori", "Detaylar", "Fiyat", "Önizleme"];
 
@@ -43,6 +44,25 @@ function Compose() {
   const [attrs, setAttrs] = useState<Record<string, AttrValue>>({});
   const [path, setPath] = useState<string[]>([]);
   const [err, setErr] = useState<string[]>([]);
+  // New listings only: a device-local draft for this member survives reloads and accidental navigation.
+  const [offer, setOffer] = useState<ListingDraft | null>(null);
+  const draftReady = useRef(false);
+  const photosAt = useRef(0);
+  useEffect(() => {
+    if (editId || !ready || !me || draftReady.current) return;
+    draftReady.current = true;
+    setOffer(readDraft(me.id));
+  }, [editId, ready, me]);
+  useEffect(() => { if (photoPaths.length && !photosAt.current) photosAt.current = Date.now(); if (!photoPaths.length) photosAt.current = 0; }, [photoPaths]);
+  useEffect(() => {
+    if (editId || !me || !draftReady.current || offer) return;
+    const t = window.setTimeout(() => writeDraft(me.id, { v: 1, savedAt: Date.now(), step, cat, sub, deal, title, desc, city, district, price, attrs, path, photoPaths, photosAt: photosAt.current }), 600);
+    return () => window.clearTimeout(t);
+  }, [editId, me, offer, step, cat, sub, deal, title, desc, city, district, price, attrs, path, photoPaths]);
+  const restore = (d: ListingDraft) => {
+    setCat(d.cat); setSub(d.sub); setDeal(d.deal); setTitle(d.title); setDesc(d.desc); setCity(d.city); setDistrict(d.district);
+    setPrice(d.price); setAttrs(d.attrs as Record<string, AttrValue>); setPath(d.path); setPhotoPaths(d.photoPaths); photosAt.current = d.photosAt; setStep(d.step); setOffer(null);
+  };
   useEffect(()=>{
     if(!editId||!ready||!me||hydrated.current===editId)return;
     const l=pool.find(l=>l.id===editId&&l.sellerId===me.id);if(!l)return;
@@ -110,6 +130,7 @@ function Compose() {
       featured: false,
     },editId||undefined,editId?undefined:newId.current);
     newId.current="";
+    if(!editId&&me)clearDraft(me.id);
     router.push(`/ilan/?id=${id}`);
     } catch(e){setErr([e instanceof Error?e.message:"İlan kaydedilemedi."]);}finally{setSaving(false);}
   };
@@ -153,6 +174,13 @@ function Compose() {
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0">
+          {offer && (
+            <div className="mb-5 flex flex-wrap items-center gap-3 border border-line bg-paper-2 p-3 text-[0.85rem]" role="status">
+              <p className="min-w-0 flex-1">Bu cihazda yarım kalmış bir ilan taslağın var{offer.title ? `: “${offer.title}”` : ""}.{offer.photoPaths.length === 0 ? " Fotoğraflar yeniden eklenmeli." : ""}</p>
+              <button type="button" className="btn-primary !h-9" onClick={() => restore(offer)}>Taslağa devam et</button>
+              <button type="button" className="btn-ghost !h-9" onClick={() => { if (me) clearDraft(me.id); setOffer(null); }}>Taslağı sil</button>
+            </div>
+          )}
           {err.length > 0 && (
             <ul className="mb-5 animate-rise border border-signal bg-signal-soft p-3 text-[0.82rem] text-signal-ink">
               {err.map((e, i) => <li key={i}>• {e}</li>)}

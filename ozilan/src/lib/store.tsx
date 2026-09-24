@@ -17,6 +17,8 @@ type Ctx={ready:boolean;live:boolean;busy:boolean;error:string;clearError:()=>vo
   publish:(draft:Draft,id?:string,newId?:string)=>Promise<string>;removeListing:(id:string)=>Promise<void>;setStatus:(id:string,s:Listing["status"])=>Promise<boolean>;bump:(id:string)=>Promise<void>;view:(id:string)=>void;
   openThread:(listingId:string)=>Promise<string>;send:(id:string,body:string)=>Promise<boolean>;report:(id:string,reason:string,note:string)=>Promise<boolean>;resolveReport:(id:string)=>Promise<void>;
   saveSearch:(label:string,href:string)=>Promise<void>;dropSearch:(id:string)=>Promise<void>;reset:()=>void;deleteAccount:(confirmation:string)=>Result;
+  /** Threads whose newest message is from the other side and not yet opened on this device. */
+  unseen:Set<string>;markSeen:(threadId:string)=>void;
 };
 const Context=createContext<Ctx|null>(null);
 const PREFS="ozilan.preferences.v2";
@@ -77,6 +79,15 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
   },[refresh]);
   useEffect(()=>{if(ready)try{localStorage.setItem(PREFS,JSON.stringify({recent:state.recent,compare:state.compare}));}catch{}},[ready,state.recent,state.compare]);
   const pool=useMemo(()=>backendConfigured?listings:SEED_LISTINGS,[listings]);
+  // "Seen" is a per-device marker, not a read receipt: nothing is sent to the other member.
+  const [seen,setSeen]=useState<Record<string,number>>({});
+  const seenKey=me?`ozilan.seen.${me.id}`:"";
+  useEffect(()=>{if(!seenKey){setSeen({});return;}try{const v=JSON.parse(localStorage.getItem(seenKey)??"{}");setSeen(v&&typeof v==="object"?v:{});}catch{setSeen({});}},[seenKey]);
+  const unseen=useMemo(()=>{const out=new Set<string>();if(!me)return out;
+    for(const t of state.threads){const last=state.messages.filter(m=>m.threadId===t.id).reduce<Message|null>((a,m)=>!a||m.at>a.at?m:a,null);
+      if(last&&last.from!==me.id&&last.at>(seen[t.id]??0))out.add(t.id);}
+    return out;},[me,state.threads,state.messages,seen]);
+  const markSeen=useCallback((threadId:string)=>{setSeen(prev=>{const at=Date.now();if((prev[threadId]??0)>=at-1000)return prev;const next={...prev,[threadId]:at};try{if(seenKey)localStorage.setItem(seenKey,JSON.stringify(next));}catch{}return next;});},[seenKey]);
   const sellers=useMemo(()=>backendConfigured?profiles:Object.fromEntries(SEED_SELLERS.map(s=>[s.id,s])),[profiles]);
   async function mutation(key:string,run:()=>Promise<void>){if(pending.current.has(key))return;pending.current.add(key);setError("");try{requireUser(me);await run();await refresh();}catch(e){setError(friendlyError(e));}finally{pending.current.delete(key);}}
   const signIn:Ctx["signIn"]=async(email,password)=>{try{const {error}=await backend().auth.signInWithPassword({email:email.trim(),password});if(error)throw error;return null;}catch(e){return friendlyError(e);}};
@@ -104,8 +115,8 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
   const deleteAccount:Ctx["deleteAccount"]=async confirmation=>{try{requireUser(me);const {error}=await backend().rpc("delete_my_account",{confirmation});if(error)throw error;
     // The auth row is gone; drop this device's session and every private list.
     await backend().auth.signOut({scope:"local"}).catch(()=>undefined);sessionUser.current=null;generation.current++;setMe(null);setState(blank);setListings([]);retryIds.current.clear();
-    try{localStorage.removeItem(PREFS);}catch{}await refresh();return null;}catch(e){return friendlyError(e);}};
-  const value:Ctx={ready,live:backendConfigured,busy,error,clearError:()=>setError(""),refresh,state,pool,sellers,me,signIn,signUp,signOut,resetPassword,updatePassword,toggleFav,isFav:id=>state.favorites.includes(id),toggleCompare,clearCompare:()=>setState(s=>({...s,compare:[]})),publish,removeListing:async id=>{await setStatus(id,"removed");},setStatus,bump,view,openThread,send,report,resolveReport,saveSearch,dropSearch,reset,deleteAccount};
+    try{localStorage.removeItem(PREFS);localStorage.removeItem(`ozilan.draft.${me!.id}`);localStorage.removeItem(`ozilan.seen.${me!.id}`);}catch{}await refresh();return null;}catch(e){return friendlyError(e);}};
+  const value:Ctx={ready,live:backendConfigured,busy,error,clearError:()=>setError(""),refresh,state,pool,sellers,me,signIn,signUp,signOut,resetPassword,updatePassword,toggleFav,isFav:id=>state.favorites.includes(id),toggleCompare,clearCompare:()=>setState(s=>({...s,compare:[]})),publish,removeListing:async id=>{await setStatus(id,"removed");},setStatus,bump,view,openThread,send,report,resolveReport,saveSearch,dropSearch,reset,deleteAccount,unseen,markSeen};
   return <Context.Provider value={value}>{children}{error&&<div className="account-feedback" role="alert"><p>{error}</p>{!me&&<a href={`${process.env.NEXT_PUBLIC_BASE_PATH??""}/giris/`}>Giriş yap</a>}<button onClick={()=>setError("")} aria-label="Bildirimi kapat">×</button></div>}</Context.Provider>;
 }
 export function useStore(){const value=useContext(Context);if(!value)throw new Error("StoreProvider gerekli");return value;}
