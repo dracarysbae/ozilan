@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ListingCard } from "@/components/ListingCard";
 import { useStore } from "@/lib/store";
@@ -9,7 +9,8 @@ import { dateTR, num, tl } from "@/lib/format";
 
 export default function Account() {
   const router = useRouter();
-  const { me, pool, state, sellers, signOut, removeListing, bump, setStatus, dropSearch, reset, ready, busy, live } = useStore();
+  const { me, pool, state, sellers, signOut, bump, setStatus, dropSearch, reset, ready, busy, live, deleteAccount } = useStore();
+  const [confirmText, setConfirmText] = useState(""), [erasing, setErasing] = useState(false), [eraseError, setEraseError] = useState(""), [erased, setErased] = useState(false);
 
   const mine = useMemo(() => pool.filter((l) => me && l.sellerId === me.id), [pool, me]);
   const recent = useMemo(() => state.recent.map((id) => pool.find((l) => l.id === id)).filter(Boolean).slice(0, 8) as typeof pool, [state.recent, pool]);
@@ -19,6 +20,15 @@ export default function Account() {
   );
 
   if (!ready) return <div className="px-4 py-24 text-mute">Yükleniyor…</div>;
+
+  if (!me && erased) return (
+    <div className="mx-auto max-w-md px-4 py-24 text-center" role="status">
+      <p className="eyebrow">Hesap silindi</p>
+      <h1 className="mt-2 font-serif text-4xl leading-none">Hesabın ve kişisel verilerin silindi</h1>
+      <p className="mt-3 text-mute">Bu cihazdaki oturum kapatıldı. İlana bağlı kalmayan fotoğraflar zamanlanmış temizlikle kaldırılır.</p>
+      <Link href="/" className="btn-primary mt-6">Ana sayfaya dön</Link>
+    </div>
+  );
 
   if (!me) return (
     <div className="mx-auto max-w-md px-4 py-24 text-center">
@@ -127,6 +137,38 @@ export default function Account() {
         </p>
         <button onClick={reset} className="btn-ghost mt-4">Bu cihazdaki keşif geçmişini temizle</button>
       </section>
+
+      {live && (
+        <section className="account-erase mt-6 border border-signal/40 p-5" aria-labelledby="erase-title">
+          <p className="eyebrow !text-signal">Hesabı sil</p>
+          <h2 id="erase-title" className="mt-1 font-serif text-2xl leading-none">Hesabını ve kişisel verilerini kalıcı olarak sil</h2>
+          <ul className="mt-3 max-w-2xl list-disc space-y-1 pl-5 text-[0.85rem] leading-relaxed text-mute">
+            <li>Google ile giriş bağlantın, profil adın, favorilerin, kayıtlı aramaların ve şikâyetlerin silinir.</li>
+            <li>Kimsenin yazışmadığı ilanların tamamen silinir. Görüşme açılmış ilanların yayından kalkar; başlık, açıklama, fiyat ve fotoğraf bağlantıları temizlenir.</li>
+            <li>Gönderdiğin mesajların metni kaldırılır. Karşı taraf görüşmenin var olduğunu ve kendi yazdıklarını görmeye devam eder.</li>
+            <li>İlana bağlı kalmayan fotoğraflar sunucudaki zamanlanmış temizlikle silinir.</li>
+            <li>Bu işlem geri alınamaz. Aynı Google hesabıyla yeniden girersen yeni ve boş bir hesap açılır.</li>
+          </ul>
+          <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={async (e) => {
+            e.preventDefault(); if (erasing) return;
+            setErasing(true); setEraseError("");
+            const failure = await deleteAccount(confirmText.trim());
+            setErasing(false);
+            if (failure) { setEraseError(failure); return; }
+            setErased(true);
+          }}>
+            <label className="flex flex-col gap-1 text-[0.8rem] text-mute">
+              Onaylamak için <strong className="text-ink">HESABIMI SİL</strong> yaz
+              <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} autoComplete="off" spellCheck={false}
+                className="field h-10 min-w-[16rem]" aria-describedby={eraseError ? "erase-error" : undefined} />
+            </label>
+            <button type="submit" disabled={erasing || confirmText.trim() !== "HESABIMI SİL"} className="btn-ghost !border-signal !text-signal disabled:opacity-50">
+              {erasing ? "Siliniyor…" : "Hesabımı kalıcı olarak sil"}
+            </button>
+          </form>
+          {eraseError && <p id="erase-error" role="alert" className="mt-3 text-[0.85rem] text-signal">{eraseError}</p>}
+        </section>
+      )}
     </div>
   );
 }

@@ -29,6 +29,6 @@ export function friendlyError(error: unknown) {
   if (/row-level|permission denied|not authorized/i.test(msg)) return "Bu işlem için yetkin bulunmuyor. Hesabını ve ilan sahipliğini kontrol et.";
   if (/already registered|already been registered/i.test(msg)) return "Bu e-postayla bir hesap zaten var. Giriş yapabilir veya şifreni yenileyebilirsin.";
   if (/password/i.test(msg)) return "Şifren en az 8 karakter olmalı. Daha güçlü bir şifre seç.";
-  if (/hazırlanıyor|giriş|İlan|fotoğraf|mesaj|Kendi|saniye|sınır|karakter|zorunlu|geçerli|olmalı|bulunamadı/i.test(msg)) return msg;
+  if (/hazırlanıyor|giriş|İlan|fotoğraf|mesaj|Kendi|saniye|sınır|karakter|zorunlu|geçerli|olmalı|bulunamadı|eşleşmedi|silinmedi/i.test(msg)) return msg;
   return "İşlem tamamlanamadı. Bilgilerin korunuyor; lütfen tekrar dene.";
 }

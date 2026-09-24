@@ -16,6 +16,7 @@ import type { AttrValue, Listing } from "@/lib/types";
 import {PUBLISH_CATEGORIES} from "@/lib/publish-categories";
 import {PhotoUploader} from "@/components/PhotoUploader";
 import {ListingImage} from "@/components/ListingImage";
+import {newRecordId} from "@/lib/store";
 
 const STEPS = ["Kategori", "Detaylar", "Fiyat", "Önizleme"];
 
@@ -25,6 +26,8 @@ function Compose() {
   const editId=useSearchParams().get("duzenle")??"";
   const hydrated=useRef("");
   const [saving,setSaving]=useState(false),[uploading,setUploading]=useState(false);
+  // One id per new listing: a retry after a lost response cannot publish it twice.
+  const newId=useRef("");
 
   const [step, setStep] = useState(0);
   const [cat, setCat] = useState("");
@@ -99,12 +102,14 @@ function Compose() {
     setErr(e);
     if (e.length) return;
     setSaving(true);
+    newId.current ||= newRecordId();
     try { const id = await publish({
       title: title.trim(), desc: desc.trim(), cat, sub, deal, path, pathLabels,
       price: deal === "Ücretsiz" ? 0 : Number(price),
       city, district, attrs, photos, photoPaths,
       featured: false,
-    },editId||undefined);
+    },editId||undefined,editId?undefined:newId.current);
+    newId.current="";
     router.push(`/ilan/?id=${id}`);
     } catch(e){setErr([e instanceof Error?e.message:"İlan kaydedilemedi."]);}finally{setSaving(false);}
   };
