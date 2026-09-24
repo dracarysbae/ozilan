@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Artwork } from "@/components/Artwork";
 import { GaugeFull } from "@/components/MarketGauge";
+import { contactStarter, withGiftPreferences } from "@/lib/contact-starter";
 import { TrustPanel } from "@/components/Trust";
 import { FavButton, ListingCard } from "@/components/ListingCard";
 import { useStore } from "@/lib/store";
@@ -31,11 +32,13 @@ function Detail() {
   const [reason, setReason] = useState(REASONS[0]);
   const [note, setNote] = useState("");
   const [phone, setPhone] = useState(false);
+  const [giftDate, setGiftDate] = useState(""), [giftNote, setGiftNote] = useState("");
 
   useEffect(() => {
     setShot(0); setSent(false); setThread(""); setRep(false); setPhone(false);
-    setMsg("Merhaba, ilan hâlâ güncel mi?"); setNote(""); setReason(REASONS[0]);
-  }, [id]);
+    setMsg(contactStarter(pool.find((x) => x.id === id)?.cat ?? "")); setNote(""); setReason(REASONS[0]); setGiftDate(""); setGiftNote("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, ready]);
 
   useEffect(() => { if (l) view(l.id); /* eslint-disable-next-line */ }, [l?.id]);
 
@@ -64,7 +67,8 @@ function Detail() {
     if (!me) { router.push(`/giris/?sonra=${encodeURIComponent(`/ilan/?id=${l.id}`)}`); return; }
     if(sending||!msg.trim())return;setSending(true);
     const th = await openThread(l.id);
-    if(th&&await send(th,msg)){setThread(th);setSent(true);}setSending(false);
+    const body = l.cat === "cicek-hediye" ? withGiftPreferences(msg, giftDate, giftNote) : msg;
+    if(th&&await send(th,body)){setThread(th);setSent(true);}setSending(false);
   };
 
   return (
@@ -185,7 +189,15 @@ function Detail() {
                 </div>
               ) : (
                 <>
-                  <textarea aria-label="Satıcıya mesajın" maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} className="field resize-none" />
+                  <textarea aria-label="Satıcıya mesajın" maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} rows={l.cat === "hizmet" || l.cat === "freelance" ? 5 : 3} className="field resize-none" />
+                  {l.cat === "cicek-hediye" && (
+                    <div className="grid gap-2">
+                      <label className="text-[0.78rem] text-mute">Tercih ettiğin gün <span className="text-mute-2">· teslim sözü değildir, satıcıyla netleşir</span>
+                        <input type="date" value={giftDate} onChange={(e) => setGiftDate(e.target.value)} className="field mt-1" /></label>
+                      <label className="text-[0.78rem] text-mute">Kart notu <span className="text-mute-2">· isteğe bağlı, en fazla 160 karakter</span>
+                        <textarea value={giftNote} maxLength={160} rows={2} onChange={(e) => setGiftNote(e.target.value)} className="field mt-1 resize-none" /></label>
+                    </div>
+                  )}
                   <button onClick={doSend} disabled={sending||!msg.trim()||l.status!=="active"||!live} className="btn-signal w-full">{sending?"Gönderiliyor…":"Satıcıya mesaj gönder"}</button>
                   {!live&&<p className="form-notice">Bu örnek ilan için gerçek satıcıya mesaj gönderilmez.</p>}
                   {!me && <p className="text-center text-[0.72rem] text-mute">Mesaj için giriş yapmanız gerekir.</p>}

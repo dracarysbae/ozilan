@@ -1,3 +1,4 @@
+import { MARKET_ATTRS } from "./market-attrs";
 import { parseTree, type Node, countLeaves, countNodes } from "./tree";
 import { OTO_1 } from "./veh-oto-1";
 import { OTO_2 } from "./veh-oto-2";
@@ -324,8 +325,10 @@ export function findSub(cat: string, sub: string): SubCategory | undefined {
   return CAT_MAP[cat]?.subs.find((s) => s.slug === sub);
 }
 
+export { MARKET_ATTRS };
+
 export function attrsFor(cat: string, sub: string): AttrDef[] {
-  return findSub(cat, sub)?.attrs ?? [];
+  return findSub(cat, sub)?.attrs ?? MARKET_ATTRS[cat] ?? [];
 }
 
 export function treeFor(cat: string, sub: string): Node[] {
